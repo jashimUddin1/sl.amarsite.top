@@ -1,114 +1,190 @@
 <?php
-require_once "config.php";
+// logs_history.php
+require_once 'config.php';
 require_login();
 
-$schoolId = isset($_GET['school_id']) ? (int)$_GET['school_id'] : 0;
+// --- Input: school_id ---
+$schoolId = isset($_GET['school_id']) ? (int) $_GET['school_id'] : 0;
 if ($schoolId <= 0) {
-    die("Invalid school ID.");
+    $pageTitle   = 'Log History - School List';
+    $pageHeading = 'Log History';
+    $activeMenu  = 'logs';
+    require 'layout_header.php';
+    ?>
+    <div class="bg-white rounded-xl shadow p-6">
+        <p class="text-sm text-red-600">ভুল school আইডি দেওয়া হয়েছে।</p>
+        <a href="logs.php"
+           class="inline-block mt-3 px-4 py-2 rounded bg-slate-800 text-white text-sm hover:bg-slate-900">
+            ← Back to Logs
+        </a>
+    </div>
+    <?php
+    require 'layout_footer.php';
+    exit;
 }
 
-// school name নেব
-$stmtS = $pdo->prepare("SELECT school_name FROM schools WHERE id = :id");
-$stmtS->execute([':id' => $schoolId]);
-$school = $stmtS->fetch(PDO::FETCH_ASSOC);
-$schoolName = $school['school_name'] ?? null;
+// --- School basic info (যদি এখনও schools টেবিলে থাকে) ---
+$school = null;
+try {
+    $stmt = $pdo->prepare("
+        SELECT id, school_name, district, upazila, status
+        FROM schools
+        WHERE id = :id
+        LIMIT 1
+    ");
+    $stmt->execute([':id' => $schoolId]);
+    $school = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // কিছু না, logs টেবিল থাকলেই history দেখাব
+}
 
-// নির্দিষ্ট school_id এর সব log
+// --- Note logs for this school ---
 $stmt = $pdo->prepare("
-    SELECT 
-        l.*, 
-        s.school_name,
+    SELECT
+        nl.id,
+        nl.action,
+        nl.action_at,
+        nl.user_id,
         u.name AS user_name
-    FROM note_logs l
-    LEFT JOIN schools s ON l.school_id = s.id
-    LEFT JOIN users u   ON l.user_id   = u.id
-    WHERE l.school_id = :sid
-    ORDER BY l.id DESC
+    FROM note_logs nl
+    LEFT JOIN users u ON nl.user_id = u.id
+    WHERE nl.school_id = :school_id
+    ORDER BY nl.action_at DESC, nl.id DESC
 ");
-$stmt->execute([':sid' => $schoolId]);
+$stmt->execute([':school_id' => $schoolId]);
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// --- Layout header ---
+$pageTitle   = 'Log History - School List';
+$pageHeading = 'School Log History';
+$activeMenu  = 'logs';
+
+require 'layout_header.php';
 ?>
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-<meta charset="UTF-8">
-<title>Note History - School <?php echo htmlspecialchars($schoolName ?? ('#'.$schoolId)); ?></title>
-<script src="https://cdn.tailwindcss.com"></script>
-</head>
 
-<body class="bg-gray-100 min-h-screen p-6">
+<div class="bg-white rounded-xl shadow p-4 md:p-6">
 
-<div class="max-w-6xl mx-auto bg-white shadow rounded-xl p-6">
-
-    <div class="flex justify-between items-center mb-4">
+    <!-- Top: Title + Back button -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <div>
-            <h1 class="text-2xl font-bold text-indigo-600">🧾 Note History</h1>
-            <p class="text-sm text-gray-600 mt-1">
-                School: 
-                <span class="font-semibold">
-                    <?php echo htmlspecialchars($schoolName ?? ('(Deleted) ID: '.$schoolId)); ?>
-                </span>
+            <h2 class="text-lg font-semibold text-slate-800 mb-1">
+                স্কুলের নোট হিস্টোরি
+            </h2>
+            <p class="text-xs text-slate-500">
+                School ID: <?php echo (int)$schoolId; ?>
             </p>
         </div>
-        <a href="logs.php" class="text-indigo-600 hover:underline text-sm">◀ Back to School List</a>
+
+        <div class="flex gap-2">
+            <a href="logs.php"
+               class="px-3 py-1.5 rounded border border-slate-300 text-slate-700 text-sm hover:bg-slate-50">
+                ← Back to Logs
+            </a>
+
+            <?php if ($school): ?>
+                <a href="school_edit.php?id=<?php echo (int)$school['id']; ?>"
+                   class="px-3 py-1.5 rounded bg-slate-800 text-white text-sm hover:bg-slate-900">
+                    Edit School
+                </a>
+            <?php endif; ?>
+        </div>
     </div>
 
+    <!-- School info card -->
+    <div class="border border-slate-200 rounded-lg p-3 mb-4 bg-slate-50">
+        <?php if ($school): ?>
+            <div class="text-sm font-semibold text-slate-800">
+                <?php echo htmlspecialchars($school['school_name']); ?>
+            </div>
+            <div class="text-xs text-slate-600 mt-0.5">
+                <?php
+                $addrParts = [];
+                if (!empty($school['district'])) $addrParts[] = $school['district'];
+                if (!empty($school['upazila']))  $addrParts[] = $school['upazila'];
+                echo htmlspecialchars(implode(', ', $addrParts));
+                ?>
+            </div>
+            <div class="mt-1">
+                <?php
+                $status = $school['status'] ?? 'Pending';
+                $badgeClass = $status === 'Approved'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-orange-100 text-orange-800';
+                ?>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium <?php echo $badgeClass; ?>">
+                    Status: <?php echo htmlspecialchars($status); ?>
+                </span>
+            </div>
+        <?php else: ?>
+            <div class="text-sm text-red-600 font-semibold">
+                এই স্কুলটি মূল তালিকা থেকে মুছে ফেলা হয়েছে (বা পাওয়া যায়নি)।
+            </div>
+            <div class="text-xs text-slate-600 mt-1">
+                তারপরও note_logs টেবিলে থাকা সব activity নিচে দেখানো হচ্ছে।
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Logs table -->
     <?php if (!$logs): ?>
-        <p class="text-center text-gray-500">এই স্কুলের কোনো log পাওয়া যায়নি।</p>
+        <p class="text-sm text-slate-500">
+            এই স্কুলের জন্য কোনো note activity পাওয়া যায়নি।
+        </p>
     <?php else: ?>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-xs border border-slate-200 border-collapse">
+                <thead>
+                <tr class="bg-slate-100">
+                    <th class="p-2 border border-slate-200 text-left">#</th>
+                    <th class="p-2 border border-slate-200 text-left">Action</th>
+                    <th class="p-2 border border-slate-200 text-left">User</th>
+                    <th class="p-2 border border-slate-200 text-left">Time</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                $sl = 1;
+                foreach ($logs as $log):
+                    $action = $log['action'] ?? '';
+                    $actionLabel = ucfirst($action);
 
-    <div class="overflow-x-auto">
-    <table class="w-full border-collapse">
-        <thead>
-            <tr class="bg-gray-200 text-left text-sm">
-                <th class="p-2 border">Log ID</th>
-                <th class="p-2 border">Action</th>
-                <th class="p-2 border">User</th>
-                <th class="p-2 border">Old Text</th>
-                <th class="p-2 border">New Text</th>
-                <th class="p-2 border">Date</th>
-            </tr>
-        </thead>
-        <tbody>
+                    $badgeClass = 'bg-slate-100 text-slate-700';
+                    if ($action === 'create') {
+                        $badgeClass = 'bg-emerald-50 text-emerald-700';
+                    } elseif ($action === 'update') {
+                        $badgeClass = 'bg-blue-50 text-blue-700';
+                    } elseif ($action === 'delete') {
+                        $badgeClass = 'bg-red-50 text-red-700';
+                    }
 
-        <?php foreach ($logs as $log): ?>
-            <?php
-                $color = $log['action'] === 'delete' ? 'text-red-600 font-bold'
-                         : ($log['action'] === 'update' ? 'text-blue-600 font-bold'
-                         : 'text-green-600 font-bold');
-            ?>
-            <tr class="text-sm hover:bg-gray-50">
-                <td class="p-2 border"><?php echo $log['id']; ?></td>
-
-                <td class="p-2 border <?php echo $color; ?>">
-                    <?php echo ucfirst($log['action']); ?>
-                </td>
-
-                <td class="p-2 border">
-                    <?php echo htmlspecialchars($log['user_name'] ?? 'Unknown'); ?>
-                </td>
-
-                <td class="p-2 border whitespace-pre-line text-gray-700">
-                    <?php echo nl2br(htmlspecialchars($log['old_text'] ?? '')); ?>
-                </td>
-
-                <td class="p-2 border whitespace-pre-line text-gray-700">
-                    <?php echo nl2br(htmlspecialchars($log['new_text'] ?? '')); ?>
-                </td>
-
-                <td class="p-2 border text-gray-600">
-                    <?php echo htmlspecialchars($log['action_at']); ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-
-        </tbody>
-    </table>
-    </div>
-
+                    $userName = $log['user_name'] ?? 'Unknown User';
+                    $time     = $log['action_at'] ?? '';
+                    ?>
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2 border border-slate-200 align-top">
+                            <?php echo $sl++; ?>
+                        </td>
+                        <td class="p-2 border border-slate-200 align-top">
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium <?php echo $badgeClass; ?>">
+                                <?php echo htmlspecialchars($actionLabel); ?>
+                            </span>
+                        </td>
+                        <td class="p-2 border border-slate-200 align-top">
+                            <?php echo htmlspecialchars($userName); ?>
+                        </td>
+                        <td class="p-2 border border-slate-200 align-top">
+                            <span class="text-[11px] text-slate-700">
+                                <?php echo htmlspecialchars($time); ?>
+                            </span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     <?php endif; ?>
 
 </div>
 
-</body>
-</html>
+<?php
+require 'layout_footer.php';

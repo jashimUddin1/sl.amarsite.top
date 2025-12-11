@@ -2,694 +2,459 @@
 require_once 'config.php';
 require_login();
 
-/**
- * বড় সাইজের ছবি compress করে ছোট JPEG বানানোর helper
- * (Facebook-এর মতো behavior; 5–10MB মোবাইল ফটোকে অনেক কমিয়ে ফেলে)
- *
- * @param string $field     ফর্মের input name (যেমন 'photo', 'ePhoto')
- * @param string $uploadDir আপলোড ডিরেক্টরি
- * @param int    $maxWidth  সর্বোচ্চ width (px)
- * @param int    $quality   JPEG quality (0–100)
- * @return string|null      সেভ হওয়া ফাইলের path অথবা null
- */
-function processCompressedImageUpload($field, $uploadDir = 'uploads/', $maxWidth = 800, $quality = 60)
-{
-    if (empty($_FILES[$field]['name']) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
-        return null;
-    }
+// ====== Filters (GET) ======
+$filterDistrict = trim($_GET['district'] ?? '');
+$filterUpazila = trim($_GET['upazila'] ?? '');
+$filterStatus = trim($_GET['status'] ?? '');
 
-    $tmpName = $_FILES[$field]['tmp_name'];
+// ====== Filter options (district / upazila / status) ======
+$districts = $pdo->query("
+    SELECT DISTINCT district
+    FROM schools
+    WHERE district IS NOT NULL AND district <> ''
+    ORDER BY district ASC
+")->fetchAll(PDO::FETCH_COLUMN);
 
-    if (!is_uploaded_file($tmpName)) {
-        return null;
-    }
+$upazilas = $pdo->query("
+    SELECT DISTINCT upazila
+    FROM schools
+    WHERE upazila IS NOT NULL AND upazila <> ''
+    ORDER BY upazila ASC
+")->fetchAll(PDO::FETCH_COLUMN);
 
-    $imgInfo = @getimagesize($tmpName);
-    if ($imgInfo === false) {
-        return null;
-    }
+$statuses = $pdo->query("
+    SELECT DISTINCT status
+    FROM schools
+    WHERE status IS NOT NULL AND status <> ''
+    ORDER BY status ASC
+")->fetchAll(PDO::FETCH_COLUMN);
 
-    list($width, $height, $type) = $imgInfo;
+// ====== মোট কাউন্ট ======
+$totalSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools")->fetchColumn() ?? 0);
+$approvedSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Approved'")->fetchColumn() ?? 0);
+$pendingSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Pending'")->fetchColumn() ?? 0);
 
-    // শুধু JPEG/PNG সাপোর্ট রাখলাম, চাইলে WebP ইত্যাদি বাড়ানো যাবে
-    if ($type === IMAGETYPE_JPEG) {
-        $src = imagecreatefromjpeg($tmpName);
-    } elseif ($type === IMAGETYPE_PNG) {
-        $src = imagecreatefrompng($tmpName);
-    } else {
-        return null;
-    }
-
-    if (!$src) {
-        return null;
-    }
-
-    // নতুন width/height নির্ধারণ
-    if ($width > $maxWidth) {
-        $newWidth  = $maxWidth;
-        $newHeight = (int) round(($height * $newWidth) / $width);
-    } else {
-        $newWidth  = $width;
-        $newHeight = $height;
-    }
-
-    $dst = imagecreatetruecolor($newWidth, $newHeight);
-
-    // background সাদা করে দিচ্ছি (PNG transparency → white)
-    $white = imagecolorallocate($dst, 255, 255, 255);
-    imagefill($dst, 0, 0, $white);
-
-    imagecopyresampled(
-        $dst,
-        $src,
-        0, 0, 0, 0,
-        $newWidth,
-        $newHeight,
-        $width,
-        $height
-    );
-
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
-    }
-
-    $fileName = 'school_' . time() . '_' . rand(1000, 9999) . '.jpg';
-    $target   = rtrim($uploadDir, '/') . '/' . $fileName;
-
-    imagejpeg($dst, $target, $quality);
-
-    imagedestroy($src);
-    imagedestroy($dst);
-
-    return $target;
-}
-
-// ================== DELETE SCHOOL ==================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_school') {
-
-    $id = (int) ($_POST['id'] ?? 0);
-
-    if ($id > 0) {
-        // পুরনো ডাটা নাও
-        $stmt = $pdo->prepare("SELECT * FROM schools WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        $school = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($school) {
-            // trash_schools/log table এ ইনসার্ট
-            $stmtT = $pdo->prepare("
-                INSERT INTO trash_schools 
-                    (school_id, district, upazila, school_name, mobile, status, photo_path, deleted_by) 
-                VALUES 
-                    (:school_id, :district, :upazila, :school_name, :mobile, :status, :photo_path, :deleted_by)
-            ");
-            $stmtT->execute([
-                ':school_id'  => $school['id'],
-                ':district'   => $school['district'],
-                ':upazila'    => $school['upazila'],
-                ':school_name'=> $school['school_name'],
-                ':mobile'     => $school['mobile'],
-                ':status'     => $school['status'],
-                ':photo_path' => $school['photo_path'],
-                ':deleted_by' => $_SESSION['user_id'] ?? null,
-            ]);
-
-            // main schools থেকে delete
-            $stmtD = $pdo->prepare("DELETE FROM schools WHERE id = :id");
-            $stmtD->execute([':id' => $id]);
-        }
-    }
-
-    header("Location: index.php");
-    exit;
-}
-
-// ================== CREATE SCHOOL ==================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'create_school') {
-
-    $schoolName = trim($_POST['schoolName'] ?? '');
-    $mobile     = trim($_POST['mobile'] ?? '');
-    $district   = trim($_POST['district'] ?? '');
-    $upazila    = trim($_POST['upazila'] ?? '');
-    $status     = $_POST['status'] ?? 'Pending';
-    $noteText   = trim($_POST['note'] ?? '');
-
-    if ($schoolName !== '' && $district !== '' && $upazila !== '') {
-
-        // photo upload with compression
-        $photoPath = processCompressedImageUpload('photo', 'uploads/', 800, 60);
-
-        $stmt = $pdo->prepare("
-            INSERT INTO schools (district, upazila, school_name, mobile, status, photo_path, updated_by)
-            VALUES (:district, :upazila, :school_name, :mobile, :status, :photo_path, :updated_by)
-        ");
-        $stmt->execute([
-            ':district'    => $district,
-            ':upazila'     => $upazila,
-            ':school_name' => $schoolName,
-            ':mobile'      => $mobile,
-            ':status'      => $status,
-            ':photo_path'  => $photoPath,
-            ':updated_by'  => $_SESSION['user_id'] ?? null,
-        ]);
-
-        $schoolId = $pdo->lastInsertId();
-
-        if ($noteText !== '') {
-            $stmt = $pdo->prepare("
-                INSERT INTO school_notes (school_id, note_text, updated_by)
-                VALUES (:school_id, :note_text, :updated_by)
-            ");
-            $stmt->execute([
-                ':school_id'  => $schoolId,
-                ':note_text'  => $noteText,
-                ':updated_by' => $_SESSION['user_id'] ?? null,
-            ]);
-        }
-    }
-
-    header("Location: index.php");
-    exit;
-}
-
-// ================== ADD NOTE ==================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_note') {
-    $schoolId = (int) ($_POST['school_id'] ?? 0);
-    $noteText = trim($_POST['note_text'] ?? '');
-
-    if ($schoolId > 0 && $noteText !== '') {
-        $stmt = $pdo->prepare("
-            INSERT INTO school_notes (school_id, note_text, updated_by)
-            VALUES (:school_id, :note_text, :updated_by)
-        ");
-        $stmt->execute([
-            ':school_id'  => $schoolId,
-            ':note_text'  => $noteText,
-            ':updated_by' => $_SESSION['user_id'] ?? null,
-        ]);
-    }
-
-    header("Location: index.php");
-    exit;
-}
-
-// ================== UPDATE SCHOOL ==================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_school') {
-
-    $id         = (int) ($_POST['id'] ?? 0);
-    $schoolName = trim($_POST['eSchoolName'] ?? '');
-    $mobile     = trim($_POST['eMobile'] ?? '');
-    $district   = trim($_POST['eDistrict'] ?? '');
-    $upazila    = trim($_POST['eUpazila'] ?? '');
-    $status     = $_POST['eStatus'] ?? 'Pending';
-
-    if ($id > 0 && $schoolName !== '' && $district !== '' && $upazila !== '') {
-
-        $photoSql = '';
-        $params = [
-            ':id'          => $id,
-            ':district'    => $district,
-            ':upazila'     => $upazila,
-            ':school_name' => $schoolName,
-            ':mobile'      => $mobile,
-            ':status'      => $status,
-        ];
-
-        // compressed new photo (optional)
-        if (!empty($_FILES['ePhoto']['name'])) {
-            $newPath = processCompressedImageUpload('ePhoto', 'uploads/', 800, 60);
-            if ($newPath) {
-                $photoSql              = ", photo_path = :photo_path";
-                $params[':photo_path'] = $newPath;
-            }
-        }
-
-        $params[':updated_by'] = $_SESSION['user_id'] ?? null;
-
-        $sql = "
-            UPDATE schools
-            SET district    = :district,
-                upazila     = :upazila,
-                school_name = :school_name,
-                mobile      = :mobile,
-                status      = :status,
-                updated_by  = :updated_by
-                $photoSql
-            WHERE id = :id
-        ";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-    }
-
-    header("Location: index.php");
-    exit;
-}
-
-// ================== FILTER VALUES FROM GET ==================
-$filterDistrict = $_GET['district'] ?? '';
-$filterUpazila  = $_GET['upazila'] ?? '';
-$filterStatus   = $_GET['status'] ?? '';
-
-// ================== FETCH SCHOOLS ==================
-$sql    = "SELECT * FROM schools WHERE 1";
+// ====== Filter অনুযায়ী স্কুল লিস্ট ======
+$sql = "SELECT * FROM schools WHERE 1=1";
 $params = [];
 
 if ($filterDistrict !== '') {
-    $sql .= " AND district = :f_district";
-    $params[':f_district'] = $filterDistrict;
+    $sql .= " AND district = :district";
+    $params[':district'] = $filterDistrict;
 }
 if ($filterUpazila !== '') {
-    $sql .= " AND upazila = :f_upazila";
-    $params[':f_upazila'] = $filterUpazila;
+    $sql .= " AND upazila = :upazila";
+    $params[':upazila'] = $filterUpazila;
 }
 if ($filterStatus !== '') {
-    $sql .= " AND status = :f_status";
-    $params[':f_status'] = $filterStatus;
+    $sql .= " AND status = :status";
+    $params[':status'] = $filterStatus;
 }
+
 $sql .= " ORDER BY id DESC";
 
-$stmt    = $pdo->prepare($sql);
+$stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $schools = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ================== SCHOOL COUNTS ==================
-$totalSchools = $pdo->query("SELECT COUNT(*) FROM schools")->fetchColumn();
-$approved     = $pdo->query("SELECT COUNT(*) FROM schools WHERE status='Approved'")->fetchColumn();
-$pending      = $pdo->query("SELECT COUNT(*) FROM schools WHERE status='Pending'")->fetchColumn();
-
-// ================== DISTINCT DISTRICTS & UPAZILAS ==================
-$districts = $pdo->query("SELECT DISTINCT district FROM schools ORDER BY district ASC")->fetchAll(PDO::FETCH_COLUMN);
-
-if ($filterDistrict !== '') {
-    $stmtU = $pdo->prepare("SELECT DISTINCT upazila FROM schools WHERE district = :d ORDER BY upazila ASC");
-    $stmtU->execute([':d' => $filterDistrict]);
-    $upazilas = $stmtU->fetchAll(PDO::FETCH_COLUMN);
-} else {
-    $upazilas = $pdo->query("SELECT DISTINCT upazila FROM schools ORDER BY upazila ASC")->fetchAll(PDO::FETCH_COLUMN);
-}
-
-// ================== FETCH NOTES BY SCHOOL ==================
+// ====== প্রতিটি স্কুল অনুযায়ী নোটগুলো আলাদা করা ======
 $notesBySchool = [];
 if (!empty($schools)) {
-    $ids = array_column($schools, 'id');
-    $in  = implode(',', array_map('intval', $ids));
+    $ids = array_column($schools, 'id'); // schools টেবিলের id
+    $ids = array_map('intval', $ids);
+    $in = implode(',', $ids);
 
-    // ধরে নিচ্ছি school_notes টেবিলে note_date কলাম আছে (DATETIME/TIMESTAMP)
-    $stmtN = $pdo->query("SELECT * FROM school_notes WHERE school_id IN ($in) ORDER BY note_date DESC");
+    // school_notes থেকে সব নোট এনে school_id অনুযায়ী গ্রুপ করব
+    // এখানে note_date DESC, তাই index 0 = সর্বশেষ নোট
+    $stmtN = $pdo->query("SELECT * FROM school_notes WHERE school_id IN ($in) ORDER BY id DESC");
 
     foreach ($stmtN as $row) {
         $notesBySchool[$row['school_id']][] = $row;
     }
 }
+
+
+// ====== Layout vars ======
+$pageTitle = 'Home - School Note Manager';
+$pageHeading = 'Home';
+$activeMenu = 'home';
+
+require 'layout_header_index.php';
+
+// session test
+// $_SESSION['note_error'] = 'testing session message';
 ?>
-<!DOCTYPE html>
-<html lang="bn">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Note Manager - Final</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .modal-bg {
-            background: rgba(0, 0, 0, 0.5);
+<style>
+    /* পূরো পেজের ব্যাকগ্রাউন্ড গ্রেডিয়েন্ট */
+    .page-bg {
+        min-height: calc(100vh - 4rem);
+        background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+        /* হালকা blue → indigo */
+        padding: 1.5rem 0;
+    }
+
+    @media (max-width: 576px) {
+        .page-bg {
+            min-height: auto !important;
+            padding: 0.5rem 0 !important;
         }
+    }
 
-        .modal-center {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-    </style>
-</head>
+    /* Filter bar এক লাইনে + ছোট input */
+    .filter-bar-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 
-<body class="bg-gradient-to-br from-blue-100 to-indigo-100 min-h-screen">
+    .filter-bar {
+        min-width: max-content;
+    }
 
-    <div class="max-w-6xl mx-auto p-6">
+    .filter-bar .form-select,
+    .filter-bar .form-control,
+    .filter-bar .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
 
-        <!-- Top Header: Logs | Heading | Trash -->
-        <div class="flex justify-between items-center mb-4">
+    .close-custom {
+        padding: 12px 12px !important;
+    }
+</style>
 
-            <!-- Left: Logs Button -->
-            <a href="logs.php"
-               class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition">
-                Logs
-            </a>
+<div class="page-bg">
+    <div class="container-lg">
 
-            <!-- Center Heading -->
-            <h1 class="text-3xl font-bold text-indigo-600 text-center flex-1 md:text-2x1 sm:text-2x1">
-                 <span class="hidden md:inline">📘  School Note Manager</span>
-            </h1>
-
-            <!-- Right: Trash Button -->
-            <a href="trash.php"
-               class="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition">
-                🗑️ Trash
-            </a>
-
-        </div>
-
-        <!-- Stats Bar -->
-        <div class="text-center mb-6 text-lg font-semibold text-gray-700">
+        <p class="text-center small text-muted mb-4">
             মোট স্কুল:
-            <span class="text-indigo-600"><?php echo (int) $totalSchools; ?></span> |
+            <span class="fw-semibold"><?php echo $totalSchools; ?></span> |
             Approved:
-            <span class="text-green-600"><?php echo (int) $approved; ?></span> |
+            <span class="fw-semibold text-success"><?php echo $approvedSchools; ?></span> |
             Pending:
-            <span class="text-orange-600"><?php echo (int) $pending; ?></span>
-        </div>
+            <span class="fw-semibold text-warning"><?php echo $pendingSchools; ?></span>
+        </p>
 
-        <!-- Upload Button -->
-        <div class="text-center mb-6">
-            <button type="button" onclick="openUploadModal()"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold shadow">
-                Upload School
-            </button>
-        </div>
+        <?php if (!empty($_SESSION['note_success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center justify-content-between small py-2 mb-2"
+                role="alert">
+                <div class="me-2">
+                    <?php
+                    echo htmlspecialchars($_SESSION['note_success']);
+                    unset($_SESSION['note_success']);
+                    ?>
+                </div>
+                <button type="button" class="btn-close btn-sm ms-auto close-custom" data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($_SESSION['note_error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between small py-2 mb-3"
+                role="alert">
+                <div class="me-2">
+                    <?php
+                    echo htmlspecialchars($_SESSION['note_error']);
+                    unset($_SESSION['note_error']);
+                    ?>
+                </div>
+                <button type="button" class="btn-close btn-sm ms-auto close-custom" data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
 
         <!-- Filter Section -->
-        <form method="GET" class="bg-white shadow p-6 rounded-xl mb-8">
-            <h2 class="text-xl font-bold mb-4">🔍 Filter School</h2>
-            <div class="grid md:grid-cols-3 gap-4">
-                <select name="district" id="filterDistrict" onchange="this.form.submit()" class="p-2 border rounded">
-                    <option value="">District</option>
-                    <?php foreach ($districts as $d): ?>
-                        <option value="<?php echo htmlspecialchars($d); ?>"
-                            <?php if ($d === $filterDistrict) echo 'selected'; ?>>
-                            <?php echo htmlspecialchars($d); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+        <div class="card shadow-sm mb-4">
+            <div class="card-body py-3">
 
-                <select name="upazila" id="filterUpazila" onchange="this.form.submit()" class="p-2 border rounded">
-                    <option value="">Upazila</option>
-                    <?php foreach ($upazilas as $u): ?>
-                        <option value="<?php echo htmlspecialchars($u); ?>"
-                            <?php if ($u === $filterUpazila) echo 'selected'; ?>>
-                            <?php echo htmlspecialchars($u); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="filter-bar-wrapper">
+                    <form method="GET" class="d-flex align-items-center gap-2 filter-bar mb-0">
 
-                <select name="status" id="filterStatus" onchange="this.form.submit()" class="p-2 border rounded">
-                    <option value="">All Status</option>
-                    <option value="Pending"  <?php if ($filterStatus === 'Pending')  echo 'selected'; ?>>Pending</option>
-                    <option value="Approved" <?php if ($filterStatus === 'Approved') echo 'selected'; ?>>Approved</option>
-                </select>
+                        <!-- District -->
+                        <select name="district" class="form-select form-select-sm">
+                            <option value="">District</option>
+                            <?php foreach ($districts as $d): ?>
+                                <option value="<?php echo htmlspecialchars($d); ?>" <?php echo ($filterDistrict === $d) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($d); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <!-- Upazila -->
+                        <select name="upazila" class="form-select form-select-sm">
+                            <option value="">Upazila</option>
+                            <?php foreach ($upazilas as $u): ?>
+                                <option value="<?php echo htmlspecialchars($u); ?>" <?php echo ($filterUpazila === $u) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($u); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <!-- Status -->
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">Status</option>
+                            <?php foreach ($statuses as $st): ?>
+                                <option value="<?php echo htmlspecialchars($st); ?>" <?php echo ($filterStatus === $st) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($st); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <!-- Apply / Reset -->
+                        <button type="submit" class="btn btn-dark btn-sm flex-shrink-0">
+                            Apply
+                        </button>
+                        <a href="index.php" class="btn btn-outline-secondary btn-sm flex-shrink-0">
+                            Reset
+                        </a>
+                    </form>
+                </div>
+
             </div>
-            <button type="submit"
-                class="mt-4 w-full bg-gray-800 text-white p-3 rounded-xl font-bold hover:bg-gray-900">
-                Apply Filter
-            </button>
-        </form>
+        </div>
 
-        <!-- School List -->
-        <div id="schoolList" class="grid md:grid-cols-2 gap-6">
-            <?php if (!$schools): ?>
-                <p class="text-center text-gray-500 col-span-2">কোনো স্কুল পাওয়া যায়নি।</p>
-            <?php else: ?>
+        <!-- School List (Card View) -->
+        <?php if (!$schools): ?>
+            <div class="card shadow-sm">
+                <div class="card-body text-center text-muted small">
+                    কোনো স্কুল পাওয়া যায়নি।
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="row row-cols-1 row-cols-md-2 g-3" id="schoolList">
                 <?php foreach ($schools as $s): ?>
                     <?php
-                    $sid       = $s['id'];
-                    $notes     = $notesBySchool[$sid] ?? [];
+                    $sid = (int) $s['id'];
+                    $notes = $notesBySchool[$sid] ?? [];
                     $noteCount = count($notes);
-                    $latestNote = $noteCount ? $notes[0] : null;
+                    $latestNote = $noteCount ? $notes[0] : null; // note_date DESC বলে index 0 = latest
+            
+                    $address = trim(
+                        ($s['district'] ?? '') .
+                        (($s['district'] ?? '') && ($s['upazila'] ?? '') ? ', ' : '') .
+                        ($s['upazila'] ?? '')
+                    );
+                    if ($address === '')
+                        $address = 'N/A';
+
+                    $status = $s['status'] ?? '';
+                    $statusClass = ($status === 'Approved')
+                        ? 'text-success'
+                        : 'text-warning';
+
+                    $photo = $s['photo_path'] ?? null;
                     ?>
-                    <div class="bg-white p-4 shadow rounded-xl relative">
-                        <?php if (!empty($s['photo_path'])): ?>
-                            <img src="<?php echo htmlspecialchars($s['photo_path']); ?>"
-                                class="w-full h-48 object-cover rounded mb-3" alt="School Photo">
-                        <?php endif; ?>
-
-                        <h3 class="text-xl font-bold"><?php echo htmlspecialchars($s['school_name']); ?></h3>
-                        <p class="text-gray-600"><?php echo htmlspecialchars($s['mobile']); ?></p>
-                        <p class="text-sm text-indigo-600 font-bold">
-                            <?php echo htmlspecialchars($s['district'] . ', ' . $s['upazila']); ?>
-                        </p>
-                        <p class="mt-2 font-semibold">
-                            Status:
-                            <span class="<?php echo $s['status'] === 'Approved' ? 'text-green-600' : 'text-orange-600'; ?>">
-                                <?php echo htmlspecialchars($s['status']); ?>
-                            </span>
-                        </p>
-
-                        <!-- Notes title + View all button -->
-                        <div class="mt-3 flex items-center justify-between">
-                            <span class="font-bold">Notes:</span>
-                            <?php if ($noteCount > 1): ?>
-                                <button type="button"
-                                    class="text-sm text-blue-600 hover:underline"
-                                    onclick="openNotesModal(this)"
-                                    data-id="<?php echo $sid; ?>"
-                                    data-name="<?php echo htmlspecialchars($s['school_name'], ENT_QUOTES); ?>">
-                                    View all (<?php echo $noteCount; ?>)
-                                </button>
+                    <div class="col">
+                        <div class="card h-100 shadow-sm">
+                            <!-- Photo -->
+                            <?php if (!empty($photo)): ?>
+                                <img src="<?php echo htmlspecialchars($photo); ?>" class="card-img-top"
+                                    style="height:220px; object-fit:cover;">
+                            <?php else: ?>
+                                <div class="d-flex align-items-center justify-content-center border-bottom"
+                                    style="height:220px; font-size:0.8rem; color:#9ca3af;">
+                                    No Photo
+                                </div>
                             <?php endif; ?>
-                        </div>
 
-                        <!-- Latest note -->
-                        <?php if ($latestNote): ?>
-                            <div class="bg-gray-100 p-2 rounded mt-2">
-                                <p><?php echo nl2br(htmlspecialchars($latestNote['note_text'])); ?></p>
-                                <small class="text-gray-500">
-                                    <?php echo htmlspecialchars($latestNote['note_date']); ?>
-                                </small>
+                            <div class="card-body d-flex flex-column">
+                                <!-- Basic Info -->
+                                <h3 class="h6 fw-bold mb-1">
+                                    <?php echo htmlspecialchars($s['school_name']); ?>
+                                </h3>
+
+                                <?php if (!empty($s['mobile'])): ?>
+                                    <p class="text-muted small mb-1">
+                                        <a href="tel:<?php echo htmlspecialchars($s['mobile']); ?>"
+                                            class="text-primary text-decoration-none">
+                                            <span style="color:blue;">📞</span> <?php echo htmlspecialchars($s['mobile']); ?>
+                                        </a>
+                                    </p>
+                                <?php endif; ?>
+
+                                <p class="small text-primary fw-semibold mb-2">
+                                    <?php echo htmlspecialchars($address); ?>
+                                </p>
+
+                                <!-- Status -->
+                                <p class="mb-2 small fw-semibold">
+                                    Status:
+                                    <span class="<?php echo $statusClass; ?>">
+                                        <?php echo htmlspecialchars($status); ?>
+                                    </span>
+                                </p>
+
+                                <!-- Notes section -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="small fw-semibold">Notes:</span>
+
+                                        <?php if ($noteCount > 1): ?>
+                                            <button type="button" class="btn btn-link btn-sm p-0 small text-decoration-none"
+                                                onclick="openNotesModal(<?php echo $sid; ?>)">
+                                                View all (<?php echo $noteCount; ?>)
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <?php if ($latestNote): ?>
+                                        <div class="small text-muted border rounded p-2 bg-light mb-0">
+                                            <div>
+                                                <?php echo nl2br(htmlspecialchars($latestNote['note_text'])); ?>
+                                            </div>
+                                            <div class="mt-1 text-secondary">
+                                                <small><?php echo htmlspecialchars($latestNote['note_date']); ?></small>
+                                            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="small text-muted mb-0">এখনও কোনো নোট যোগ করা হয়নি।</p>
+                                    <?php endif; ?>
+                                </div>
+
+
+                                <!-- Actions -->
+                                <div class="mt-auto d-flex gap-2">
+                                    <!-- সব নোট লিস্ট + edit/delete -->
+                                    <a href="note_view.php?school_id=<?php echo (int) $s['id']; ?>"
+                                        class="btn btn-primary btn-sm w-50">
+                                        Manage Note
+                                    </a>
+
+                                    <!-- নতুন নোট যোগ করার জন্য modal open -->
+                                    <button type="button" class="btn btn-success btn-sm w-50 btn-open-add-note"
+                                        data-bs-toggle="modal" data-bs-target="#addNoteModal"
+                                        data-school-id="<?php echo (int) $s['id']; ?>"
+                                        data-school-name="<?php echo htmlspecialchars($s['school_name']); ?>">
+                                        Add Note
+                                    </button>
+                                </div>
                             </div>
-                        <?php else: ?>
-                            <p class="text-sm text-gray-400 mt-1">No notes yet.</p>
-                        <?php endif; ?>
-
-                        <div class="flex gap-2 mt-3">
-                            <button type="button"
-                                onclick="openEditModal(this)"
-                                class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                                data-id="<?php echo $sid; ?>"
-                                data-name="<?php echo htmlspecialchars($s['school_name'], ENT_QUOTES); ?>"
-                                data-mobile="<?php echo htmlspecialchars($s['mobile'], ENT_QUOTES); ?>"
-                                data-district="<?php echo htmlspecialchars($s['district'], ENT_QUOTES); ?>"
-                                data-upazila="<?php echo htmlspecialchars($s['upazila'], ENT_QUOTES); ?>"
-                                data-status="<?php echo htmlspecialchars($s['status'], ENT_QUOTES); ?>">
-                                ✏️ Edit
-                            </button>
-                            <button type="button"
-                                onclick="openAddNoteModal(<?php echo $sid; ?>)"
-                                class="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                                📝 Add Note
-                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
+            </div>
+        <?php endif; ?>
 
     </div>
+</div>
 
-    <!-- Upload Modal -->
-    <div id="uploadModal" class="modal-bg modal-center fixed inset-0 hidden z-50">
-        <div class="bg-white p-6 rounded-xl w-full max-w-md relative shadow-xl">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">📤 Upload School</h2>
-            <form method="POST" enctype="multipart/form-data" class="grid gap-4">
-                <input type="hidden" name="action" value="create_school">
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="core/add_note_core.php" class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="addNoteModalLabel">Add Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
 
-                <input name="district" type="text" placeholder="District" class="p-2 border rounded" required>
-                <input name="upazila" type="text" placeholder="Upazila" class="p-2 border rounded" required>
-                <input name="schoolName" type="text" placeholder="School Name" class="p-2 border rounded" required>
-                <input name="mobile" type="text" placeholder="Mobile Number" class="p-2 border rounded">
-                <input name="photo" type="file" accept="image/*" class="p-2 border rounded" required>
+                <input type="hidden" name="school_id" id="noteSchoolId">
 
-                <select name="status" class="p-2 border rounded">
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                </select>
-
-                <textarea name="note" placeholder="First Note লিখুন..." class="p-2 border rounded"></textarea>
-
-                <div class="flex justify-end gap-2 mt-2">
-                    <button type="button" onclick="closeUploadModal()"
-                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Submit</button>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">School</label>
+                    <input type="text" class="form-control form-control-sm" id="noteSchoolName" readonly>
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal-bg modal-center fixed inset-0 hidden z-50">
-        <div class="bg-white p-6 rounded-xl w-full max-w-md relative shadow-xl">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">✏️ Edit School</h2>
-            <form method="POST" enctype="multipart/form-data" class="grid gap-4">
-                <input type="hidden" name="action" value="update_school">
-                <input type="hidden" name="id" id="eId">
-
-                <input id="eSchoolName" name="eSchoolName" type="text" placeholder="School Name"
-                    class="p-2 border rounded" required>
-                <input id="eMobile" name="eMobile" type="text" placeholder="Mobile Number"
-                    class="p-2 border rounded">
-                <input id="eDistrict" name="eDistrict" type="text" placeholder="District"
-                    class="p-2 border rounded" required>
-                <input id="eUpazila" name="eUpazila" type="text" placeholder="Upazila"
-                    class="p-2 border rounded" required>
-
-                <select id="eStatus" name="eStatus" class="p-2 border rounded">
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                </select>
-
-                <input id="ePhoto" name="ePhoto" type="file" accept="image/*" class="p-2 border rounded">
-
-                <div class="flex justify-between items-center mt-2">
-
-                    <!-- Delete Button -->
-                    <button type="button"
-                        onclick="deleteSchool()"
-                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-                        Delete
-                    </button>
-
-                    <div class="flex gap-2">
-                        <button type="button" onclick="closeEditModal()"
-                            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
-
-                        <button type="submit"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Submit</button>
-                    </div>
+                <div class="mb-2">
+                    <label for="noteText" class="form-label small mb-1">Note</label>
+                    <textarea name="note_text" id="noteText" rows="4" class="form-control form-control-sm"
+                        placeholder="Write your note here..." required></textarea>
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Add Note Modal -->
-    <div id="addNoteModal" class="modal-bg modal-center fixed inset-0 hidden z-50">
-        <div class="bg-white p-6 rounded-xl w-full max-w-md relative shadow-xl">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">📝 Add Note</h2>
-            <form method="POST" class="grid gap-4">
-                <input type="hidden" name="action" value="add_note">
-                <input type="hidden" name="school_id" id="note_school_id">
-                <textarea name="note_text" id="addNoteText" placeholder="Write note here..."
-                    class="p-2 border rounded w-full" required></textarea>
-                <div class="flex justify-end gap-2 mt-4">
-                    <button type="button" onclick="closeAddNoteModal()"
-                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Add Note</button>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-sm btn-primary">Save Note</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- All Notes Modal -->
+<div class="modal fade" id="notesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title">All Notes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="notesModalContent" class="d-flex flex-column gap-2 small">
+                    <!-- JS দিয়ে notes.php থেকে content আসবে -->
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- View Notes Modal -->
-    <div id="notesModal" class="modal-bg modal-center fixed inset-0 hidden z-50">
-        <div class="bg-white p-6 rounded-xl w-full max-w-[95vh] relative shadow-xl max-h-[95vh] overflow-y-auto">
-            <h2 id="notesModalTitle" class="text-2xl font-bold mb-4 text-gray-800">
-                📓 All Notes
-            </h2>
-            <div id="notesModalContent" class="space-y-3"></div>
-
-            <div class="flex justify-end mt-4">
-                <button onclick="closeNotesModal()"
-                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                     Close
                 </button>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // =============== Upload Modal ===============
-        function openUploadModal() {
-            document.getElementById("uploadModal").classList.remove("hidden");
+
+<script>
+    function openNotesModal(schoolId) {
+        const modalEl = document.getElementById('notesModal');
+        const contentEl = document.getElementById('notesModalContent');
+
+        if (!modalEl || !contentEl) return;
+
+        contentEl.innerHTML = "<p class='text-muted small mb-0'>Loading...</p>";
+
+        // notes.php থেকে HTML রেসপন্স নিয়ে আসছি
+        fetch('notes.php?id=' + encodeURIComponent(schoolId))
+            .then(function (res) {
+                return res.text();
+            })
+            .then(function (html) {
+                contentEl.innerHTML = html;
+            })
+            .catch(function () {
+                contentEl.innerHTML = "<p class='text-danger small mb-0'>নোট লোড করতে সমস্যা হয়েছে।</p>";
+            });
+
+        // Bootstrap Modal show
+        if (typeof bootstrap !== 'undefined') {
+            var modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            // fallback (যদি bootstrap js লোড না থাকে)
+            modalEl.classList.add('show');
+            modalEl.style.display = 'block';
         }
+    }
 
-        function closeUploadModal() {
-            document.getElementById("uploadModal").classList.add("hidden");
-        }
-
-        // =============== Edit Modal ===============
-        function openEditModal(btn) {
-            document.getElementById("eId").value         = btn.dataset.id;
-            document.getElementById("eSchoolName").value = btn.dataset.name;
-            document.getElementById("eMobile").value     = btn.dataset.mobile;
-            document.getElementById("eDistrict").value   = btn.dataset.district;
-            document.getElementById("eUpazila").value    = btn.dataset.upazila;
-            document.getElementById("eStatus").value     = btn.dataset.status;
-
-            document.getElementById("ePhoto").value = "";
-
-            document.getElementById("editModal").classList.remove("hidden");
-        }
-
-        function closeEditModal() {
-            document.getElementById("editModal").classList.add("hidden");
-        }
-
-        function deleteSchool() {
-            const id = document.getElementById("eId").value;
-
-            if (!id) {
-                alert("ID missing! Cannot delete.");
-                return;
+    fetch("core/notification_core.php")
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > 0) {
+                document.getElementById("notify-badge").innerText = data.length;
+                document.getElementById("notify-badge").style.display = "inline-block";
             }
+        });
 
-            if (confirm("Are you sure you want to delete this school?")) {
-                const form = document.createElement("form");
-                form.method = "POST";
-                form.action = "";
+</script>
 
-                form.innerHTML = `
-                    <input type="hidden" name="action" value="delete_school">
-                    <input type="hidden" name="id" value="${id}">
-                `;
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addNoteButtons = document.querySelectorAll('.btn-open-add-note');
+        const schoolIdInput = document.getElementById('noteSchoolId');
+        const schoolNameInput = document.getElementById('noteSchoolName');
 
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
+        addNoteButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const schoolId = this.getAttribute('data-school-id');
+                const schoolName = this.getAttribute('data-school-name');
 
-        // =============== Add Note Modal ===============
-        function openAddNoteModal(id) {
-            document.getElementById("note_school_id").value = id;
-            document.getElementById("addNoteText").value    = "";
-            document.getElementById("addNoteModal").classList.remove("hidden");
-        }
+                if (schoolIdInput) schoolIdInput.value = schoolId;
+                if (schoolNameInput) schoolNameInput.value = schoolName;
+            });
+        });
+    });
+</script>
 
-        function closeAddNoteModal() {
-            document.getElementById("addNoteModal").classList.add("hidden");
-        }
 
-        // =============== View All Notes Modal ===============
-        function openNotesModal(btn) {
-            const id   = btn.dataset.id;
-            const name = btn.dataset.name;
 
-            const titleEl = document.getElementById("notesModalTitle");
-            if (titleEl) {
-                titleEl.textContent = "📓 All Notes - " + name;
-            }
-
-            const modal   = document.getElementById("notesModal");
-            const content = document.getElementById("notesModalContent");
-            content.innerHTML = "<p class='text-gray-500'>Loading...</p>";
-
-            fetch("notes.php?id=" + encodeURIComponent(id))
-                .then(function (res) {
-                    return res.text();
-                })
-                .then(function (html) {
-                    content.innerHTML = html;
-                })
-                .catch(function () {
-                    content.innerHTML = "<p class='text-red-600'>Could not load notes.</p>";
-                });
-
-            modal.classList.remove("hidden");
-        }
-
-        function closeNotesModal() {
-            document.getElementById("notesModal").classList.add("hidden");
-        }
-    </script>
-
-</body>
-</html>
+<?php
+require 'layout_footer.php';

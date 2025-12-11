@@ -1,140 +1,120 @@
 <?php
-require_once "config.php";
+require_once 'config.php';
 require_login();
 
-// Search input
-$q = trim($_GET['q'] ?? '');
+$search = trim($_GET['q'] ?? '');
 
-// Distinct school list from note_logs + schools
-// (যে যে school_id কখনও logs এ এসেছে, তাদের activity দেখি)
+// school-wise logs info
 $sql = "
-    SELECT 
-        l.school_id AS id,
-        s.school_name,
-        s.district,
-        s.upazila,
-        CASE 
-            WHEN s.id IS NULL THEN 'Deactive'
-            ELSE 'Active'
-        END AS activity
-    FROM note_logs l
-    LEFT JOIN schools s ON l.school_id = s.id
-    WHERE l.school_id IS NOT NULL
+    SELECT
+        nl.school_id,
+        MAX(s.school_name) AS school_name,
+        MAX(CONCAT_WS(', ', s.district, s.upazila)) AS address,
+        CASE WHEN MAX(s.id) IS NULL THEN 'Deactive' ELSE 'Active' END AS activity
+    FROM note_logs nl
+    LEFT JOIN schools s ON s.id = nl.school_id
+    WHERE nl.school_id IS NOT NULL
 ";
 
 $params = [];
 
-if ($q !== '') {
-    // শুধুমাত্র নাম match হলে show
+if ($search !== '') {
     $sql .= " AND s.school_name LIKE :q";
-    $params[':q'] = '%' . $q . '%';
+    $params[':q'] = '%' . $search . '%';
 }
 
 $sql .= "
-    GROUP BY l.school_id, s.school_name, s.district, s.upazila, s.id
-    ORDER BY id DESC
+    GROUP BY nl.school_id
+    ORDER BY nl.school_id DESC
 ";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
-$schools = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// layout variables
+$pageTitle   = 'Logs - School List';
+$pageHeading = 'Logs';
+$activeMenu  = 'logs';
+
+require 'layout_header.php';
 ?>
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-<meta charset="UTF-8">
-<title>School Activity Logs</title>
-<script src="https://cdn.tailwindcss.com"></script>
-</head>
 
-<body class="bg-gray-100 min-h-screen p-6">
-
-<div class="max-w-5xl mx-auto bg-white shadow rounded-xl p-6">
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold text-indigo-600">📚 School Activity</h1>
-        <a href="index.php" class="text-indigo-600 hover:underline text-sm">◀ Back to Dashboard</a>
-    </div>
-
-    <!-- Search Form -->
-    <form method="GET" class="mb-4 flex gap-2">
-        <input
-            type="text"
-            name="q"
-            value="<?php echo htmlspecialchars($q); ?>"
-            placeholder="Search by school name..."
-            class="flex-1 p-2 border rounded"
-        >
-        <button
-            type="submit"
-            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-        >
-            Search
-        </button>
-        <?php if ($q !== ''): ?>
-            <a href="logs.php" class="px-3 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300">
+<div class="bg-white rounded-xl shadow p-4 mb-4">
+    <form method="GET" class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">
+                Search by School Name
+            </label>
+            <input type="text" name="q"
+                   class="w-full p-2 border rounded text-sm"
+                   placeholder="Type school name..."
+                   value="<?php echo htmlspecialchars($search); ?>">
+        </div>
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="px-4 py-2 rounded bg-slate-900 text-white text-sm hover:bg-slate-800">
+                Search
+            </button>
+            <a href="logs.php"
+               class="px-4 py-2 rounded bg-slate-200 text-slate-700 text-sm hover:bg-slate-300">
                 Reset
             </a>
-        <?php endif; ?>
+        </div>
     </form>
+    <p class="mt-2 text-[11px] text-slate-500">
+        এখানে শুধুমাত্র যেসব স্কুলের note_logs আছে সেগুলোর সারসংক্ষেপ দেখানো হচ্ছে।
+    </p>
+</div>
 
-    <?php if (!$schools): ?>
-        <p class="text-center text-gray-500">কোনো school activity পাওয়া যায়নি।</p>
+<div class="bg-white rounded-xl shadow p-3 overflow-x-auto">
+    <?php if (!$rows): ?>
+        <p class="text-center text-gray-500 text-sm py-4">কোনো লগ পাওয়া যায়নি।</p>
     <?php else: ?>
-
-    <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-sm">
+        <table class="min-w-full text-sm border-collapse">
             <thead>
-                <tr class="bg-gray-200 text-left">
+                <tr class="bg-slate-100 text-left">
                     <th class="p-2 border">ID</th>
-                    <th class="p-2 border">School Name</th>
-                    <th class="p-2 border">Address</th>
+                    <th class="p-2 border" style="min-width: 150px;">School Name</th>
+                    <th class="p-2 border" style="min-width: 160px;">Address</th>
                     <th class="p-2 border">Activity</th>
                     <th class="p-2 border">History</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($schools as $row): ?>
+                <?php foreach ($rows as $r): ?>
                     <?php
-                        $id      = (int)$row['id'];
-                        $name    = $row['school_name'] ?? null;
-                        $district= $row['district'] ?? '';
-                        $upazila = $row['upazila'] ?? '';
-
-                        $address = trim($district . ($district && $upazila ? ', ' : '') . $upazila);
-                        if ($address === '') {
-                            $address = 'N/A';
-                        }
-
-                        $isActive = $row['activity'] === 'Active';
-                        $activityClass = $isActive ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+                    $schoolId   = (int)$r['school_id'];
+                    $schoolName = $r['school_name'] ?? '(Deleted School #' . $schoolId . ')';
+                    $address    = $r['address'] ?: 'N/A';
+                    $activity   = $r['activity'] ?? 'Deactive';
+                    $activityClass = ($activity === 'Active') ? 'text-green-600' : 'text-red-600';
                     ?>
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-2 border"><?php echo $id; ?></td>
-                        <td class="p-2 border">
-                            <?php echo htmlspecialchars($name ?? 'N/A (Deleted)'); ?>
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2 border align-top"><?php echo $schoolId; ?></td>
+                        <td class="p-2 border align-top font-semibold">
+                            <?php echo htmlspecialchars($schoolName); ?>
                         </td>
-                        <td class="p-2 border">
+                        <td class="p-2 border align-top text-xs text-slate-700">
                             <?php echo htmlspecialchars($address); ?>
                         </td>
-                        <td class="p-2 border <?php echo $activityClass; ?>">
-                            <?php echo $isActive ? 'Active' : 'Deactive'; ?>
+                        <td class="p-2 border align-top">
+                            <span class="text-xs font-semibold <?php echo $activityClass; ?>">
+                                <?php echo htmlspecialchars($activity); ?>
+                            </span>
                         </td>
-                        <td class="p-2 border">
-                            <a
-                                href="logs_history.php?school_id=<?php echo $id; ?>"
-                                class="px-3 py-1 inline-block bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-                            >
-                                History
+                        <td class="p-2 border align-top">
+                            <a href="logs_history.php?school_id=<?php echo $schoolId; ?>"
+                               class="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700">
+                                View History
                             </a>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-
     <?php endif; ?>
 </div>
 
-</body>
-</html>
+<?php
+require 'layout_footer.php';

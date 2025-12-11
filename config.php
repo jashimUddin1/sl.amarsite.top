@@ -3,7 +3,7 @@
 session_start();
 
 $host = "localhost";
-$db   = "school_note_manager";
+$db   = "school_list_final";
 $user = "root";
 $pass = ""; 
 

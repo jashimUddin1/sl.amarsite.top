@@ -1,72 +1,48 @@
 <?php
-require_once "config.php";
-require_login();
+require_once 'config.php';
 
-$id = (int)($_GET['id'] ?? 0);
-if ($id <= 0) {
-    echo "<p class='text-red-600'>Invalid School ID</p>";
-    exit;
-}
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// School name ber korbo
-$stmtS = $pdo->prepare("SELECT school_name FROM schools WHERE id = :id");
-$stmtS->execute([':id' => $id]);
-$school = $stmtS->fetch(PDO::FETCH_ASSOC);
-
-if (!$school) {
-    echo "<p class='text-red-600'>School not found.</p>";
-    exit;
-}
-$schoolName = $school['school_name'];
-
-// Notes
-$stmt = $pdo->prepare("SELECT * FROM school_notes WHERE school_id = :id ORDER BY note_date DESC");
+$stmt = $pdo->prepare("
+    SELECT note_text, note_date, created_at
+    FROM school_notes
+    WHERE school_id = :id
+    ORDER BY created_at DESC
+");
 $stmt->execute([':id' => $id]);
 $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// echo "<h3 class='text-lg font-semibold mb-3'>School: " . htmlspecialchars($schoolName) . "</h3>";
-
 if (!$notes) {
-    echo "<p class='text-gray-500'>No notes available.</p>";
+    echo "<p class='text-muted small mb-0'>কোনো নোট পাওয়া যায়নি।</p>";
     exit;
 }
 
-// Protiti note er jonno edit + delete form
-foreach ($notes as $n){
-    ?>
-    <form method="POST" action="note_action.php" class="bg-gray-100 border p-3 rounded space-y-2">
-        <textarea
-            name="note_text"
-            class="w-full p-2 border rounded"
-            rows="3"
-        ><?php echo htmlspecialchars($n['note_text']); ?></textarea>
+foreach ($notes as $n):
+    // note_date থাকলে সেটা, না থাকলে created_at
+    $dateSource = !empty($n['note_date']) ? $n['note_date'] : ($n['created_at'] ?? null);
 
-        <div class="flex items-center justify-between text-xs text-gray-500">
-            <span><?php echo htmlspecialchars($n['note_date']); ?></span>
-            <div class="flex gap-2">
-                <input type="hidden" name="note_id" value="<?php echo (int)$n['id']; ?>">
-                <input type="hidden" name="school_id" value="<?php echo (int)$id; ?>">
+    $dateStr = '';
+    $timeStr = '';
 
-                <button
-                    type="submit"
-                    name="action"
-                    value="update"
-                    class="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
-                >
-                    Save
-                </button>
-
-                <button
-                    type="submit"
-                    name="action"
-                    value="delete"
-                    class="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700"
-                    onclick="return confirm('Are you sure you want to delete this note?');"
-                >
-                    Delete
-                </button>
-            </div>
+    if ($dateSource) {
+        $ts = strtotime($dateSource);
+        if ($ts !== false && $ts > 0) {
+            $dateStr = date("Y-m-d", $ts);
+            $timeStr = date("h:i A", $ts);
+        }
+    }
+?>
+    <div class="border rounded-3 p-2 mb-2 bg-white shadow-sm">
+        <div class="small">
+            <?= nl2br(htmlspecialchars($n['note_text'])); ?>
         </div>
-    </form>
-    <?php
-}
+
+        <?php if ($dateStr): ?>
+            <div class="text-end mt-1">
+                <small class="text-secondary">
+                     <?= $dateStr ?>  <?= $timeStr ?>
+                </small>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endforeach; ?>
