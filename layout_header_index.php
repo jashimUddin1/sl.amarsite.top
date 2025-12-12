@@ -7,6 +7,24 @@ if (!isset($pageHeading))
 if (!isset($activeMenu))
     $activeMenu = 'home';
 $userName = htmlspecialchars($_SESSION['user_name'] ?? 'Admin');
+
+
+$notifyCount = 0;
+$user_id = $_SESSION['user_id'] ?? null;
+
+if ($user_id) {
+    $stmtNotify = $pdo->prepare("
+        SELECT COUNT(*) AS cnt
+        FROM notifications
+        WHERE user_id = :user_id
+          AND status = 'unread'
+    ");
+    $stmtNotify->execute([':user_id' => $user_id]);
+    $rowNotify   = $stmtNotify->fetch(PDO::FETCH_ASSOC);
+    $notifyCount = (int)($rowNotify['cnt'] ?? 0);
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="bn">
@@ -49,6 +67,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'Admin');
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🏫</span> Schools
                 </a>
+
+                <a href="notifications.php"
+                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
+                    <span class="mr-2">🔔</span> Notifications
+                </a>
+
                 <a href="logs.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🧾</span> Logs
@@ -108,6 +132,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'Admin');
                         onclick="toggleSidebar()">
                         <span class="mr-2">🏫</span> Schools
                     </a>
+                    <a href="notifications.php"
+                        class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
+                        onclick="toggleSidebar()">
+                        <span class="mr-2">🔔</span> Notifications
+                    </a>
                     <a href="logs.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
@@ -164,24 +193,43 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'Admin');
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <div id="notify-icon" style="position:relative;">
-                        <a href="notifications.php"
-                            class="text-sm sm:text-sm px-2 py-1 rounded bg-success text-white hover:bg-secondary">
+
+                    <div class="relative">
+                        <a href="notifications.php" class="text-sm sm:text-sm px-2 py-1 rounded text-white
+                            <?php echo ($notifyCount > 0) ? 'bg-success' : 'bg-secondary'; ?>
+                            hover:bg-secondary">
+
                             &#128276;
                         </a>
-                        <span id="notify-badge" style="position:absolute; top:-5px; right:-5px; background:red; color:#fff;
-                 padding:2px 6px; font-size:12px; border-radius:50%; display:none;">
-                        </span>
+
+                        <!-- Notification Count Badge -->
+                        <?php if ($notifyCount > 0): ?>
+                            <span style="
+                                position:absolute;
+                                top:-6px;
+                                right:-6px;
+                                background:red;
+                                color:white;
+                                padding:1px 6px;
+                                font-size:10px;
+                                border-radius:50%;
+                            ">
+                                <?php echo $notifyCount; ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
 
                     <span class="hidden sm:inline-block text-sm text-slate-600">
                         <?php echo $userName; ?>
                     </span>
+
                     <a href="logout.php"
                         class="text-xs sm:text-sm px-3 py-1.5 rounded bg-slate-900 text-white hover:bg-slate-800">
                         Logout
                     </a>
+
                 </div>
+
             </header>
 
             <!-- Page content wrapper -->

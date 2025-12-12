@@ -1,11 +1,20 @@
-<?php
+<?php //index.php main file
 require_once 'config.php';
 require_login();
 
+require_once 'functions_notifications.php';
+
+$user_id = $_SESSION['user_id'] ?? null;
+
+// লগইন থাকলে নোটিফিকেশন জেনারেট করে নেব (আগামী ২৪ ঘণ্টার মধ্যে যা পড়বে)
+if ($user_id) {
+    generateNotificationsForUser($pdo, (int)$user_id);
+}
+
 // ====== Filters (GET) ======
 $filterDistrict = trim($_GET['district'] ?? '');
-$filterUpazila = trim($_GET['upazila'] ?? '');
-$filterStatus = trim($_GET['status'] ?? '');
+$filterUpazila  = trim($_GET['upazila'] ?? '');
+$filterStatus   = trim($_GET['status'] ?? '');
 
 // ====== Filter options (district / upazila / status) ======
 $districts = $pdo->query("
@@ -30,12 +39,12 @@ $statuses = $pdo->query("
 ")->fetchAll(PDO::FETCH_COLUMN);
 
 // ====== মোট কাউন্ট ======
-$totalSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools")->fetchColumn() ?? 0);
+$totalSchools    = (int) ($pdo->query("SELECT COUNT(*) FROM schools")->fetchColumn() ?? 0);
 $approvedSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Approved'")->fetchColumn() ?? 0);
-$pendingSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Pending'")->fetchColumn() ?? 0);
+$pendingSchools  = (int) ($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Pending'")->fetchColumn() ?? 0);
 
 // ====== Filter অনুযায়ী স্কুল লিস্ট ======
-$sql = "SELECT * FROM schools WHERE 1=1";
+$sql    = "SELECT * FROM schools WHERE 1=1";
 $params = [];
 
 if ($filterDistrict !== '') {
@@ -62,10 +71,10 @@ $notesBySchool = [];
 if (!empty($schools)) {
     $ids = array_column($schools, 'id'); // schools টেবিলের id
     $ids = array_map('intval', $ids);
-    $in = implode(',', $ids);
+    $in  = implode(',', $ids);
 
     // school_notes থেকে সব নোট এনে school_id অনুযায়ী গ্রুপ করব
-    // এখানে note_date DESC, তাই index 0 = সর্বশেষ নোট
+    // এখানে id DESC, তাই index 0 = সর্বশেষ নোট
     $stmtN = $pdo->query("SELECT * FROM school_notes WHERE school_id IN ($in) ORDER BY id DESC");
 
     foreach ($stmtN as $row) {
@@ -74,15 +83,44 @@ if (!empty($schools)) {
 }
 
 
+
+// 🔹 notifications টেবিল থেকে এই user-এর সব unread count (home alert এর জন্য)
+$unreadCount = 0;
+if ($user_id) {
+    $stmtNotify = $pdo->prepare("
+        SELECT COUNT(*) AS cnt
+        FROM notifications
+        WHERE user_id = :user_id
+          AND status = 'unread'
+    ");
+    $stmtNotify->execute([':user_id' => $user_id]);
+    $rowNotify   = $stmtNotify->fetch(PDO::FETCH_ASSOC);
+    $unreadCount = (int)($rowNotify['cnt'] ?? 0);
+}
+
+if (isset($_GET['dismiss_alert'])) {
+    $_SESSION['home_notifications_alert_dismissed'] = true;
+    header('Location: index.php');
+    exit;
+}
+
+$showFirstTimeAlert = empty($_SESSION['home_notifications_alert_dismissed']);
+
+
+
 // ====== Layout vars ======
-$pageTitle = 'Home - School Note Manager';
+$pageTitle   = 'Home - School Note Manager';
 $pageHeading = 'Home';
-$activeMenu = 'home';
+$activeMenu  = 'home';
 
 require 'layout_header_index.php';
 
 // session test
 // $_SESSION['note_error'] = 'testing session message';
+
+// echo "<pre>";
+// print_r($_SESSION);
+// echo "</pre>";
 ?>
 
 <style>
@@ -134,10 +172,33 @@ require 'layout_header_index.php';
             Pending:
             <span class="fw-semibold text-warning"><?php echo $pendingSchools; ?></span>
         </p>
+        
+<?php if ($showFirstTimeAlert): ?>
+    <?php if ($unreadCount > 0): ?>
+        <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+            আজকের জন্য আপনার <strong><?php echo $unreadCount; ?></strong> টি নতুন notification আছে 
+            (<a class="text-primary" href="notifications.php">notifications</a> ট্যাবে দেখুন)।
+
+            <a href="index.php?dismiss_alert=1" 
+               class="btn-close"
+               aria-label="Close"></a>
+        </div>
+    <?php else: ?>
+        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+            এই মুহূর্তে আপনার জন্য কোনো নতুন notification নেই।
+
+            <a href="index.php?dismiss_alert=1"
+               class="btn-close"
+               aria-label="Close"></a>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
+
+
 
         <?php if (!empty($_SESSION['note_success'])): ?>
             <div class="alert alert-success alert-dismissible fade show d-flex align-items-center justify-content-between small py-2 mb-2"
-                role="alert">
+                 role="alert">
                 <div class="me-2">
                     <?php
                     echo htmlspecialchars($_SESSION['note_success']);
@@ -145,13 +206,13 @@ require 'layout_header_index.php';
                     ?>
                 </div>
                 <button type="button" class="btn-close btn-sm ms-auto close-custom" data-bs-dismiss="alert"
-                    aria-label="Close"></button>
+                        aria-label="Close"></button>
             </div>
         <?php endif; ?>
 
         <?php if (!empty($_SESSION['note_error'])): ?>
             <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center justify-content-between small py-2 mb-3"
-                role="alert">
+                 role="alert">
                 <div class="me-2">
                     <?php
                     echo htmlspecialchars($_SESSION['note_error']);
@@ -159,7 +220,7 @@ require 'layout_header_index.php';
                     ?>
                 </div>
                 <button type="button" class="btn-close btn-sm ms-auto close-custom" data-bs-dismiss="alert"
-                    aria-label="Close"></button>
+                        aria-label="Close"></button>
             </div>
         <?php endif; ?>
 
@@ -224,20 +285,21 @@ require 'layout_header_index.php';
             <div class="row row-cols-1 row-cols-md-2 g-3" id="schoolList">
                 <?php foreach ($schools as $s): ?>
                     <?php
-                    $sid = (int) $s['id'];
-                    $notes = $notesBySchool[$sid] ?? [];
+                    $sid       = (int) $s['id'];
+                    $notes     = $notesBySchool[$sid] ?? [];
                     $noteCount = count($notes);
-                    $latestNote = $noteCount ? $notes[0] : null; // note_date DESC বলে index 0 = latest
-            
+                    $latestNote = $noteCount ? $notes[0] : null; // id DESC বলে index 0 = latest
+
                     $address = trim(
                         ($s['district'] ?? '') .
                         (($s['district'] ?? '') && ($s['upazila'] ?? '') ? ', ' : '') .
                         ($s['upazila'] ?? '')
                     );
-                    if ($address === '')
+                    if ($address === '') {
                         $address = 'N/A';
+                    }
 
-                    $status = $s['status'] ?? '';
+                    $status      = $s['status'] ?? '';
                     $statusClass = ($status === 'Approved')
                         ? 'text-success'
                         : 'text-warning';
@@ -249,10 +311,10 @@ require 'layout_header_index.php';
                             <!-- Photo -->
                             <?php if (!empty($photo)): ?>
                                 <img src="<?php echo htmlspecialchars($photo); ?>" class="card-img-top"
-                                    style="height:220px; object-fit:cover;">
+                                     style="height:220px; object-fit:cover;">
                             <?php else: ?>
                                 <div class="d-flex align-items-center justify-content-center border-bottom"
-                                    style="height:220px; font-size:0.8rem; color:#9ca3af;">
+                                     style="height:220px; font-size:0.8rem; color:#9ca3af;">
                                     No Photo
                                 </div>
                             <?php endif; ?>
@@ -266,7 +328,7 @@ require 'layout_header_index.php';
                                 <?php if (!empty($s['mobile'])): ?>
                                     <p class="text-muted small mb-1">
                                         <a href="tel:<?php echo htmlspecialchars($s['mobile']); ?>"
-                                            class="text-primary text-decoration-none">
+                                           class="text-primary text-decoration-none">
                                             <span style="color:blue;">📞</span> <?php echo htmlspecialchars($s['mobile']); ?>
                                         </a>
                                     </p>
@@ -290,8 +352,9 @@ require 'layout_header_index.php';
                                         <span class="small fw-semibold">Notes:</span>
 
                                         <?php if ($noteCount > 1): ?>
-                                            <button type="button" class="btn btn-link btn-sm p-0 small text-decoration-none"
-                                                onclick="openNotesModal(<?php echo $sid; ?>)">
+                                            <button type="button"
+                                                    class="btn btn-link btn-sm p-0 small text-decoration-none"
+                                                    onclick="openNotesModal(<?php echo $sid; ?>)">
                                                 View all (<?php echo $noteCount; ?>)
                                             </button>
                                         <?php endif; ?>
@@ -311,20 +374,21 @@ require 'layout_header_index.php';
                                     <?php endif; ?>
                                 </div>
 
-
                                 <!-- Actions -->
                                 <div class="mt-auto d-flex gap-2">
                                     <!-- সব নোট লিস্ট + edit/delete -->
                                     <a href="note_view.php?school_id=<?php echo (int) $s['id']; ?>"
-                                        class="btn btn-primary btn-sm w-50">
+                                       class="btn btn-primary btn-sm w-50">
                                         Manage Note
                                     </a>
 
                                     <!-- নতুন নোট যোগ করার জন্য modal open -->
-                                    <button type="button" class="btn btn-success btn-sm w-50 btn-open-add-note"
-                                        data-bs-toggle="modal" data-bs-target="#addNoteModal"
-                                        data-school-id="<?php echo (int) $s['id']; ?>"
-                                        data-school-name="<?php echo htmlspecialchars($s['school_name']); ?>">
+                                    <button type="button"
+                                            class="btn btn-success btn-sm w-50 btn-open-add-note"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addNoteModal"
+                                            data-school-id="<?php echo (int) $s['id']; ?>"
+                                            data-school-name="<?php echo htmlspecialchars($s['school_name']); ?>">
                                         Add Note
                                     </button>
                                 </div>
@@ -357,8 +421,15 @@ require 'layout_header_index.php';
 
                 <div class="mb-2">
                     <label for="noteText" class="form-label small mb-1">Note</label>
-                    <textarea name="note_text" id="noteText" rows="4" class="form-control form-control-sm"
-                        placeholder="Write your note here..." required></textarea>
+                    <textarea name="note_text" id="noteText" rows="4"
+                              class="form-control form-control-sm"
+                              placeholder="Write your note here..." required></textarea>
+                </div>
+
+                <div class="mb-2">
+                    <label for="nextMeeting" class="form-label small mb-1">Next Meeting</label>
+                    <input type="datetime-local" id="nextMeeting" name="next_meeting_date"
+                           class="form-control form-control-sm">
                 </div>
 
             </div>
@@ -392,10 +463,9 @@ require 'layout_header_index.php';
     </div>
 </div>
 
-
 <script>
     function openNotesModal(schoolId) {
-        const modalEl = document.getElementById('notesModal');
+        const modalEl   = document.getElementById('notesModal');
         const contentEl = document.getElementById('notesModalContent');
 
         if (!modalEl || !contentEl) return;
@@ -425,36 +495,35 @@ require 'layout_header_index.php';
         }
     }
 
+    // পুরোনো notification_core.php ফেচ: যদি ব্যবহার করো, নাহলে remove করতে পারো
     fetch("core/notification_core.php")
         .then(res => res.json())
         .then(data => {
-            if (data.length > 0) {
+            if (data.length > 0 && document.getElementById("notify-badge")) {
                 document.getElementById("notify-badge").innerText = data.length;
                 document.getElementById("notify-badge").style.display = "inline-block";
             }
-        });
-
+        })
+        .catch(() => {});
 </script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const addNoteButtons = document.querySelectorAll('.btn-open-add-note');
-        const schoolIdInput = document.getElementById('noteSchoolId');
+        const addNoteButtons  = document.querySelectorAll('.btn-open-add-note');
+        const schoolIdInput   = document.getElementById('noteSchoolId');
         const schoolNameInput = document.getElementById('noteSchoolName');
 
         addNoteButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
-                const schoolId = this.getAttribute('data-school-id');
+                const schoolId   = this.getAttribute('data-school-id');
                 const schoolName = this.getAttribute('data-school-name');
 
-                if (schoolIdInput) schoolIdInput.value = schoolId;
+                if (schoolIdInput)   schoolIdInput.value = schoolId;
                 if (schoolNameInput) schoolNameInput.value = schoolName;
             });
         });
     });
 </script>
-
-
 
 <?php
 require 'layout_footer.php';

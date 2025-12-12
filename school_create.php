@@ -1,4 +1,9 @@
 <?php
+// নিচের অংশ আসলে এখানে দরকার নেই, কারণ সব ক্ষেত্রেই উপরে exit হয়ে যাবে,
+// তবে আগের কোড থেকে রেখে দিচ্ছি যদি UI page বানাও ভবিষ্যতে।
+$pageTitle   = 'Add School - School List';
+$pageHeading = 'Add School';
+$activeMenu  = 'schools';
 require 'layout_header.php';
 ?>
 
@@ -27,37 +32,33 @@ require 'layout_header.php';
             <label class="block text-xs font-semibold mb-1 text-slate-700">
                 District<span class="text-red-500">*</span>
             </label>
-            <input type="text" name="district" class="w-full p-2 border rounded text-sm"
-                value="<?php echo htmlspecialchars($district); ?>" required>
+            <input type="text" name="district" class="w-full p-2 border rounded text-sm" required>
         </div>
 
         <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700">
                 Upazila<span class="text-red-500">*</span>
             </label>
-            <input type="text" name="upazila" class="w-full p-2 border rounded text-sm"
-                value="<?php echo htmlspecialchars($upazila); ?>" required>
+            <input type="text" name="upazila" class="w-full p-2 border rounded text-sm"required>
         </div>
 
         <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700">
                 School Name<span class="text-red-500">*</span>
             </label>
-            <input type="text" name="school_name" class="w-full p-2 border rounded text-sm"
-                value="<?php echo htmlspecialchars($schoolName); ?>" required>
+            <input type="text" name="school_name" class="w-full p-2 border rounded text-sm" required>
         </div>
 
         <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">Mobile<span class="text-red-500">*</span></label>
-            <input type="text" name="mobile" class="w-full p-2 border rounded text-sm"
-                value="<?php echo htmlspecialchars($mobile); ?>" required>
+            <label class="block text-xs font-semibold mb-1 text-slate-700">Mobile</label>
+            <input type="text" name="mobile" class="w-full p-2 border rounded text-sm">
         </div>
 
         <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700">Status</label>
             <select name="status" class="w-full p-2 border rounded text-sm">
-                <option value="Pending" <?php echo ($status === 'Pending') ? 'selected' : ''; ?>>Pending</option>
-                <option value="Approved" <?php echo ($status === 'Approved') ? 'selected' : ''; ?>>Approved</option>
+                <option value="Pending" >Pending</option>
+                <option value="Approved">Approved</option>
             </select>
         </div>
 

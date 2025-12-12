@@ -83,7 +83,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':id'          => $id,
         ]);
 
+        // 🔹 note_logs এ লগ ইনসার্ট
+        $logStmt = $pdo->prepare("
+            INSERT INTO note_logs (school_id, user_id, action, old_text, new_text, action_at)
+            VALUES (:school_id, :user_id, :action, :old_text, :new_text, NOW())
+        ");
 
+        $logStmt->execute([
+            ':school_id' => $id,
+            ':user_id'   => $userId,
+            ':action'    => 'update school',
+            ':old_text'  => null,
+            ':new_text'  => null,
+        ]);
+
+
+        $_SESSION['school_success'] = 'স্কুল সফলভাবে আপডেট হয়েছে |';
         header("Location: schools.php");
         exit;
     }

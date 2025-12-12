@@ -181,6 +181,7 @@ $pageHeading = 'School List';
 $activeMenu  = 'schools';
 
 require 'layout_header.php';
+
 ?>
 
 <div class="flex items-center justify-between mb-4">
@@ -258,6 +259,42 @@ require 'layout_header.php';
         </div>
     </form>
 </div>
+
+<?php
+// Success message
+if (!empty($_SESSION['school_success'])): ?>
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center justify-content-between small py-2 mb-2"
+         role="alert">
+        <div class="me-2">
+            <?php
+            echo htmlspecialchars($_SESSION['school_success']);
+            unset($_SESSION['school_success']);
+            ?>
+        </div>
+        <button type="button"
+                class="btn-close btn-sm ms-auto p-2"
+                data-bs-dismiss="alert"
+                aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php
+// Error message (একাধিক error থাকলে list আকারে)
+if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show small py-2 mb-3" role="alert">
+        <ul class="mb-0 ps-3">
+            <?php foreach ($_SESSION['school_errors'] as $err): ?>
+                <li><?php echo htmlspecialchars($err); ?></li>
+            <?php endforeach; ?>
+        </ul>
+        <button type="button"
+                class="btn-close btn-sm"
+                data-bs-dismiss="alert"
+                aria-label="Close"></button>
+    </div>
+    <?php unset($_SESSION['school_errors']); ?>
+<?php endif; ?>
+
 
 <div class="bg-white rounded-xl shadow p-3 overflow-x-auto">
     <?php if (!$schools): ?>
