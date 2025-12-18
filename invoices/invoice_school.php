@@ -17,7 +17,6 @@ if (!$school) {
     die('School not found');
 }
 
-
 // ✅ Get next invoice number from invoices.data JSON
 $sql = "
 SELECT COALESCE(
@@ -29,8 +28,6 @@ FROM `invoices`
 $stmt = $pdo->query($sql);
 $maxInv = (int) $stmt->fetchColumn();
 $nextInvoiceNumber = $maxInv + 1;
-
-
 
 require '../layout/single_invoice_header.php';
 ?>
@@ -75,7 +72,7 @@ require '../layout/single_invoice_header.php';
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-school"
-                                value="<?= htmlspecialchars($school['school_name']) ?>" readonly>
+                                value="<?= htmlspecialchars($school['school_name']) ?>">
                         </div>
 
                         <div class="mb-3">
@@ -137,15 +134,15 @@ require '../layout/single_invoice_header.php';
                                         placeholder="Item description / comment" value="" required>
                                 </td>
                                 <td>
-                                    <input type="text" min="0" step="1" class="form-control item-qty" value="1"
-                                        required>
+                                    <input type="text" class="form-control item-qty" value="1" required>
                                 </td>
                                 <td>
                                     <input type="number" min="0" step="0.01" class="form-control item-rate" value="0"
                                         required>
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control item-amount" value="0.00" required>
+                                    <input type="number" class="form-control item-amount" value="0.00" required
+                                        readonly>
                                 </td>
                                 <td class="text-end">
                                     <button type="button" class="btn btn-link text-danger p-0 btn-sm btn-delete-row"
@@ -187,7 +184,6 @@ require '../layout/single_invoice_header.php';
                 <div
                     class="d-flex flex-column flex-md-row align-items-stretch align-items-md-end justify-content-between gap-3 mb-4">
 
-                    <!-- ✅ Left: Add Item + View -->
                     <div class="d-flex justify-content-between gap-2">
                         <button type="button" class="btn btn-add-item btn-sm" id="add-item-btn">
                             <i class="fa-solid fa-plus me-1"></i> Add Item
@@ -198,9 +194,7 @@ require '../layout/single_invoice_header.php';
                         </button>
                     </div>
 
-                    <!-- ✅ Right: Payment Status -->
                     <div class="d-flex align-items-center justify-content-between" style="min-width: 260px;">
-
                         <label for="payment-status" class="mb-0 small fw-semibold text-muted me-2">
                             <i class="fa-solid fa-credit-card me-1"></i>
                             Payment Status
@@ -286,25 +280,19 @@ require '../layout/single_invoice_header.php';
         const noteTextarea = document.getElementById("invoice-note");
         const calcBtn = document.getElementById("btn-total-to-note");
 
-        // ✅ Form totals elements
         const paymentStatusEl = document.getElementById("payment-status");
         const formTotalEl = document.getElementById("form-total");
         const formDueEl = document.getElementById("form-due");
         const payWrapper = document.getElementById("pay-wrapper");
         const payAmountEl = document.getElementById("pay-amount");
 
+        // ✅ Note words toggle (must exist before updatePaymentUI runs)
+        let isApplied = true;
 
         function extractNumber(value) {
-            const match = value.match(/[\d.]+/);
+            const match = String(value || "").match(/[\d.]+/);
             return match ? parseFloat(match[0]) : 0;
         }
-
-        function updateNoteFromTotal() {
-            const total = getTotalAmount();
-            const words = convert_number_to_words(total);
-            noteTextarea.value = `${words} Taka Only.`;
-        }
-
 
         // ✅ Auto set date
         const dateInput = document.getElementById("invoice-date");
@@ -316,6 +304,7 @@ require '../layout/single_invoice_header.php';
             dateInput.value = `${yyyy}-${mm}-${dd}`;
         }
 
+        // ✅ total calc (qty text supported)
         function getTotalAmount() {
             let total = 0;
             itemsBody.querySelectorAll("tr.item-row").forEach(row => {
@@ -326,62 +315,7 @@ require '../layout/single_invoice_header.php';
             return Math.round(total * 100) / 100;
         }
 
-
-        // ✅ compute totals with status
-        function computeInvoiceTotals() {
-            const total = getTotalAmount();
-            const status = paymentStatusEl.value || "UNPAID";
-            let pay = 0;
-
-            if (status === "PARTIAL") {
-                pay = parseFloat(payAmountEl.value) || 0;
-                if (pay < 0) pay = 0;
-
-                if (pay > total) {
-                    alert("Total amount ar theke Pay Amount beshi likhso");
-                    pay = total;
-                    payAmountEl.value = total.toFixed(2);
-                }
-
-                if (total > 0 && pay === total) {
-                    alert("somoporiman tk paid hole just paid select koro. jodi unpaid select kora hoy tobe pay amount and tar sather input thakbe na");
-                }
-            } else if (status === "PAID") {
-                pay = total;
-            } else {
-                pay = 0; // UNPAID
-            }
-
-            const due = Math.max(0, total - pay);
-            return { total, pay, due, status };
-        }
-
-        // ✅ update UI (form totals + pay field visibility)
-        function updatePaymentUI() {
-            const status = paymentStatusEl.value || "UNPAID";
-
-            if (status === "PARTIAL") {
-                payWrapper.classList.remove("d-none");
-            } else {
-                payWrapper.classList.add("d-none");
-                if (payAmountEl) payAmountEl.value = "0";
-            }
-
-            const { total, due } = computeInvoiceTotals();
-            formTotalEl.textContent = total.toFixed(2);
-            formDueEl.textContent = due.toFixed(2);
-
-            if (isApplied) {
-                setNoteAsWordsFromTotal();
-            }
-        }
-
-        // ✅ listeners
-        paymentStatusEl.addEventListener("change", updatePaymentUI);
-        if (payAmountEl) payAmountEl.addEventListener("input", updatePaymentUI);
-
         // ✅ Convert number to words (English) for taka.
-
         function convert_number_to_words(amount) {
             if (amount === null || amount === undefined || isNaN(amount)) return "Zero";
 
@@ -431,17 +365,68 @@ require '../layout/single_invoice_header.php';
             return chunkToWords(taka).trim();
         }
 
-        // auto word set in note
+        // ✅ Note set from current total
         function setNoteAsWordsFromTotal() {
             const total = getTotalAmount();
             const words = convert_number_to_words(total);
             noteTextarea.value = `${words} Taka Only.`;
         }
 
+        // ✅ compute totals with status
+        function computeInvoiceTotals() {
+            const total = getTotalAmount();
+            const status = paymentStatusEl.value || "UNPAID";
+            let pay = 0;
 
-        // Toggle behavior for Note (words)
-        let isApplied = true; // default words mode ON
+            if (status === "PARTIAL") {
+                pay = parseFloat(payAmountEl.value) || 0;
+                if (pay < 0) pay = 0;
 
+                if (pay > total) {
+                    alert("Total amount ar theke Pay Amount beshi likhso");
+                    pay = total;
+                    payAmountEl.value = total.toFixed(2);
+                }
+
+                if (total > 0 && pay === total) {
+                    alert("somoporiman tk paid hole just paid select koro. jodi unpaid select kora hoy tobe pay amount and tar sather input thakbe na");
+                }
+            } else if (status === "PAID") {
+                pay = total;
+            } else {
+                pay = 0;
+            }
+
+            const due = Math.max(0, total - pay);
+            return { total, pay, due, status };
+        }
+
+        // ✅ update UI + auto note update (words mode)
+        function updatePaymentUI() {
+            const status = paymentStatusEl.value || "UNPAID";
+
+            if (status === "PARTIAL") {
+                payWrapper.classList.remove("d-none");
+            } else {
+                payWrapper.classList.add("d-none");
+                if (payAmountEl) payAmountEl.value = "0";
+            }
+
+            const { total, due } = computeInvoiceTotals();
+            formTotalEl.textContent = total.toFixed(2);
+            formDueEl.textContent = due.toFixed(2);
+
+            if (isApplied) {
+                setNoteAsWordsFromTotal();
+            }
+        }
+
+        // ✅ listeners
+        paymentStatusEl.addEventListener("change", updatePaymentUI);
+        if (payAmountEl) payAmountEl.addEventListener("input", updatePaymentUI);
+
+        // ✅ Toggle behaviour for calculator icon
+        // Default ON => show total words
         setNoteAsWordsFromTotal();
         calcBtn.classList.add("active");
 
@@ -457,8 +442,7 @@ require '../layout/single_invoice_header.php';
             }
         });
 
-
-        // replace row
+        // ✅ Row calculation
         function recalcRow(row) {
             const qtyInput = row.querySelector(".item-qty");
             const rateInput = row.querySelector(".item-rate");
@@ -467,10 +451,8 @@ require '../layout/single_invoice_header.php';
             const qty = extractNumber(qtyInput.value);
             const rate = parseFloat(rateInput.value) || 0;
 
-            const amount = qty * rate;
-            amountInput.value = amount.toFixed(2);
+            amountInput.value = (qty * rate).toFixed(2);
         }
-
 
         function attachRowEvents(row) {
             const qtyInput = row.querySelector(".item-qty");
@@ -492,7 +474,7 @@ require '../layout/single_invoice_header.php';
             recalcRow(row);
         });
 
-        // ✅ initial totals
+        // ✅ initial totals + note
         updatePaymentUI();
 
         // Add item
@@ -500,7 +482,7 @@ require '../layout/single_invoice_header.php';
             const newRow = itemsBody.rows[0].cloneNode(true);
 
             newRow.querySelector(".item-desc").value = "";
-            newRow.querySelector(".item-qty").value = 1;
+            newRow.querySelector(".item-qty").value = "1";
             newRow.querySelector(".item-rate").value = 0;
             newRow.querySelector(".item-amount").value = "0.00";
 
@@ -509,10 +491,7 @@ require '../layout/single_invoice_header.php';
 
             recalcRow(newRow);
             updatePaymentUI();
-
         });
-
-        updateNoteFromTotal();
 
         // Back
         document.getElementById("back-btn").addEventListener("click", function () {
@@ -538,7 +517,7 @@ require '../layout/single_invoice_header.php';
 
             const firstRow = itemsBody.rows[0];
             firstRow.querySelector(".item-desc").value = "";
-            firstRow.querySelector(".item-qty").value = 1;
+            firstRow.querySelector(".item-qty").value = "1";
             firstRow.querySelector(".item-rate").value = 0;
             firstRow.querySelector(".item-amount").value = "0.00";
 
@@ -563,14 +542,14 @@ require '../layout/single_invoice_header.php';
         function getNonEmptyItemRows() {
             return Array.from(itemsBody.querySelectorAll("tr.item-row")).filter(row => {
                 const desc = row.querySelector(".item-desc")?.value?.trim() || "";
-                const qty = parseFloat(row.querySelector(".item-qty")?.value) || 0;
+                const qty = extractNumber(row.querySelector(".item-qty")?.value || "");
                 const rate = parseFloat(row.querySelector(".item-rate")?.value) || 0;
                 return desc !== "" || qty > 0 || rate > 0;
             });
         }
 
         document.getElementById("view-btn").addEventListener("click", function () {
-            const billName = document.getElementById("bill-name").value || "Customer";
+            const billName = document.getElementById("bill-name").value || "....................";
             const invoiceNumber = document.getElementById("invoice-number").value || "--";
             const invoiceDate = document.getElementById("invoice-date").value || "-";
             const status = paymentStatusEl.value || "UNPAID";
@@ -584,8 +563,8 @@ require '../layout/single_invoice_header.php';
             const filledRows = getNonEmptyItemRows();
 
             filledRows.forEach((row, idx) => {
-                const desc = row.querySelector(".item-desc").value;
-                const qty = parseFloat(row.querySelector(".item-qty").value) || 0;
+                const desc = row.querySelector(".item-desc").value || "-";
+                const qty = extractNumber(row.querySelector(".item-qty").value || "");
                 const rate = parseFloat(row.querySelector(".item-rate").value) || 0;
                 const amount = qty * rate;
                 total += amount;
@@ -593,10 +572,10 @@ require '../layout/single_invoice_header.php';
                 rowsHtml += `
             <tr>
                 <td>#${idx + 1}</td>
-                <td>${desc || "-"}</td>
-                <td class="text-center">${qty}</td>
-                <td class="text-center">Tk ${rate.toFixed(2)}</td>
-                <td class="text-center">Tk ${amount.toFixed(2)}</td>
+                <td class="">${desc}</td>
+                <td class="text-center">${row.querySelector(".item-qty").value || ""}</td>
+                <td class="text-center"> ${rate.toFixed(2)}</td>
+                <td class="text-center"> ${amount.toFixed(2)}</td>
             </tr>`;
             });
 
@@ -609,32 +588,33 @@ require '../layout/single_invoice_header.php';
 
             previewBody.innerHTML = `
         <div class="invoice-preview-card" id="invoice-preview-card">
-           
+
             <div class="d-flex justify-content-between align-items-start">
                 <div class="invoice_left_heading">
-                    <img src="../assets/logo.png" alt="Logo" style="width: 180px; margin-bottom: 5px;">
+                    <img src="../assets/logo.png" alt="Logo" style="width: 140px; margin-bottom: 5px;">
+                    
                     <div><strong>Client Name</strong>: ${billName}</div>
-                    <div><strong>Institution Name</strong>: ${document.getElementById("bill-school").value || ""}</div>
                     <div><strong>Phone Number</strong>: ${document.getElementById("bill-phone").value || ""}</div>
+                    <div><strong>Institution Name</strong>: ${document.getElementById("bill-school").value || ""}</div>
                 </div>
-                <div class="text-end small">
-                    <h4 class="fw-bold mb-1 fs-3" style="color: #1FBD59;">INVOICE</h4>
-                    <div class="fs-7 text-muted">Date: ${invoiceDate}</div>
+                <div class="text-end invoice_right_heading">
+                    <h4 class="fw-bold mb-1 fs-6" style="color: #1FBD59;">INVOICE</h4>
+                    <div class="text-muted">Date: ${invoiceDate}</div>
                     <div class="text-muted">Invoice: ${invoiceNumber}</div>
                 </div>
             </div>
 
             <div class="invoice-preview-header-line"></div>
 
-            <div class="table-responsive my-3 ">
+            <div class="table-responsive mt-3 ">
                 <table class="table invoice-preview-table mb-0">
                     <thead>
                         <tr>
-                            <th class="text-white" style="width: 10%; background-color: #1FBD59;">Item #</th>
+                            <th class="text-white" style="width: 10%; background-color: #1FBD59;">Item </th>
                             <th class="text-white" style="background-color: #1FBD59;">Description</th>
                             <th class="text-white text-center" style="width: 15%; background-color: #1FBD59;">Quantity</th>
-                            <th class="text-white text-center" style="width: 20%; background-color: #1FBD59;">Amount</th>
-                            <th class="text-white text-center" style="width: 20%; background-color: #1FBD59;">Total</th>
+                            <th class="text-white text-center" style="width: 15%; background-color: #1FBD59;">Amount</th>
+                            <th class="text-white text-center" style="width: 18%; background-color: #1FBD59;">Total(Tk)</th>
                         </tr>
                     </thead>
                     <tbody id="bg-img-logo">${rowsHtml || `
@@ -643,21 +623,21 @@ require '../layout/single_invoice_header.php';
                 </table>
             </div>
 
-            <div class="row mt-3 small">
-                <div class="col-md-7">
-                    ${note ? `<div><strong>Note:</strong> ${note}</div>` : ""}
+            <div class="row small">
+                <div class="col-md-7 mt-1">
+                    ${note ? `<div style="font-size:0.5rem"><strong>Note:</strong> ${note}</div>` : ""}
                 </div>
                 <div class="col-md-5">
-                    <table class="table table-sm mb-0">
+                    <table class="table table-sm subtotal_cal">
                         <tr>
                             <th class="text-end">Subtotal</th>
                             <td class="text-end">Tk ${total.toFixed(2)}</td>
                         </tr>
-                        <tr style="background-color: #DCFCE7;">
+                        <tr style="background: #DCFCE7;">
                             <th class="text-end">Due</th>
                             <td class="text-end">Tk ${totals.due.toFixed(2)}</td>
                         </tr>
-                        <tr style="background-color: #1FBD59">
+                        <tr style="background: #1FBD59">
                             <th class="text-end">TOTAL</th>
                             <td class="text-end fw-bold">Tk ${total.toFixed(2)}</td>
                         </tr>
@@ -666,9 +646,33 @@ require '../layout/single_invoice_header.php';
                 </div>
             </div>
 
-            <div class="mt-4 small text-center text-muted">
-                We believe education is powerful. Thank you for being with us.
-            </div>
+
+
+            <footer  class="mt-5">
+                <div class="footer_top d-flex justify-content-between align-items-end w-100">
+                    
+                    <div class="footer_top_left text-center rem4">
+                    <img src="../assets/signature.png" alt="Signature" class="mb-1"
+                        style="width:70px; height:13px;">
+                    <p class="mb-0" style="border-top:1px solid #000;">
+                        Easin Khan Santo (Co-founder)
+                    </p>
+                    </div>
+
+                    <div class="footer_top_right text-end ms-auto rem5">
+                    <p class="mb-0">bkash & Nagad 01805-123649</p>
+                    <a href="https://www.edurlab.com" class="text-decoration-none">www.edurlab.com</a>
+                    </div>
+
+                </div>
+
+                <div class="footer_bottom_txt text-center mt-2">
+                    <p class="mb-0 rem5">
+                    We believe education is the key to progress, and EduRLab is always here to support that journey.
+                    </p>
+                </div>
+            </footer>
+
         </div>`;
 
             const modalEl = document.getElementById("previewModal");
@@ -715,7 +719,6 @@ require '../layout/single_invoice_header.php';
 
     });
 </script>
-
 
 </body>
 
