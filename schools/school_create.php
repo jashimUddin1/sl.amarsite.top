@@ -1,10 +1,10 @@
 <?php
-// নিচের অংশ আসলে এখানে দরকার নেই, কারণ সব ক্ষেত্রেই উপরে exit হয়ে যাবে,
-// তবে আগের কোড থেকে রেখে দিচ্ছি যদি UI page বানাও ভবিষ্যতে।
-$pageTitle   = 'Add School - School List';
+require_once '../auth/config.php';
+require_login();
+$pageTitle = 'Add School - School List';
 $pageHeading = 'Add School';
-$activeMenu  = 'schools';
-require 'layout_header.php';
+$activeMenu = 'schools';
+require '../layout/layout_header.php';
 ?>
 
 <div class="max-w-xl mx-auto bg-white rounded-xl shadow p-4">
@@ -26,7 +26,7 @@ require 'layout_header.php';
         </div>
     <?php endif; ?>
 
-    <form action="core/create_core.php" method="POST" enctype="multipart/form-data" class="space-y-3">
+    <form action="../core/create_core.php" method="POST" enctype="multipart/form-data" class="space-y-3">
         <input type="hidden" name="action" value="create_school">
         <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700">
@@ -39,7 +39,7 @@ require 'layout_header.php';
             <label class="block text-xs font-semibold mb-1 text-slate-700">
                 Upazila<span class="text-red-500">*</span>
             </label>
-            <input type="text" name="upazila" class="w-full p-2 border rounded text-sm"required>
+            <input type="text" name="upazila" class="w-full p-2 border rounded text-sm" required>
         </div>
 
         <div>
@@ -50,6 +50,13 @@ require 'layout_header.php';
         </div>
 
         <div>
+            <label class="block text-xs font-semibold mb-1 text-slate-700">
+                Client Name
+            </label>
+            <input type="text" name="client_name" class="w-full p-2 border rounded text-sm">
+        </div>
+
+        <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700">Mobile</label>
             <input type="text" name="mobile" class="w-full p-2 border rounded text-sm">
         </div>
@@ -57,7 +64,7 @@ require 'layout_header.php';
         <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700">Status</label>
             <select name="status" class="w-full p-2 border rounded text-sm">
-                <option value="Pending" >Pending</option>
+                <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
             </select>
         </div>
@@ -66,7 +73,7 @@ require 'layout_header.php';
             <label class="block text-xs font-semibold mb-1 text-slate-700">Photo (optional)</label>
             <input type="file" name="photo" accept="image/*" class="w-full text-sm">
             <p class="text-[11px] text-slate-500 mt-1">
-                বড় ছবি আপলোড করলেও অটো কমপ্রেস হয়ে ছোট সাইজে সেভ হবে (JPG)।
+                format: JPG, PNG, JPEG. Maximum file size: 5MB.
             </p>
         </div>
 
@@ -83,4 +90,6 @@ require 'layout_header.php';
 </div>
 
 <?php
-require 'layout_footer.php';
+require '../layout/layout_footer.php';
+
+

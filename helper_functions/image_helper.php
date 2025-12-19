@@ -19,7 +19,7 @@ function compress_school_image(array $file, int $maxWidth = 1200, int $quality =
     }
 
     $mime = $info['mime'] ?? '';
-    $width  = $info[0];
+    $width = $info[0];
     $height = $info[1];
 
     // source image create
@@ -47,20 +47,21 @@ function compress_school_image(array $file, int $maxWidth = 1200, int $quality =
     if ($width > $maxWidth) {
         $ratio = $maxWidth / $width;
     }
-    $newWidth  = (int) round($width * $ratio);
+    $newWidth = (int) round($width * $ratio);
     $newHeight = (int) round($height * $ratio);
 
     $dst = imagecreatetruecolor($newWidth, $newHeight);
     imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
     // uploads/schools ফোল্ডার ensure
-    $uploadDir = __DIR__ . '/uploads/schools';
+    $uploadDir = dirname(__DIR__) . '/uploads/schools';
+
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0777, true);
     }
 
     $filename = 'school_' . time() . '_' . mt_rand(1000, 9999) . '.jpg';
-    $target   = $uploadDir . '/' . $filename;
+    $target = $uploadDir . '/' . $filename;
 
     // JPEG হিসেবে কমপ্রেস করে save
     $ok = imagejpeg($dst, $target, $quality);

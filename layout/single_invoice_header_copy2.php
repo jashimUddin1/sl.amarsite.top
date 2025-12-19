@@ -1,4 +1,3 @@
-<!-- layout/single_invoice_header.php -->
 <!DOCTYPE html>
 <html lang="bn">
 
@@ -28,27 +27,15 @@
             font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        .base-color {
+        .base-color{
             color: #22c55e;
         }
-
-        .base-bg {
+        .base-bg{
             background-color: #22c55e;
         }
-
-        .border1_sub {
-            border-color: black;
-            border-top: none;
-        }
-
-        .base-p {
+        .base-p{
             padding: 9px 14px;
         }
-
-        .base-p7d {
-            padding: 7px 14px;
-        }
-
         /* ===== Invoice page CSS merged (safe, only classes used in invoice page) ===== */
         .invoice-wrapper {
             max-width: 900px;
@@ -65,7 +52,7 @@
             color: #fff;
         }
 
-        .invoice_left_heading div {
+        .invoice_left_heading div{
             font-size: x-small;
         }
 
@@ -123,16 +110,13 @@
             margin: 0 auto;
             background: #ffffff;
             border-radius: 10px;
-            /* border: 1px solid #e5e7eb; */
+            border: 1px solid #e5e7eb;
             box-shadow: 0 18px 35px rgba(15, 23, 42, 0.18);
             padding: 20px 24px;
-            border-collapse: collapse !important;
-            border-spacing: 0 !important;
-            border: 0 !important;
         }
 
         .invoice-preview-header-line {
-            border-top: 2px solid black;
+            border-top: 2px solid darkolivegreen;
             margin: 8px 0 12px;
         }
 
@@ -141,12 +125,10 @@
             color: #fff;
         }
 
-        .invoice-preview-table{
-            border-collapse: collapse;
-        }
+        .invoice-preview-table,
         .invoice-preview-table th,
         .invoice-preview-table td {
-            border: 0.5px solid #000;
+            border: 1px solid #cbd5e1;
         }
 
         .invoice-preview-table th,
@@ -154,7 +136,6 @@
             padding: 5px 5px;
             font-size: 0.5rem;
         }
-
 
         .rem4 {
             font-size: 0.4rem;
@@ -172,7 +153,7 @@
             font-size: 0.7rem;
         }
 
-        .subtotal_cal {
+        .subtotal_cal{
             font-size: 0.6rem;
         }
 
@@ -208,28 +189,41 @@
             background-color: #16a34a;
         }
 
-        #bg-img-logo {
-            position: relative;
-            overflow: hidden;
-            background: #fff;
-        }
+#bg-img-logo{
+  position: relative;
+  overflow: hidden;
+  background: #fff; /* টেবিল অংশ সাদা থাকুক */
+}
 
-        /* watermark image only for table area */
-        #bg-img-logo::before {
-            content: "";
-            position: absolute;
-            inset: 0;
+/* watermark image only for table area */
+#bg-img-logo::before{
+  content: "";
+  position: absolute;
+  inset: 0;
 
-            background-image: url("../assets/logo3.png");
-            background-repeat: no-repeat;
-            background-position: center;
+  background-image: url("../assets/logo3.png");
+  background-repeat: no-repeat;
+  background-position: center;
 
-            background-size: 35% auto;
-            opacity: 0.2;
+  background-size: 35% auto;   /* 🔥 width = 10%, height auto */
+  opacity: 0.2;
 
-            pointer-events: none;
-            z-index: 0;
-        }
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* table content always above watermark */
+#bg-img-logo table{
+  position: relative;
+  z-index: 1;
+}
+
+@media print {
+  @page {
+    margin: 12mm;   /* চাইলে 10mm/15mm করো */
+  }
+}
 
     </style>
 </head>

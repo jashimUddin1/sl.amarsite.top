@@ -1,11 +1,9 @@
 <?php
 // notifications.php
-require_once 'config.php';
+require_once '../auth/config.php';
 require_login();
 
-$pageTitle   = 'Notifications';
-$pageHeading = 'Notifications';
-$activeMenu  = 'notifications';
+
 
 $user_id = $_SESSION['user_id'] ?? null;
 if (!$user_id) {
@@ -162,7 +160,11 @@ foreach ($notifications as $row) {
 // ✅ প্রথমবার alert দেখাবে কিনা (যদি dismiss করা না থাকে)
 $showFirstTimeAlert = !($_SESSION['notifications_first_visit'] ?? false);
 
-include 'layout_header_index.php';
+$pageTitle   = 'Notifications';
+$pageHeading = 'Notifications';
+$activeMenu  = 'notifications';
+
+include '../layout/layout_header.php';
 ?>
 
 <div class="px-2 py-4">
@@ -186,6 +188,8 @@ include 'layout_header_index.php';
             </div>
         <?php endif; ?>
     <?php endif; ?>
+
+
 
     <!-- Heading + Buttons Row -->
     <div class="flex items-center justify-between mb-4">
@@ -355,7 +359,7 @@ document.addEventListener('DOMContentLoaded', startCountdown);
 </script>
 
 <?php
-if (file_exists('layout_footer.php')) {
-    include 'layout_footer.php';
+if (file_exists('../layout/layout_footer.php')) {
+    include '../layout/layout_footer.php';
 }
 ?>

@@ -1,3 +1,3 @@
-'create','update','delete','restore'
+aiber amra save invoice a niye kaj korbo . mani inovice database a save hobe.
 
-'create school', 'update school', 'delete school', 'restore school', 'add note', 'update note', 'delete note', 'restore note'
+invoice table => 

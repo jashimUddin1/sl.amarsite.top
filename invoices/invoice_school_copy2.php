@@ -1,4 +1,4 @@
-<?php // invoices/invoice_school.php
+<?php // invoices/invoice_school.php 
 require_once '../auth/config.php';
 require_login();
 require_once '../controllers/is_controller.php';
@@ -141,7 +141,8 @@ require '../layout/single_invoice_header.php';
                                         required>
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control item-amount" value="0.00" required>
+                                    <input type="number" class="form-control item-amount" value="0.00" required
+                                        readonly>
                                 </td>
                                 <td class="text-end">
                                     <button type="button" class="btn btn-link text-danger p-0 btn-sm btn-delete-row"
@@ -155,7 +156,8 @@ require '../layout/single_invoice_header.php';
 
                     <!-- ✅ Totals Summary (Form) -->
                     <div class="d-flex justify-content-end">
-                        <div class="p-3 rounded-3 total_amount_border bg-light" style="min-width: 320px;">
+                        <div class="p-3 rounded-3 border bg-light" style="min-width: 320px;">
+
                             <div class="d-flex justify-content-between">
                                 <span class="fw-semibold">Total Amount</span>
                                 <span class="fw-bold">Tk <span id="form-total">0.00</span></span>
@@ -170,10 +172,6 @@ require '../layout/single_invoice_header.php';
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-content-between mt-2 pt-2 border-top">
-                                <span class="fw-semibold">Due</span>
-                                <span class="fw-bold text-danger">Tk <span id="form-due">0.00</span></span>
-                            </div>
                         </div>
                     </div>
 
@@ -223,7 +221,7 @@ require '../layout/single_invoice_header.php';
                 <!-- Footer buttons -->
                 <div class="d-flex flex-column flex-md-row justify-content-center gap-3 pt-3 border-top">
                     <button type="button" class="btn btn-footer-add px-5 rounded-pill" id="add-invoice-btn">
-                        <i class="fa-solid fa-circle-plus me-2"></i> Add Invoice
+                        <i class="fa-solid fa-circle-plus me-2"></i> Save Invoice
                     </button>
 
                     <button type="button" class="btn btn-footer-print px-5 rounded-pill" id="print-btn">
@@ -255,25 +253,13 @@ require '../layout/single_invoice_header.php';
 
             <div class="modal-footer flex-column flex-md-row justify-content-between gap-2">
                 <button type="button" class="btn btn-download-preview w-100 w-md-auto" id="download-preview-btn">
-                    <i class="fa-solid fa-download me-2"></i> Download as Image
+                    <span class="jodi agei save thake tobe ar dekhabe na ">Save and</span><i class="fa-solid fa-download me-2"></i> Download as Image
                 </button>
 
                 <button type="button" class="btn btn-secondary w-100 w-md-auto" data-bs-dismiss="modal">
                     Close
                 </button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ✅ Toast -->
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
-    <div id="paymentToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
-        aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="paymentToastMsg">...</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-                aria-label="Close"></button>
         </div>
     </div>
 </div>
@@ -293,37 +279,15 @@ require '../layout/single_invoice_header.php';
 
         const paymentStatusEl = document.getElementById("payment-status");
         const formTotalEl = document.getElementById("form-total");
-        const formDueEl = document.getElementById("form-due");
         const payWrapper = document.getElementById("pay-wrapper");
         const payAmountEl = document.getElementById("pay-amount");
 
+        // ✅ Note words toggle (must exist before updatePaymentUI runs)
         let isApplied = true;
 
-        // ✅ Toast helpers
-        let toastShown = false; // একই invoice-এ বারবার spam না করতে
-
-        function showToast(message, type = "success") {
-            const toastEl = document.getElementById("paymentToast");
-            const msgEl = document.getElementById("paymentToastMsg");
-            if (!toastEl || !msgEl) return;
-
-            msgEl.textContent = message;
-
-            toastEl.classList.remove("text-bg-success", "text-bg-warning", "text-bg-info", "text-bg-danger");
-            toastEl.classList.add(`text-bg-${type}`);
-
-            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 2600, autohide: true });
-            toast.show();
-        }
-
-        function extractNumber(value, fallback = 1) {
-            const str = String(value ?? "").trim();
-            if (!str) return fallback;
-
-            const match = str.match(/[\d.]+/);
-            const num = match ? parseFloat(match[0]) : NaN;
-
-            return Number.isFinite(num) ? num : fallback;
+        function extractNumber(value) {
+            const match = String(value || "").match(/[\d.]+/);
+            return match ? parseFloat(match[0]) : 0;
         }
 
         // ✅ Auto set date
@@ -340,7 +304,7 @@ require '../layout/single_invoice_header.php';
         function getTotalAmount() {
             let total = 0;
             itemsBody.querySelectorAll("tr.item-row").forEach(row => {
-                const qty = extractNumber(row.querySelector(".item-qty")?.value || "", 1);
+                const qty = extractNumber(row.querySelector(".item-qty")?.value || "");
                 const rate = parseFloat(row.querySelector(".item-rate")?.value) || 0;
                 total += qty * rate;
             });
@@ -397,91 +361,100 @@ require '../layout/single_invoice_header.php';
             return chunkToWords(taka).trim();
         }
 
+        // ✅ Note set from current total
         function setNoteAsWordsFromTotal() {
             const total = getTotalAmount();
             const words = convert_number_to_words(total);
             noteTextarea.value = `${words} Taka Only.`;
         }
 
-        // ✅ totals + clean UX + Bangla toast
+        function focusNextInItemsTable(currentEl) {
+            const table = document.getElementById("items-table");
+            if (!table) return;
+
+            // amount readonly, delete btn skip — only editable inputs
+            const focusables = Array.from(table.querySelectorAll("input, textarea, select"))
+                .filter(el => !el.disabled && !el.readOnly && el.offsetParent !== null);
+
+            const idx = focusables.indexOf(currentEl);
+            if (idx === -1) return;
+
+            const next = focusables[idx + 1];
+            if (next) {
+                next.focus();
+                next.select?.();
+            } else {
+                // last cell হলে new row add করে desc এ ফোকাস
+                document.getElementById("add-item-btn").click();
+                setTimeout(() => {
+                    const lastRow = itemsBody.querySelector("tr.item-row:last-child");
+                    const firstInput = lastRow?.querySelector(".item-desc");
+                    firstInput?.focus();
+                }, 0);
+            }
+        }
+
+
+        // ✅ compute totals with status
         function computeInvoiceTotals() {
             const total = getTotalAmount();
-            let status = paymentStatusEl.value || "UNPAID";
+            const status = paymentStatusEl.value || "UNPAID";
             let pay = 0;
 
             if (status === "PARTIAL") {
-                pay = parseFloat(payAmountEl.value);
-                pay = Number.isFinite(pay) ? pay : 0;
-
+                pay = parseFloat(payAmountEl.value) || 0;
                 if (pay < 0) pay = 0;
 
-                // overpay clamp + toast once
                 if (pay > total) {
+                    alert("Total amount ar theke Pay Amount beshi likhso");
                     pay = total;
                     payAmountEl.value = total.toFixed(2);
-                    if (!toastShown && total > 0) {
-                        showToast("পে এমাউন্ট টোটালের বেশি ছিল—টোটাল অনুযায়ী ঠিক করা হয়েছে।", "warning");
-                        toastShown = true;
-                    }
-                } else {
-                    payAmountEl.value = pay.toFixed(2);
                 }
 
-                // if fully paid in PARTIAL => auto PAID + toast once
-                if (total > 0 && Math.abs(total - pay) < 0.0001) {
-                    status = "PAID";
-                    paymentStatusEl.value = "PAID";
-                    payWrapper.classList.add("d-none");
-
-                    if (!toastShown) {
-                        showToast("সম্পূর্ণ টাকা পরিশোধ হয়েছে—স্ট্যাটাস PAID করা হলো।", "success");
-                        toastShown = true;
-                    }
+                if (total > 0 && pay === total) {
+                    alert("somoporiman tk paid hole just paid select koro. jodi unpaid select kora hoy tobe pay amount and tar sather input thakbe na");
                 }
             } else if (status === "PAID") {
                 pay = total;
-                if (total > 0 && !toastShown) {
-                    showToast("স্ট্যাটাস PAID সিলেক্ট করা হয়েছে।", "success");
-                    toastShown = true;
-                }
             } else {
                 pay = 0;
             }
 
-            const due = Math.max(0, total - pay);
-            return { total, pay, due, status };
+            return { total, pay, status };
         }
 
+        // ✅ update UI + auto note update (words mode)
         function updatePaymentUI() {
-            // UNPAID এ ফিরলে আবার toast দেখানোর সুযোগ
-            if ((paymentStatusEl.value || "UNPAID") === "UNPAID") toastShown = false;
+            const status = paymentStatusEl.value || "UNPAID";
 
-            const totals = computeInvoiceTotals();
-
-            if (totals.status === "PARTIAL") {
+            if (status === "PARTIAL") {
                 payWrapper.classList.remove("d-none");
             } else {
                 payWrapper.classList.add("d-none");
                 if (payAmountEl) payAmountEl.value = "0";
             }
 
-            formTotalEl.textContent = totals.total.toFixed(2);
-            formDueEl.textContent = totals.due.toFixed(2);
+            const { total } = computeInvoiceTotals();
+            formTotalEl.textContent = total.toFixed(2);
+
 
             if (isApplied) {
                 setNoteAsWordsFromTotal();
             }
         }
 
+        // ✅ listeners
         paymentStatusEl.addEventListener("change", updatePaymentUI);
         if (payAmountEl) payAmountEl.addEventListener("input", updatePaymentUI);
 
-        // note calculator toggle
+        // ✅ Toggle behaviour for calculator icon
+        // Default ON => show total words
         setNoteAsWordsFromTotal();
         calcBtn.classList.add("active");
 
         calcBtn.addEventListener("click", function () {
             isApplied = !isApplied;
+
             if (isApplied) {
                 setNoteAsWordsFromTotal();
                 calcBtn.classList.add("active");
@@ -491,12 +464,13 @@ require '../layout/single_invoice_header.php';
             }
         });
 
+        // ✅ Row calculation
         function recalcRow(row) {
             const qtyInput = row.querySelector(".item-qty");
             const rateInput = row.querySelector(".item-rate");
             const amountInput = row.querySelector(".item-amount");
 
-            const qty = extractNumber(qtyInput.value, 1);
+            const qty = extractNumber(qtyInput.value);
             const rate = parseFloat(rateInput.value) || 0;
 
             amountInput.value = (qty * rate).toFixed(2);
@@ -514,43 +488,16 @@ require '../layout/single_invoice_header.php';
                 if (itemsBody.rows.length > 1) row.remove();
                 updatePaymentUI();
             });
+            row.querySelectorAll("input").forEach(inp => {
+                inp.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        focusNextInItemsTable(e.target);
+                    }
+                });
+            });
+
         }
-
-        // ✅ Enter = next input in same row
-        itemsBody.addEventListener("keydown", function (e) {
-            if (e.key !== "Enter") return;
-
-            const el = e.target;
-            if (!el.matches(".item-desc, .item-qty, .item-rate")) return;
-
-            e.preventDefault();
-
-            const row = el.closest("tr.item-row");
-            if (!row) return;
-
-            const inputs = Array.from(row.querySelectorAll(".item-desc, .item-qty, .item-rate"));
-            const idx = inputs.indexOf(el);
-
-            if (idx >= 0 && idx < inputs.length - 1) {
-                inputs[idx + 1].focus();
-                inputs[idx + 1].select?.();
-                return;
-            }
-
-            const allRows = Array.from(itemsBody.querySelectorAll("tr.item-row"));
-            const rowIndex = allRows.indexOf(row);
-
-            if (rowIndex >= 0 && rowIndex < allRows.length - 1) {
-                const nextDesc = allRows[rowIndex + 1].querySelector(".item-desc");
-                nextDesc?.focus();
-                nextDesc?.select?.();
-                return;
-            }
-
-            document.getElementById("add-item-btn").click();
-            const newLastRow = itemsBody.querySelector("tr.item-row:last-child .item-desc");
-            newLastRow?.focus();
-        });
 
         // init rows
         Array.from(itemsBody.rows).forEach(row => {
@@ -558,6 +505,7 @@ require '../layout/single_invoice_header.php';
             recalcRow(row);
         });
 
+        // ✅ initial totals + note
         updatePaymentUI();
 
         // Add item
@@ -586,8 +534,8 @@ require '../layout/single_invoice_header.php';
             if (!confirm("Reset all invoice fields?")) return;
 
             invoiceForm.reset();
-            toastShown = false;
 
+            // date again
             if (dateInput) {
                 const today = new Date();
                 const yyyy = today.getFullYear();
@@ -625,10 +573,9 @@ require '../layout/single_invoice_header.php';
         function getNonEmptyItemRows() {
             return Array.from(itemsBody.querySelectorAll("tr.item-row")).filter(row => {
                 const desc = row.querySelector(".item-desc")?.value?.trim() || "";
-                const qtyRaw = row.querySelector(".item-qty")?.value || "";
-                const qtyVal = extractNumber(qtyRaw, 0); // filter purpose
+                const qty = extractNumber(row.querySelector(".item-qty")?.value || "");
                 const rate = parseFloat(row.querySelector(".item-rate")?.value) || 0;
-                return desc !== "" || qtyVal > 0 || rate > 0;
+                return desc !== "" || qty > 0 || rate > 0;
             });
         }
 
@@ -636,37 +583,39 @@ require '../layout/single_invoice_header.php';
             const billName = document.getElementById("bill-name").value || "....................";
             const invoiceNumber = document.getElementById("invoice-number").value || "--";
             const invoiceDate = document.getElementById("invoice-date").value || "-";
+            const status = paymentStatusEl.value || "UNPAID";
             const note = noteTextarea.value || "";
 
             const totals = computeInvoiceTotals();
-            const filledRows = getNonEmptyItemRows(); // ✅ FIX: missing ছিল
 
             let rowsHtml = "";
+            let total = 0;
+
+            const filledRows = getNonEmptyItemRows();
 
             filledRows.forEach((row, idx) => {
                 const desc = row.querySelector(".item-desc").value || "-";
-                const qtyRaw = row.querySelector(".item-qty").value || "";
-                const qty = extractNumber(qtyRaw, 1);
+                const qty = extractNumber(row.querySelector(".item-qty").value || "");
                 const rate = parseFloat(row.querySelector(".item-rate").value) || 0;
                 const amount = qty * rate;
+                total += amount;
 
                 rowsHtml += `
             <tr>
                 <td>#${idx + 1}</td>
-                <td>${desc}</td>
-                <td class="text-center">${qtyRaw || "1"}</td>
-                <td class="text-center">${rate.toFixed(2)}</td>
-                <td class="text-center">${amount.toFixed(2)}</td>
+                <td class="">${desc}</td>
+                <td class="text-center">${row.querySelector(".item-qty").value || ""}</td>
+                <td class="text-center"> ${rate.toFixed(2)}</td>
+                <td class="text-center"> ${amount.toFixed(2)}</td>
             </tr>`;
             });
 
             const emptyRowsNeeded = Math.max(0, MIN_ROWS - filledRows.length);
             for (let i = 0; i < emptyRowsNeeded; i++) rowsHtml += makeEmptyPreviewRow();
 
-            const statusForBadge = totals.status;
-            const unpaidBadge = statusForBadge === "UNPAID"
+            const unpaidBadge = status === "UNPAID"
                 ? `<span class="badge-status-unpaid ms-2">UNPAID</span>`
-                : `<span class="badge base-bg base-p7d ms-2">${statusForBadge}</span>`;
+                : `<span class="badge base-bg base-p ms-2">${status}</span>`;
 
             previewBody.innerHTML = `
         <div class="invoice-preview-card" id="invoice-preview-card">
@@ -674,6 +623,7 @@ require '../layout/single_invoice_header.php';
             <div class="d-flex justify-content-between align-items-start">
                 <div class="invoice_left_heading">
                     <img src="../assets/logo.png" alt="Logo" style="width: 140px; margin-bottom: 5px;">
+                    
                     <div><strong>Client Name</strong>: ${billName}</div>
                     <div><strong>Phone Number</strong>: ${document.getElementById("bill-phone").value || ""}</div>
                     <div><strong>Institution Name</strong>: ${document.getElementById("bill-school").value || ""}</div>
@@ -687,15 +637,15 @@ require '../layout/single_invoice_header.php';
 
             <div class="invoice-preview-header-line"></div>
 
-            <div class="table-responsive mt-3">
-                <table class="invoice-preview-table w-100 mb-0">
+            <div class="table-responsive mt-3 ">
+                <table class="table invoice-preview-table mb-0">
                     <thead>
                         <tr>
-                            <th class="text-white" style="width: 10%; background-color: #1FBD59;">Item</th>
+                            <th class="text-white" style="width: 10%; background-color: #1FBD59;">Item </th>
                             <th class="text-white" style="background-color: #1FBD59;">Description</th>
                             <th class="text-white text-center" style="width: 15%; background-color: #1FBD59;">Quantity</th>
-                            <th class="text-white text-center" style="width: 15%; background-color: #1FBD59;">Rate</th>
-                            <th class="text-white text-center" style="width: 18%; background-color: #1FBD59;">Amount</th>
+                            <th class="text-white text-center" style="width: 15%; background-color: #1FBD59;">Amount</th>
+                            <th class="text-white text-center" style="width: 18%; background-color: #1FBD59;">Total(Tk)</th>
                         </tr>
                     </thead>
                     <tbody id="bg-img-logo">${rowsHtml || `
@@ -709,44 +659,39 @@ require '../layout/single_invoice_header.php';
                     ${note ? `<div style="font-size:0.5rem"><strong>Note:</strong> ${note}</div>` : ""}
                 </div>
                 <div class="col-md-5">
-                    <table class="table table-sm border1_sub subtotal_cal">
-                        <tr>
-                            <th class="text-end">Subtotal</th>
-                            <td class="text-end">Tk ${totals.total.toFixed(2)}</td>
-                        </tr>
-                        <tr style="background: #DCFCE7;">
-                            <th class="text-end">Due</th>
-                            <td class="text-end">Tk ${totals.due.toFixed(2)}</td>
-                        </tr>
+                    <table class="table table-sm subtotal_cal">
                         <tr style="background: #1FBD59">
                             <th class="text-end">TOTAL</th>
-                            <td class="text-end fw-bold">Tk ${totals.total.toFixed(2)}</td>
+                            <td class="text-end fw-bold">Tk ${total.toFixed(2)}</td>
                         </tr>
                     </table>
                     <div class="mt-2 text-end">${unpaidBadge}</div>
                 </div>
             </div>
 
-            <footer class="mt-5">
-                <div class="footer_top d-flex justify-content-between align-items-end w-100">
 
+
+            <footer  class="mt-5">
+                <div class="footer_top d-flex justify-content-between align-items-end w-100">
+                    
                     <div class="footer_top_left text-center rem4">
-                        <img src="../assets/signature.png" alt="Signature" class="mb-1" style="width:70px; height:13px;">
-                        <p class="mb-0" style="border-top:1px solid #000;">
-                            Easin Khan Santo (Co-founder)
-                        </p>
+                    <img src="../assets/signature.png" alt="Signature" class="mb-1"
+                        style="width:70px; height:13px;">
+                    <p class="mb-0" style="border-top:1px solid #000;">
+                        Easin Khan Santo (Co-founder)
+                    </p>
                     </div>
 
                     <div class="footer_top_right text-end ms-auto rem7">
-                        <p class="mb-0">bkash & Nagad 01805-123649</p>
-                        <a href="https://www.edurlab.com" class="text-decoration-none">www.edurlab.com</a>
+                    <p class="mb-0">bkash & Nagad 01805-123649</p>
+                    <a href="https://www.edurlab.com" class="text-decoration-none">www.edurlab.com</a>
                     </div>
 
                 </div>
 
                 <div class="footer_bottom_txt text-center mt-2">
                     <p class="mb-0 rem5">
-                        We believe education is the key to progress, and EduRLab is always here to support that journey.
+                    We believe education is the key to progress, and EduRLab is always here to support that journey.
                     </p>
                 </div>
             </footer>
@@ -794,6 +739,7 @@ require '../layout/single_invoice_header.php';
         document.getElementById("download-pdf-btn").addEventListener("click", function () {
             alert("Download PDF clicked (এখানে তুমি HTML2PDF বা server-side PDF জেনারেশন করবে)।");
         });
+
     });
 </script>
 

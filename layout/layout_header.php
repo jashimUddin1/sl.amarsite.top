@@ -46,41 +46,46 @@ if ($user_id) {
         <aside id="sidebarDesktop"
             class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 bg-slate-900 text-slate-100 shadow-xl z-30">
             <div class="h-16 flex items-center px-4 border-b border-slate-800">
-                <img src="edur.png" style="width: 160px; " alt="logo">
+                <img src="../assets/edur.png" style="width: 160px; " alt="logo">
                 <!-- <span class="text-lg font-bold tracking-wide">
                
             </span> -->
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4">
-                <a href="index.php"
+                <a href="/school_list/index.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'home' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🏠</span> Home
                 </a>
 
-                <a href="index2.php"
+                <a href="/school_list/pages/dashboard.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'dashboard' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">📊</span> Dashboard
                 </a>
 
-                <a href="schools.php"
+                <a href="/school_list/schools/schools.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🏫</span> Schools
                 </a>
 
-                <a href="notifications.php"
+                <a href="/school_list/invoices/invoices.php"
+                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'invoices' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
+                    <span class="mr-2">🧾</span> Invoices
+                </a>
+
+                <a href="/school_list/pages/notifications.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🔔</span> Notifications
                 </a>
-                <a href="logs.php"
+                <a href="/school_list/logs/logs.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🧾</span> Logs
                 </a>
-                <a href="trash.php"
+                <a href="/school_list/pages/trash.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'trash' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🗑️</span> Trash
                 </a>
-                <a href="user_reports.php"
+                <a href="/school_list/pages/user_reports.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'reports' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">👤</span> User Reports
                 </a>
@@ -94,7 +99,7 @@ if ($user_id) {
                 <div class="font-semibold">
                     <?php echo $userName; ?>
                 </div>
-                <a href="logout.php" class="text-slate-300 hover:text-white">
+                <a href="/school_list/auth/logout.php" class="text-slate-300 hover:text-white">
                     Logout
                 </a>
             </div>
@@ -106,7 +111,7 @@ if ($user_id) {
 
             <aside class="absolute inset-y-0 left-0 w-64 bg-slate-900 text-slate-100 shadow-xl flex flex-col">
                 <div class="h-16 flex items-center px-4 border-b border-slate-800 justify-between">
-                    <img src="edur.png" style="width: 160px; " alt="logo">
+                    <img src="/school_list/assets/edur.png" style="width: 160px; " alt="logo">
                     <!-- <span class="text-lg font-bold tracking-wide">
                     School List
                 </span> -->
@@ -116,37 +121,42 @@ if ($user_id) {
                 </div>
 
                 <nav class="flex-1 overflow-y-auto py-4">
-                    <a href="index.php"
+                    <a href="/school_list/index.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'home' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🏠</span> Home
                     </a>
-                    <a href="index2.php"
+                    <a href="/school_list/pages/dashboard.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'dashboard' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">📊</span> Dashboard
                     </a>
-                    <a href="schools.php"
+                    <a href="/school_list/schools/schools.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🏫</span> Schools
                     </a>
-                    <a href="notifications.php"
+                    <a href="/school_list/invoices/invoices.php"
+                        class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'invoices' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
+                        onclick="toggleSidebar()">
+                        <span class="mr-2">🏫</span> Invoices
+                    </a>
+                    <a href="/school_list/pages/notifications.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🔔</span> Notifications
                     </a>
-                    <a href="logs.php"
+                    <a href="/school_list/logs/logs.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🧾</span> Logs
                     </a>
-                    <a href="trash.php"
+                    <a href="/school_list/pages/trash.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'trash' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🗑️</span> Trash
                     </a>
-                    <a href="user_reports.php"
+                    <a href="/school_list/pages/user_reports.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'reports' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">👤</span> User Reports
@@ -162,7 +172,7 @@ if ($user_id) {
                     <div class="font-semibold">
                         <?php echo $userName; ?>
                     </div>
-                    <a href="logout.php" class="text-slate-300 hover:text-white">
+                    <a href="/school_list/auth/logout.php" class="text-slate-300 hover:text-white">
                         Logout
                     </a>
                 </div>
@@ -193,7 +203,7 @@ if ($user_id) {
 
                 <div class="flex items-center gap-3">
                     <div class="relative">
-                        <a href="notifications.php" class="text-sm sm:text-sm px-2 py-1 rounded text-white
+                        <a href="../pages/notifications.php" class="text-sm sm:text-sm px-2 py-1 rounded text-white
                             <?php echo ($notifyCount > 0) ? 'bg-success' : 'bg-secondary'; ?>
                             hover:bg-secondary">
 
@@ -220,7 +230,7 @@ if ($user_id) {
                     <span class="hidden sm:inline-block text-sm text-slate-600">
                         <?php echo $userName; ?>
                     </span>
-                    <a href="logout.php"
+                    <a href="../auth/logout.php"
                         class="text-xs sm:text-sm px-3 py-1.5 rounded bg-slate-900 text-white hover:bg-slate-800">
                         Logout
                     </a>

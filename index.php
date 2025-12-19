@@ -1,8 +1,8 @@
 <?php //index.php main file
-require_once 'config.php';
+require_once 'auth/config.php';
 require_login();
 
-require_once 'functions_notifications.php';
+require_once 'helper_functions/functions_notifications.php';
 
 $user_id = $_SESSION['user_id'] ?? null;
 
@@ -113,7 +113,7 @@ $pageTitle   = 'Home - School Note Manager';
 $pageHeading = 'Home';
 $activeMenu  = 'home';
 
-require 'layout_header_index.php';
+require 'layout/layout_header_index.php';
 
 // session test
 // $_SESSION['note_error'] = 'testing session message';
@@ -526,4 +526,4 @@ require 'layout_header_index.php';
 </script>
 
 <?php
-require 'layout_footer.php';
+require 'layout/layout_footer.php';

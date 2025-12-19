@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once '../auth/config.php';
 require_login();
 
 // user-wise aggregate
@@ -68,7 +68,7 @@ $pageTitle   = 'User Reports - School List';
 $pageHeading = 'User Reports';
 $activeMenu  = 'reports';
 
-require 'layout_header.php';
+require '../layout/layout_header.php';
 ?>
 
 <div class="bg-white rounded-xl shadow p-4 overflow-x-auto">
@@ -123,4 +123,4 @@ require 'layout_header.php';
 </div>
 
 <?php
-require 'layout_footer.php';
+require '../layout/layout_footer.php';

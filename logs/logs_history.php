@@ -1,6 +1,6 @@
 <?php
 // logs_history.php
-require_once 'config.php';
+require_once '../auth/config.php';
 require_login();
 
 // --- Input: school_id ---
@@ -9,17 +9,17 @@ if ($schoolId <= 0) {
     $pageTitle   = 'Log History - School List';
     $pageHeading = 'Log History';
     $activeMenu  = 'logs';
-    require 'layout_header.php';
+    require '../layout/layout_header.php';
     ?>
     <div class="bg-white rounded-xl shadow p-6">
-        <p class="text-sm text-red-600">ভুল school আইডি দেওয়া হয়েছে।</p>
+        <p class="text-sm text-red-600">ভুল school আইডি দেওয়া হয়েছে।</p>
         <a href="logs.php"
            class="inline-block mt-3 px-4 py-2 rounded bg-slate-800 text-white text-sm hover:bg-slate-900">
             ← Back to Logs
         </a>
     </div>
     <?php
-    require 'layout_footer.php';
+    require '../layout/layout_footer.php';
     exit;
 }
 
@@ -59,7 +59,7 @@ $pageTitle   = 'Log History - School List';
 $pageHeading = 'School Log History';
 $activeMenu  = 'logs';
 
-require 'layout_header.php';
+require '../layout/layout_header.php';
 ?>
 
 <div class="bg-white rounded-xl shadow p-4 md:p-6">
@@ -187,4 +187,4 @@ require 'layout_header.php';
 </div>
 
 <?php
-require 'layout_footer.php';
+require '../layout/layout_footer.php';

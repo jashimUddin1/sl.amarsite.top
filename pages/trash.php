@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once '../auth/config.php';
 require_login();
 
 $userId = $_SESSION['user_id'] ?? null;
@@ -211,7 +211,7 @@ $pageTitle   = 'Trash - School List';
 $pageHeading = 'Trash';
 $activeMenu  = 'trash';
 
-require 'layout_header.php';
+require '../layout/layout_header.php';
 ?>
 
 <div class="bg-white rounded-xl shadow p-4 mb-4">
@@ -293,7 +293,7 @@ require 'layout_header.php';
                             <div>SID: <?php echo (int)$r['school_id']; ?></div>
                             <?php if (!empty($r['photo_path'])): ?>
                                 <img
-                                    src="<?php echo htmlspecialchars($r['photo_path']); ?>"
+                                    src="../<?php echo htmlspecialchars($r['photo_path']); ?>"
                                     style="width: 80px;"
                                     alt="trash"
                                 >
@@ -358,4 +358,4 @@ require 'layout_header.php';
 </div>
 
 <?php
-require 'layout_footer.php';
+require '../layout/layout_footer.php';

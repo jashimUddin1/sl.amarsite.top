@@ -1,134 +1,13 @@
-<?php
-require_once 'config.php';
+<?php // schools/schools.php
+require_once '../auth/config.php';
 require_login();
-
-// ====== Delete Handler (POST + Trash) ======
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_school') {
-    $id      = isset($_POST['id']) ? (int) $_POST['id'] : 0;
-    $userId  = $_SESSION['user_id'] ?? null;
-
-    if ($id > 0) {
-        try {
-            $pdo->beginTransaction();
-
-            // 1) আগে school data নিয়ে আসি
-            $stmt = $pdo->prepare("SELECT * FROM schools WHERE id = :id");
-            $stmt->execute([':id' => $id]);
-            $school = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($school) {
-                // 2) ছবি move করি uploads/trash_schools এ
-                $photoPath      = $school['photo_path'] ?? null;
-                $trashPhotoPath = null;
-
-                if (!empty($photoPath)) {
-                    $oldFull = __DIR__ . '/' . $photoPath;
-                    if (is_file($oldFull)) {
-                        $trashDir = __DIR__ . '/uploads/trash_schools';
-                        if (!is_dir($trashDir)) {
-                            mkdir($trashDir, 0777, true);
-                        }
-
-                        $fileName = basename($photoPath);
-                        $newFull  = $trashDir . '/' . $fileName;
-
-                        if (@rename($oldFull, $newFull)) {
-                            // trash table এ এই path রাখব
-                            $trashPhotoPath = 'uploads/trash_schools/' . $fileName;
-                        } else {
-                            // move ব্যর্থ হলে পুরানো path-ই রেখে দিচ্ছি
-                            $trashPhotoPath = $photoPath;
-                        }
-                    } else {
-                        // ফাইল নাই, তাহলে পুরানো path-ই রেখে দিচ্ছি
-                        $trashPhotoPath = $photoPath;
-                    }
-                }
-
-                // 3) school_trash এ insert
-                $stmtTrash = $pdo->prepare("
-                    INSERT INTO school_trash (
-                        school_id,
-                        district, upazila, school_name, mobile, status,
-                        photo_path,
-                        created_by, updated_by, deleted_by
-                    )
-                    VALUES (
-                        :school_id,
-                        :district, :upazila, :school_name, :mobile, :status,
-                        :photo_path,
-                        :created_by, :updated_by, :deleted_by
-                    )
-                ");
-
-                $stmtTrash->execute([
-                    ':school_id'  => $school['id'],
-                    ':district'   => $school['district'],
-                    ':upazila'    => $school['upazila'],
-                    ':school_name'=> $school['school_name'],
-                    ':mobile'     => $school['mobile'],
-                    ':status'     => $school['status'],
-                    ':photo_path' => $trashPhotoPath,
-                    ':created_by' => $school['created_by'] ?? null,
-                    ':updated_by' => $school['updated_by'] ?? null,
-                    ':deleted_by' => $userId,
-                ]);
-
-                // 4) এই স্কুলের সব নোট note_trash এ কপি করি
-                $stmtNotesTrash = $pdo->prepare("
-                    INSERT INTO note_trash (
-                        original_note_id,
-                        school_id,
-                        note_text,
-                        note_date,
-                        updated_by,
-                        created_at,
-                        deleted_by,
-                        deleted_at
-                    )
-                    SELECT
-                        n.id AS original_note_id,
-                        n.school_id,
-                        n.note_text,
-                        n.note_date,
-                        n.updated_by,
-                        n.created_at,
-                        :deleted_by AS deleted_by,
-                        NOW()       AS deleted_at
-                    FROM school_notes AS n
-                    WHERE n.school_id = :school_id
-                ");
-                $stmtNotesTrash->execute([
-                    ':deleted_by' => $userId,
-                    ':school_id'  => $school['id'],
-                ]);
-            }
-
-            // 5) আসল school_notes টেবিল থেকে delete
-            $stmtDelNotes = $pdo->prepare("DELETE FROM school_notes WHERE school_id = :id");
-            $stmtDelNotes->execute([':id' => $id]);
-
-            // 6) আসল schools টেবিল থেকে delete
-            $stmtDel = $pdo->prepare("DELETE FROM schools WHERE id = :id");
-            $stmtDel->execute([':id' => $id]);
-
-            $pdo->commit();
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            // চাইলে এখানে error log করতে পারো
-        }
-    }
-
-    header("Location: schools.php");
-    exit;
-}
 
 
 // ====== Filters ======
 $filterDistrict = trim($_GET['district'] ?? '');
-$filterUpazila  = trim($_GET['upazila'] ?? '');
-$filterStatus   = trim($_GET['status'] ?? '');
-$filtersActive  = ($filterDistrict !== '' || $filterUpazila !== '' || $filterStatus !== '');
+$filterUpazila = trim($_GET['upazila'] ?? '');
+$filterStatus = trim($_GET['status'] ?? '');
+$filtersActive = ($filterDistrict !== '' || $filterUpazila !== '' || $filterStatus !== '');
 
 // ====== Filter options ======
 $districts = $pdo->query("
@@ -176,19 +55,35 @@ $stmt->execute($params);
 $schools = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // ====== Layout variables ======
-$pageTitle   = 'Schools - School List';
+$pageTitle = 'Schools - School List';
 $pageHeading = 'School List';
-$activeMenu  = 'schools';
+$activeMenu = 'schools';
 
-require 'layout_header.php';
+require '../layout/layout_header.php';
 
 ?>
 
-<div class="flex items-center justify-between mb-4">
-    <h2 class="text-xl font-bold text-slate-800">School List</h2>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
 
+    <!-- Left: Title + Search -->
+    <div class="flex items-center gap-3 flex-wrap">
+        <h2 class="text-xl font-bold text-slate-800 whitespace-nowrap">
+            School List
+        </h2>
+
+        <!-- 🔍 Search bar -->
+        <input
+            type="text"
+            name="search"
+            id="schoolSearchInput"
+            placeholder="Search school..."
+            class="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
+            onkeyup="searchSchoolTable()"
+        >
+    </div>
+
+    <!-- Right: Buttons -->
     <div class="flex items-center gap-2">
-        <!-- Filter Toggle Button -->
         <button
             type="button"
             id="filterToggleBtn"
@@ -197,13 +92,13 @@ require 'layout_header.php';
             <?php echo $filtersActive ? 'Hide Filters' : 'Show Filters'; ?>
         </button>
 
-        <!-- Add School Button -->
         <a href="school_create.php"
            class="px-4 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700">
             + Add School
         </a>
     </div>
 </div>
+
 
 <!-- 🔍 Filters Section (Toggle-able) -->
 <div id="filterSection" class="<?php echo $filtersActive ? '' : 'hidden'; ?>">
@@ -213,8 +108,7 @@ require 'layout_header.php';
             <select name="district" class="p-2 border rounded text-sm min-w-[150px]">
                 <option value="">All</option>
                 <?php foreach ($districts as $d): ?>
-                    <option value="<?php echo htmlspecialchars($d); ?>"
-                        <?php echo ($filterDistrict === $d) ? 'selected' : ''; ?>>
+                    <option value="<?php echo htmlspecialchars($d); ?>" <?php echo ($filterDistrict === $d) ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($d); ?>
                     </option>
                 <?php endforeach; ?>
@@ -226,8 +120,7 @@ require 'layout_header.php';
             <select name="upazila" class="p-2 border rounded text-sm min-w-[150px]">
                 <option value="">All</option>
                 <?php foreach ($upazilas as $u): ?>
-                    <option value="<?php echo htmlspecialchars($u); ?>"
-                        <?php echo ($filterUpazila === $u) ? 'selected' : ''; ?>>
+                    <option value="<?php echo htmlspecialchars($u); ?>" <?php echo ($filterUpazila === $u) ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($u); ?>
                     </option>
                 <?php endforeach; ?>
@@ -239,8 +132,7 @@ require 'layout_header.php';
             <select name="status" class="p-2 border rounded text-sm min-w-[140px]">
                 <option value="">All</option>
                 <?php foreach ($statuses as $st): ?>
-                    <option value="<?php echo htmlspecialchars($st); ?>"
-                        <?php echo ($filterStatus === $st) ? 'selected' : ''; ?>>
+                    <option value="<?php echo htmlspecialchars($st); ?>" <?php echo ($filterStatus === $st) ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($st); ?>
                     </option>
                 <?php endforeach; ?>
@@ -248,12 +140,10 @@ require 'layout_header.php';
         </div>
 
         <div class="flex gap-2">
-            <button type="submit"
-                class="px-4 py-2 rounded bg-slate-900 text-white text-sm hover:bg-slate-800">
+            <button type="submit" class="px-4 py-2 rounded bg-slate-900 text-white text-sm hover:bg-slate-800">
                 Apply
             </button>
-            <a href="schools.php"
-                class="px-4 py-2 rounded bg-slate-200 text-slate-700 text-sm hover:bg-slate-300">
+            <a href="schools.php" class="px-4 py-2 rounded bg-slate-200 text-slate-700 text-sm hover:bg-slate-300">
                 Reset
             </a>
         </div>
@@ -264,17 +154,14 @@ require 'layout_header.php';
 // Success message
 if (!empty($_SESSION['school_success'])): ?>
     <div class="alert alert-success alert-dismissible fade show d-flex align-items-center justify-content-between small py-2 mb-2"
-         role="alert">
+        role="alert">
         <div class="me-2">
             <?php
             echo htmlspecialchars($_SESSION['school_success']);
             unset($_SESSION['school_success']);
             ?>
         </div>
-        <button type="button"
-                class="btn-close btn-sm ms-auto p-2"
-                data-bs-dismiss="alert"
-                aria-label="Close"></button>
+        <button type="button" class="btn-close btn-sm ms-auto p-2" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 
@@ -287,10 +174,7 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                 <li><?php echo htmlspecialchars($err); ?></li>
             <?php endforeach; ?>
         </ul>
-        <button type="button"
-                class="btn-close btn-sm"
-                data-bs-dismiss="alert"
-                aria-label="Close"></button>
+        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     <?php unset($_SESSION['school_errors']); ?>
 <?php endif; ?>
@@ -309,7 +193,8 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                     <th class="p-2 border" style="min-width: 150px;">Address</th>
                     <th class="p-2 border">Mobile</th>
                     <th class="p-2 border">Status</th>
-                    <th class="p-2 border">Actions</th>
+                    <th class="p-2 border text-center">Actions</th>
+                    <th class="p-2 border">Print</th>
                 </tr>
             </thead>
             <tbody>
@@ -318,7 +203,8 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                     $address = trim(($s['district'] ?? '') .
                         (($s['district'] ?? '') && ($s['upazila'] ?? '') ? ', ' : '') .
                         ($s['upazila'] ?? ''));
-                    if ($address === '') $address = 'N/A';
+                    if ($address === '')
+                        $address = 'N/A';
 
                     $statusClass = $s['status'] === 'Approved'
                         ? 'text-green-600'
@@ -329,7 +215,7 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
 
                         <td class="p-2 border align-center">
                             <?php if (!empty($s['photo_path'])): ?>
-                                <img src="<?php echo htmlspecialchars($s['photo_path']); ?>"
+                                <img src="../<?php echo htmlspecialchars($s['photo_path']); ?>"
                                     class="h-10 w-16 object-cover rounded border" alt="photo">
                             <?php else: ?>
                                 <span class="text-xs text-gray-400">No photo</span>
@@ -356,25 +242,29 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                             </span>
                         </td>
 
-                        <td class="p-2 border align-center">
-                            <div class="flex items-center gap-1 text-xs">
+                        <td class="p-2 border  align-center">
+                            <div class="flex items-center justify-center gap-1 text-xs">
                                 <!-- Edit -->
-                                <a href="school_edit.php?id=<?php echo (int)$s['id']; ?>"
+                                <a href="school_edit.php?id=<?php echo (int) $s['id']; ?>"
                                     class="px-3 py-1 rounded bg-slate-800 text-white text-center hover:bg-slate-900">
                                     Edit
                                 </a>
 
                                 <!-- Delete -->
-                                <form method="POST"
-                                      onsubmit="return confirm('এই স্কুলটি delete করতে নিশ্চিত?');">
+                                <form method="POST" action="/school_list/controllers/schoolController.php"
+                                    onsubmit="return confirm('এই স্কুলটি delete করতে নিশ্চিত?');">
                                     <input type="hidden" name="action" value="delete_school">
                                     <input type="hidden" name="id" value="<?php echo (int) $s['id']; ?>">
                                     <button type="submit"
-                                            class="px-3 py-1 rounded bg-red-600 text-white text-center hover:bg-red-700">
+                                        class="px-3 py-1 rounded bg-red-600 text-white text-center hover:bg-red-700">
                                         Delete
                                     </button>
                                 </form>
+
                             </div>
+                        </td>
+                        <td class="border text-center align-center">
+                            <button class="text-blue-600 hover:text-blue-800"><a href="../invoices/invoice_school.php?school_id=<?php echo (int) $s['id']; ?>" class="p-2">📄</a></button>
                         </td>
 
                     </tr>
@@ -400,6 +290,19 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
         }
     }
 </script>
+<script>
+function searchSchoolTable() {
+    const input = document.getElementById('schoolSearchInput');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('table tbody tr');
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+    });
+}
+</script>
+
 
 <?php
-require 'layout_footer.php';
+require '../layout/layout_footer.php';

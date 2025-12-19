@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once '../auth/config.php';
 require_login();
 
 $search = trim($_GET['q'] ?? '');
@@ -37,7 +37,7 @@ $pageTitle   = 'Logs - School List';
 $pageHeading = 'Logs';
 $activeMenu  = 'logs';
 
-require 'layout_header.php';
+require '../layout/layout_header.php';
 ?>
 
 <div class="bg-white rounded-xl shadow p-4 mb-4">
@@ -117,4 +117,4 @@ require 'layout_header.php';
 </div>
 
 <?php
-require 'layout_footer.php';
+require '../layout/layout_footer.php';
