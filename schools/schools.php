@@ -264,7 +264,7 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                             </div>
                         </td>
                         <td class="border text-center align-center">
-                            <button class="text-blue-600 hover:text-blue-800"><a href="../invoices/invoice_school.php?school_id=<?php echo (int) $s['id']; ?>" class="p-2">📄</a></button>
+                            <button class="text-blue-600 hover:text-blue-800"><a href="../invoices/invoice_school_final.php?school_id=<?php echo (int) $s['id']; ?>" class="p-2">📄</a></button>
                         </td>
 
                     </tr>

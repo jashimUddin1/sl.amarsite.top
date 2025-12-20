@@ -1,3 +1,4 @@
+<!-- layout/single_invoice_header_final -->
 <!DOCTYPE html>
 <html lang="bn">
 
@@ -19,6 +20,9 @@
 
     <!-- html2canvas (invoice preview image download) -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- pdf -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
 
     <style>
         body {
@@ -213,7 +217,31 @@
             pointer-events: none;
             z-index: 0;
         }
-    </style>
-</head>
 
+
+        /* Print only the preview card */
+        @media print {
+            /* body * {
+                visibility: hidden !important;
+            } */
+
+            #invoice-preview-card,
+            #invoice-preview-card * {
+                visibility: visible !important;
+            }
+
+            #invoice-preview-card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+            }
+        }
+    </style>
+
+</head>
 <body>
