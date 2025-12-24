@@ -17,7 +17,3 @@ updated_at
 
 
 
-amar ai file ta aktu poriborton chassi ... 
-amar bortoman system hosse school_id diye oi school ar data chole ase then notun invoice create hoy. controllers/invoice_save_school.php diye 
-
-akhon chassi peramiter hisabe invoice_id jabe . je id jabe sei id jodi database a thake tobe fetch kore aina data dekhabe then chnage korle save change button ar maddhome controllers/invoice_update.php diye update hobe . ar jodi oi peramiter ar  invoice_id database a na thake tobe echo korbe "ai invoice id database a nai . id thik kore din othoba new invoice create korun." kaj ta kore daw please sathe controllers/invoice_update.php file baniye dio

@@ -20,7 +20,7 @@ $invoiceData = null;
 if ($invoiceId > 0) {
     $mode = 'edit';
 
-    $stmt = $pdo->prepare("SELECT id, school_id, data FROM invoices WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, school_id, in_no, data FROM invoices WHERE id = ?");
     $stmt->execute([$invoiceId]);
     $invoiceRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -86,7 +86,7 @@ $nextInvoiceNumber = 1;
 if ($mode === 'create') {
     $sql = "
         SELECT COALESCE(
-            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.invoiceNumber')) AS UNSIGNED)),
+            COALESCE(MAX(in_no),0),
             0
         ) AS max_inv
         FROM `invoices`
@@ -98,8 +98,8 @@ if ($mode === 'create') {
 
 // ✅ Prefill values
 $prefInvoiceNumber = ($mode === 'edit')
-    ? (int) ($invoiceData['invoiceNumber'] ?? 0)
-    : (int) $nextInvoiceNumber;
+    ? (int)($invoiceRow['in_no'] ?? ($invoiceData['invoiceNumber'] ?? 0))
+    : (int)$nextInvoiceNumber;
 
 $prefInvoiceDate = ($mode === 'edit') ? (string) ($invoiceData['invoiceDate'] ?? '') : '';
 $prefInvoiceStyle = ($mode === 'edit') ? (string) ($invoiceData['invoiceStyle'] ?? 'classic') : 'classic';
@@ -983,10 +983,12 @@ require '../layout/single_invoice_header_final.php';
             const totals = computeInvoiceTotals();
 
             const payload = {
-                school_id: parseInt(document.getElementById("school-id").value, 10),
-                invoice_id: (mode === "edit") ? parseInt(document.getElementById("invoice-id").value, 10) : 0,
+                school_id: parseInt(document.getElementById("school-id").value, 10) || 0,
+                in_no: parseInt(document.getElementById("invoice-number").value, 10) || 0,
+                invoice_id: (mode === "edit") ? (parseInt(document.getElementById("invoice-id").value, 10) || 0) : 0,
                 data: {
-                    invoiceNumber: parseInt(document.getElementById("invoice-number").value, 10) || 0,
+                    invoiceNumber: parseInt(document.getElementById("invoice-number").value, 10) || 0, // legacy in JSON
+
                     invoiceDate: document.getElementById("invoice-date").value || "",
                     invoiceStyle: document.getElementById("invoice-style").value || "classic",
 
@@ -1008,7 +1010,7 @@ require '../layout/single_invoice_header_final.php';
                 }
             };
 
-            if (!payload.data.invoiceNumber || payload.data.invoiceNumber <= 0) {
+            if (!payload.in_no || payload.in_no <= 0) {
                 showToast("Invoice Number ঠিক দিন।", "danger");
                 return;
             }
@@ -1016,7 +1018,7 @@ require '../layout/single_invoice_header_final.php';
             // ✅ Refresh invoice list just before save (so it's not stale)
             await loadInvoiceNumbers();
 
-            const dupCheck = checkInvoiceDuplicate(payload.data.invoiceNumber, mode);
+            const dupCheck = checkInvoiceDuplicate(payload.in_no, mode);
             if (!dupCheck.ok) {
                 showToast(dupCheck.msg, "danger");
                 return;
@@ -1026,6 +1028,9 @@ require '../layout/single_invoice_header_final.php';
                 showToast("invoice_id missing/invalid.", "danger");
                 return;
             }
+
+                        // ✅ sync legacy JSON key
+            payload.data.invoiceNumber = payload.in_no;
 
             const endpoint = (mode === "edit")
                 ? "controllers/invoice_update.php"
