@@ -1,4 +1,4 @@
-<?php // invoices/invoice_school.php
+<?php // invoices/invoice_school_final.php
 require_once '../auth/config.php';
 require_login();
 require_once '../controllers/is_controller.php';
@@ -17,17 +17,13 @@ if (!$school) {
     die('School not found');
 }
 
-// ✅ Get next invoice number from invoices.data JSON
+// ✅ Get next invoice number from invoices.in_no (global)
 $sql = "
-SELECT COALESCE(
-    MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.invoiceNumber')) AS UNSIGNED)),
-    0
-) AS max_inv
-FROM `invoices`
+SELECT COALESCE(MAX(in_no), 0) + 1 AS next_in_no
+FROM invoices
 ";
 $stmt = $pdo->query($sql);
-$maxInv = (int) $stmt->fetchColumn();
-$nextInvoiceNumber = $maxInv + 1;
+$nextInvoiceNumber = (int)$stmt->fetchColumn();
 
 require '../layout/single_invoice_header_final.php';
 ?>
@@ -72,17 +68,23 @@ require '../layout/single_invoice_header_final.php';
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-school"
-                                value="<?= htmlspecialchars($school['school_name']) ?>">
+                                value="<?= htmlspecialchars($school['school_name']) ?>"
+                                placeholder="Institution Name"
+                                >
                         </div>
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-name"
-                                value="<?= htmlspecialchars($school['client_name']) ?>">
+                                value="<?= htmlspecialchars($school['client_name']) ?>"
+                                placeholder="Client Name"
+                                >
                         </div>
 
                         <div>
                             <input type="text" class="form-control" id="bill-phone"
-                                value="<?= htmlspecialchars($school['mobile'] ?? '') ?>">
+                                value="<?= htmlspecialchars($school['mobile'] ?? '') ?>"
+                                placeholder="Phone Number"
+                                >
                         </div>
                     </div>
 
@@ -798,10 +800,13 @@ require '../layout/single_invoice_header_final.php';
 
             const totals = computeInvoiceTotals();
 
+            const invNo = parseInt(document.getElementById("invoice-number").value, 10) || 0;
+
             const payload = {
                 school_id: parseInt(document.getElementById("school-id").value, 10),
+                in_no: invNo,
                 data: {
-                    invoiceNumber: parseInt(document.getElementById("invoice-number").value, 10) || 0,
+                    invoiceNumber: invNo,
                     invoiceDate: document.getElementById("invoice-date").value || "",
                     invoiceStyle: document.getElementById("invoice-style").value || "classic",
 
@@ -824,13 +829,13 @@ require '../layout/single_invoice_header_final.php';
             };
 
             // Basic validation
-            if (!payload.data.invoiceNumber || payload.data.invoiceNumber <= 0) {
+            if (!payload.in_no || payload.in_no <= 0) {
                 showToast("Invoice Number ঠিক দিন।", "danger");
                 return;
             }
 
             try {
-                const res = await fetch("../controllers/invoice_save_school.php", {
+                const res = await fetch("controllers/invoice_save_school.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
@@ -846,7 +851,7 @@ require '../layout/single_invoice_header_final.php';
                 showToast("Invoice Save Successfully", "success");
 
                 // চাইলে: save হওয়ার পর invoice-number auto next করে দিতে পারো
-                document.getElementById("invoice-number").value = payload.data.invoiceNumber + 1;
+                document.getElementById("invoice-number").value = payload.in_no + 1;
 
             } catch (err) {
                 console.error(err);

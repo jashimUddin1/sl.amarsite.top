@@ -10,9 +10,10 @@ akhon amar ai file ta dynamic kore daw
 invoices table => 
 id
 school_id 
-data ==> akhone json data ase ...--> {"invoiceNumber":12,"invoiceDate":"2025-12-20","invoiceStyle":"classic","billTo":{"school":"আল-আবরার নুরানি ক্যাডেট মাদরাসা এন্ড স্কুল","name":"","phone":"01712798772"},"items":[{"desc":"","qty_raw":"1","qty":1,"rate":0,"amount":0}],"totals":{"total":0,"pay":0,"due":0,"status":"UNPAID"},"note":"Zero Taka Only."}
+data ==> akhone json data ase ...--> {"invoiceNumber":2,"invoiceDate":"2025-12-24","invoiceStyle":"classic","billTo":{"school":"Mulghor High School","name":"","phone":""},"items":[{"desc":"new in","qty_raw":"32","qty":32,"rate":34,"amount":1088},{"desc":"now","qty_raw":"2","qty":2,"rate":25,"amount":50}],"totals":{"total":1138,"pay":1138,"due":0,"status":"PAID"},"note":"One Thousand Eighty Eight Taka Only."}
 created_at
 updated_at
+
 
 
 
