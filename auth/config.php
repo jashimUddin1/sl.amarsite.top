@@ -16,7 +16,7 @@ try {
 
 function require_login() {
     if (empty($_SESSION['user_id'])) {
-        header("Location: login.php");
+        header("Location: /school_list/auth/login.php");
         exit;
     }
 }

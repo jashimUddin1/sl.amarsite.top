@@ -3,34 +3,133 @@ require_once '../auth/config.php';
 require_login();
 require_once '../controllers/is_controller.php';
 
-// 🔹 ID validate
+/**
+ * ✅ MODE
+ * - Create: ?school_id=##
+ * - Edit:   ?invoice_id=##
+ */
+
+$invoiceId = isset($_GET['invoice_id']) ? (int) $_GET['invoice_id'] : 0;
 $schoolId = isset($_GET['school_id']) ? (int) $_GET['school_id'] : 0;
 
+$mode = 'create'; // default
+$invoiceRow = null;
+$invoiceData = null;
+
+// ✅ Edit mode (invoice_id দিয়ে fetch)
+if ($invoiceId > 0) {
+    $mode = 'edit';
+
+    $stmt = $pdo->prepare("SELECT id, school_id, data FROM invoices WHERE id = ?");
+    $stmt->execute([$invoiceId]);
+    $invoiceRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$invoiceRow) {
+        http_response_code(404);
+
+        $msg = 'এই invoice_id ডাটাবেজে নেই। ID ঠিক করে দিন অথবা নতুন ইনভয়েস তৈরি করুন।';
+
+        echo '<!doctype html>
+                <html lang="en">
+                <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Invoice Not Found</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+                </head>
+                <body class="bg-light">
+                <div class=" d-flex align-items-center justify-content-center p-3">
+                    <div class="card shadow-sm border-0 rounded-4" style="max-width: 720px; width: 100%;">
+                    <div class="card-body p-4 p-md-5 text-center">
+                        <h4 class="fw-bold mb-2">Invoice Not Found</h4>
+                        <p class="text-muted mb-4">' . htmlspecialchars($msg, ENT_QUOTES, "UTF-8") . '</p>
+
+                        <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+                            <button class="btn btn-outline-secondary rounded-pill px-4" onclick="history.back()">Go Back</button>
+                            <a class="btn btn-success rounded-pill px-4" href="invoice_create.php?school_id=' . (int) $schoolId . '">
+                                Create New Invoice
+                            </a>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+                </body>
+                </html>';
+
+        exit;
+    }
+
+    //ai button ta go back ar pore chilo appatotto invoice create id chara hobe na tai comment kora holo
+
+
+    $schoolId = (int) $invoiceRow['school_id'];
+
+    $invoiceData = json_decode($invoiceRow['data'] ?? '', true);
+    if (!is_array($invoiceData))
+        $invoiceData = [];
+}
+
+// ✅ Create mode এ school_id লাগবে
 if ($schoolId <= 0) {
     die('Invalid school ID');
 }
 
 // 🔹 Fetch school data
 $school = getSchoolById($pdo, $schoolId);
-
 if (!$school) {
     die('School not found');
 }
 
-// ✅ Get next invoice number from invoices.data JSON
-$sql = "
-SELECT COALESCE(
-    MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.invoiceNumber')) AS UNSIGNED)),
-    0
-) AS max_inv
-FROM `invoices`
-";
-$stmt = $pdo->query($sql);
-$maxInv = (int) $stmt->fetchColumn();
-$nextInvoiceNumber = $maxInv + 1;
+// ✅ Create mode এ next invoice number (JSON data থেকে)
+$nextInvoiceNumber = 1;
+if ($mode === 'create') {
+    $sql = "
+        SELECT COALESCE(
+            MAX(CAST(JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.invoiceNumber')) AS UNSIGNED)),
+            0
+        ) AS max_inv
+        FROM `invoices`
+    ";
+    $stmt = $pdo->query($sql);
+    $maxInv = (int) $stmt->fetchColumn();
+    $nextInvoiceNumber = $maxInv + 1;
+}
+
+// ✅ Prefill values
+$prefInvoiceNumber = ($mode === 'edit')
+    ? (int) ($invoiceData['invoiceNumber'] ?? 0)
+    : (int) $nextInvoiceNumber;
+
+$prefInvoiceDate = ($mode === 'edit') ? (string) ($invoiceData['invoiceDate'] ?? '') : '';
+$prefInvoiceStyle = ($mode === 'edit') ? (string) ($invoiceData['invoiceStyle'] ?? 'classic') : 'classic';
+
+$prefBillSchool = ($mode === 'edit')
+    ? (string) ($invoiceData['billTo']['school'] ?? $school['school_name'])
+    : (string) $school['school_name'];
+
+$prefBillName = ($mode === 'edit')
+    ? (string) ($invoiceData['billTo']['name'] ?? ($school['client_name'] ?? ''))
+    : (string) ($school['client_name'] ?? '');
+
+$prefBillPhone = ($mode === 'edit')
+    ? (string) ($invoiceData['billTo']['phone'] ?? ($school['mobile'] ?? ''))
+    : (string) ($school['mobile'] ?? '');
+
+$prefNote = ($mode === 'edit') ? (string) ($invoiceData['note'] ?? '') : '';
+
+$prefTotalsStatus = ($mode === 'edit') ? (string) ($invoiceData['totals']['status'] ?? 'UNPAID') : 'UNPAID';
+$prefTotalsPay = ($mode === 'edit') ? (float) ($invoiceData['totals']['pay'] ?? 0) : 0;
 
 require '../layout/single_invoice_header_final.php';
 ?>
+
+<script>
+    // ✅ server -> client
+    window.__INVOICE_MODE__ = <?= json_encode($mode) ?>;
+    window.__INVOICE_ID__ = <?= json_encode((int) $invoiceId) ?>;
+    window.__INVOICE_DATA__ = <?= json_encode($invoiceData ?? null) ?>;
+</script>
 
 <div class="invoice-wrapper">
     <div class="card shadow-sm border-0 rounded-4">
@@ -43,7 +142,7 @@ require '../layout/single_invoice_header_final.php';
                 </button>
 
                 <h2 class="m-0 fw-bold text-center flex-grow-1 order-2 order-md-2" style="line-height: 1.1;">
-                    Create Your Invoice
+                    <?= $mode === 'edit' ? 'Edit Your Invoice' : 'Create Your Invoice' ?>
                 </h2>
 
                 <button type="button" class="btn btn-reset btn-sm rounded-pill order-3 order-md-3" id="reset-btn">
@@ -60,8 +159,10 @@ require '../layout/single_invoice_header_final.php';
                 <!-- Bill To + Invoice Details -->
                 <div class="row g-4 mb-4">
 
-                    <!-- hidden input for school ID -->
-                    <input type="hidden" id="school-id" value="<?= $school['id'] ?>">
+                    <!-- hidden input for school ID + invoice ID + mode -->
+                    <input type="hidden" id="school-id" value="<?= (int) $school['id'] ?>">
+                    <input type="hidden" id="invoice-id" value="<?= (int) $invoiceId ?>">
+                    <input type="hidden" id="page-mode" value="<?= htmlspecialchars($mode) ?>">
 
                     <!-- Bill To -->
                     <div class="col-md-6">
@@ -72,17 +173,17 @@ require '../layout/single_invoice_header_final.php';
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-school"
-                                value="<?= htmlspecialchars($school['school_name']) ?>">
+                                value="<?= htmlspecialchars($prefBillSchool) ?>">
                         </div>
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-name"
-                                value="<?= htmlspecialchars($school['client_name']) ?>">
+                                value="<?= htmlspecialchars($prefBillName) ?>">
                         </div>
 
                         <div>
                             <input type="text" class="form-control" id="bill-phone"
-                                value="<?= htmlspecialchars($school['mobile'] ?? '') ?>">
+                                value="<?= htmlspecialchars($prefBillPhone) ?>">
                         </div>
                     </div>
 
@@ -95,18 +196,22 @@ require '../layout/single_invoice_header_final.php';
 
                         <div class="mb-3">
                             <input type="number" min="1" class="form-control" id="invoice-number"
-                                placeholder="Invoice #" value="<?= htmlspecialchars($nextInvoiceNumber) ?>">
+                                placeholder="Invoice #" value="<?= htmlspecialchars((string) $prefInvoiceNumber) ?>">
                         </div>
 
                         <div class="mb-3">
-                            <input type="date" class="form-control" id="invoice-date">
+                            <input type="date" class="form-control" id="invoice-date"
+                                value="<?= htmlspecialchars($prefInvoiceDate) ?>">
                         </div>
 
                         <div class="mb-3">
                             <select class="form-select" id="invoice-style">
-                                <option value="classic" selected>Classic Style</option>
-                                <option value="modern">Modern Style</option>
-                                <option value="minimal">Minimal Style</option>
+                                <option value="classic" <?= $prefInvoiceStyle === 'classic' ? 'selected' : '' ?>>Classic
+                                    Style</option>
+                                <option value="modern" <?= $prefInvoiceStyle === 'modern' ? 'selected' : '' ?>>Modern Style
+                                </option>
+                                <option value="minimal" <?= $prefInvoiceStyle === 'minimal' ? 'selected' : '' ?>>Minimal
+                                    Style</option>
                             </select>
                         </div>
                     </div>
@@ -127,7 +232,7 @@ require '../layout/single_invoice_header_final.php';
                                 <th style="width: 5%;"></th>
                             </tr>
                         </thead>
-                        <tbody id="items-body">
+                        <tbody id="items-body">                            
                             <tr class="item-row">
                                 <td>
                                     <input type="text" class="form-control item-desc"
@@ -141,8 +246,7 @@ require '../layout/single_invoice_header_final.php';
                                         required>
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control item-amount" value="0.00" required
-                                        >
+                                    <input type="number" class="form-control item-amount" value="0.00" required>
                                 </td>
                                 <td class="text-end">
                                     <button type="button" class="btn btn-link text-danger p-0 btn-sm btn-delete-row"
@@ -166,7 +270,8 @@ require '../layout/single_invoice_header_final.php';
                                 <div class="d-flex justify-content-between align-items-center gap-2">
                                     <label class="mb-0 fw-semibold" for="pay-amount">Pay Amount</label>
                                     <input type="number" min="0" step="0.01"
-                                        class="form-control form-control-sm text-end" id="pay-amount" value="0"
+                                        class="form-control form-control-sm text-end" id="pay-amount"
+                                        value="<?= htmlspecialchars(number_format($prefTotalsPay, 2, '.', '')) ?>"
                                         style="max-width: 140px;">
                                 </div>
                             </div>
@@ -199,9 +304,10 @@ require '../layout/single_invoice_header_final.php';
                         </label>
 
                         <select class="form-select form-select-sm w-auto" id="payment-status">
-                            <option value="UNPAID" selected>UNPAID</option>
-                            <option value="PAID">PAID</option>
-                            <option value="PARTIAL">PARTIALLY PAID</option>
+                            <option value="UNPAID" <?= $prefTotalsStatus === 'UNPAID' ? 'selected' : '' ?>>UNPAID</option>
+                            <option value="PAID" <?= $prefTotalsStatus === 'PAID' ? 'selected' : '' ?>>PAID</option>
+                            <option value="PARTIAL" <?= $prefTotalsStatus === 'PARTIAL' ? 'selected' : '' ?>>PARTIALLY PAID
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -215,13 +321,14 @@ require '../layout/single_invoice_header_final.php';
 
                 <div class="mb-4">
                     <textarea class="form-control" id="invoice-note" rows="3"
-                        placeholder="Write any note here..."></textarea>
+                        placeholder="Write any note here..."><?= htmlspecialchars($prefNote) ?></textarea>
                 </div>
 
                 <!-- Footer buttons -->
                 <div class="d-flex flex-column flex-md-row justify-content-center gap-3 pt-3 border-top">
                     <button type="button" class="btn btn-footer-add px-5 rounded-pill" id="add-invoice-btn">
-                        <i class="fa-solid fa-circle-plus me-2"></i> Save Invoice
+                        <i class="fa-solid fa-circle-plus me-2"></i>
+                        <?= $mode === 'edit' ? 'Save Change' : 'Save Invoice' ?>
                     </button>
 
                     <button type="button" class="btn btn-footer-pdf px-5 rounded-pill" id="download-pdf-btn">
@@ -276,9 +383,11 @@ require '../layout/single_invoice_header_final.php';
     integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
     crossorigin="anonymous"></script>
 
-
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    // ✅ original invoice number (for edit duplicate check)
+    window.ORIGINAL_INVOICE_NUMBER = <?= json_encode((string)$prefInvoiceNumber, JSON_UNESCAPED_UNICODE); ?>;
+
+    document.addEventListener("DOMContentLoaded", async function () {
         const itemsBody = document.getElementById("items-body");
         const invoiceForm = document.getElementById("invoice-form");
         const previewBody = document.getElementById("preview-body");
@@ -292,7 +401,10 @@ require '../layout/single_invoice_header_final.php';
         const payWrapper = document.getElementById("pay-wrapper");
         const payAmountEl = document.getElementById("pay-amount");
 
-        let isApplied = true;
+        const mode = window.__INVOICE_MODE__ || "create";
+
+        // ✅ preload invoice numbers
+        await loadInvoiceNumbers();
 
         // ✅ toast helpers
         let toastShown = false;
@@ -311,6 +423,45 @@ require '../layout/single_invoice_header_final.php';
             toast.show();
         }
 
+        // ✅ Invoice number list (for client-side duplicate check)
+        let ALL_INVOICE_NUMBERS = [];
+
+        async function loadInvoiceNumbers() {
+            try {
+                const res = await fetch("controllers/get_invoice_numbers.php", { cache: "no-store" });
+                const out = await res.json().catch(() => ({}));
+                if (res.ok && out && out.ok && Array.isArray(out.invoiceNumbers)) {
+                    ALL_INVOICE_NUMBERS = out.invoiceNumbers
+                        .map(v => String(v ?? "").trim())
+                        .filter(Boolean);
+                } else {
+                    ALL_INVOICE_NUMBERS = [];
+                }
+            } catch (e) {
+                console.warn("Invoice number fetch failed:", e);
+                ALL_INVOICE_NUMBERS = [];
+            }
+        }
+
+        function checkInvoiceDuplicate(invValue, mode) {
+            const cur = String(parseInt(invValue, 10) || "").trim();
+            if (!cur) return { ok: false, msg: "Invoice Number ঠিক দিন।" };
+
+            const original = String(window.ORIGINAL_INVOICE_NUMBER ?? "").trim();
+            const exists = ALL_INVOICE_NUMBERS.includes(cur);
+
+            if (mode === "edit") {
+                // allow if unchanged
+                if (original && cur === original) return { ok: true };
+                if (exists) return { ok: false, msg: "এই invoice number আগে থেকেই আছে। দয়া করে অন্য invoice number দিন।" };
+                return { ok: true };
+            }
+
+            // create mode
+            if (exists) return { ok: false, msg: "এই invoice number আগে থেকেই আছে। দয়া করে অন্য invoice number দিন।" };
+            return { ok: true };
+        }
+
         function extractNumber(value, fallback = 1) {
             const str = String(value ?? "").trim();
             if (!str) return fallback;
@@ -321,7 +472,7 @@ require '../layout/single_invoice_header_final.php';
             return Number.isFinite(num) ? num : fallback;
         }
 
-        // ✅ Auto set date
+        // ✅ Auto set date (create mode বা date empty হলে)
         const dateInput = document.getElementById("invoice-date");
         if (dateInput && !dateInput.value) {
             const today = new Date();
@@ -392,6 +543,9 @@ require '../layout/single_invoice_header_final.php';
             return chunkToWords(taka).trim();
         }
 
+        // ✅ Edit mode এ যদি নোট আগে থেকেই থাকে, সেটাকে আর auto overwrite করবে না
+        let isApplied = (noteTextarea.value || "").trim() === "";
+
         function setNoteAsWordsFromTotal() {
             const total = getTotalAmount();
             const words = convert_number_to_words(total);
@@ -428,7 +582,7 @@ require '../layout/single_invoice_header_final.php';
                     payWrapper.classList.add("d-none");
 
                     if (!toastShown) {
-                        showToast("সম্পূর্ণ টাকা পরিশোধ হয়েছে—স্ট্যাটাস PAID করা হলো।", "success");
+                        // showToast("সম্পূর্ণ টাকা পরিশোধ হয়েছে—স্ট্যাটাস PAID করা হলো।", "success");
                         toastShown = true;
                     }
                 }
@@ -436,7 +590,7 @@ require '../layout/single_invoice_header_final.php';
                 pay = total;
 
                 if (total > 0 && !toastShown) {
-                    showToast("স্ট্যাটাস PAID সিলেক্ট করা হয়েছে।", "success");
+                    // showToast("স্ট্যাটাস PAID সিলেক্ট করা হয়েছে।", "success");
                     toastShown = true;
                 }
             } else {
@@ -466,12 +620,24 @@ require '../layout/single_invoice_header_final.php';
             if (isApplied) setNoteAsWordsFromTotal();
         }
 
-        paymentStatusEl.addEventListener("change", updatePaymentUI);
+        let __lastPayStatus = (paymentStatusEl.value || "UNPAID");
+        paymentStatusEl.addEventListener("change", function(){
+            const now = (paymentStatusEl.value || "UNPAID");
+            if (now !== __lastPayStatus) {
+                if (now === "PAID") showToast("স্ট্যাটাস PAID সিলেক্ট করা হয়েছে।", "success");
+                __lastPayStatus = now;
+            }
+            updatePaymentUI();
+        });
         if (payAmountEl) payAmountEl.addEventListener("input", updatePaymentUI);
 
-        // Default ON
-        setNoteAsWordsFromTotal();
-        calcBtn.classList.add("active");
+        // ✅ calculator toggle
+        if (isApplied) {
+            setNoteAsWordsFromTotal();
+            calcBtn.classList.add("active");
+        } else {
+            calcBtn.classList.remove("active");
+        }
 
         calcBtn.addEventListener("click", function () {
             isApplied = !isApplied;
@@ -480,7 +646,7 @@ require '../layout/single_invoice_header_final.php';
                 setNoteAsWordsFromTotal();
                 calcBtn.classList.add("active");
             } else {
-                noteTextarea.value = "Zero Taka Only.";
+                // note clear করবে না; শুধু auto off
                 calcBtn.classList.remove("active");
             }
         });
@@ -510,47 +676,58 @@ require '../layout/single_invoice_header_final.php';
             });
         }
 
-        // ✅ Enter navigation
-        itemsBody.addEventListener("keydown", function (e) {
-            if (e.key !== "Enter") return;
+        // ✅ Edit mode: items render from server
+        function renderItemsFromServer(data) {
+            if (!data || !Array.isArray(data.items) || data.items.length === 0) return;
 
-            const el = e.target;
-            if (!el.matches(".item-desc, .item-qty, .item-rate")) return;
+            // clear all rows
+            while (itemsBody.rows.length > 0) itemsBody.deleteRow(0);
 
-            e.preventDefault();
+            data.items.forEach(it => {
+                const row = document.createElement("tr");
+                row.className = "item-row";
+                row.innerHTML = `
+                <td>
+                    <input type="text" class="form-control item-desc" placeholder="Item description / comment" required>
+                </td>
+                <td>
+                    <input type="text" class="form-control item-qty" required>
+                </td>
+                <td>
+                    <input type="number" min="0" step="0.01" class="form-control item-rate" required>
+                </td>
+                <td>
+                    <input type="number" class="form-control item-amount" required>
+                </td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-link text-danger p-0 btn-sm btn-delete-row" title="Remove item">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </td>
+            `;
 
-            const row = el.closest("tr.item-row");
-            if (!row) return;
+                row.querySelector(".item-desc").value = (it.desc ?? "").toString();
+                row.querySelector(".item-qty").value = (it.qty_raw ?? it.qty ?? "1").toString();
+                row.querySelector(".item-rate").value = Number(it.rate ?? 0).toFixed(2);
 
-            const inputs = Array.from(row.querySelectorAll(".item-desc, .item-qty, .item-rate"));
-            const idx = inputs.indexOf(el);
+                attachRowEvents(row);
+                itemsBody.appendChild(row);
+                recalcRow(row);
+            });
 
-            if (idx >= 0 && idx < inputs.length - 1) {
-                inputs[idx + 1].focus();
-                inputs[idx + 1].select?.();
-                return;
-            }
+            updatePaymentUI();
+        }
 
-            const allRows = Array.from(itemsBody.querySelectorAll("tr.item-row"));
-            const rowIndex = allRows.indexOf(row);
-
-            if (rowIndex >= 0 && rowIndex < allRows.length - 1) {
-                const nextDesc = allRows[rowIndex + 1].querySelector(".item-desc");
-                nextDesc?.focus();
-                nextDesc?.select?.();
-                return;
-            }
-
-            document.getElementById("add-item-btn").click();
-            const newLastRow = itemsBody.querySelector("tr.item-row:last-child .item-desc");
-            newLastRow?.focus();
-        });
-
-        // init rows
+        // ✅ init rows
         Array.from(itemsBody.rows).forEach(row => {
             attachRowEvents(row);
             recalcRow(row);
         });
+
+        // ✅ if edit mode, override rows
+        if (mode === "edit") {
+            renderItemsFromServer(window.__INVOICE_DATA__);
+        }
 
         updatePaymentUI();
 
@@ -582,7 +759,7 @@ require '../layout/single_invoice_header_final.php';
             invoiceForm.reset();
             toastShown = false;
 
-            if (dateInput) {
+            if (dateInput && !dateInput.value) {
                 const today = new Date();
                 const yyyy = today.getFullYear();
                 const mm = String(today.getMonth() + 1).padStart(2, "0");
@@ -598,6 +775,10 @@ require '../layout/single_invoice_header_final.php';
             firstRow.querySelector(".item-rate").value = 0;
             firstRow.querySelector(".item-amount").value = "0.00";
 
+            // reset note auto only if empty
+            isApplied = (noteTextarea.value || "").trim() === "";
+            if (isApplied) calcBtn.classList.add("active"); else calcBtn.classList.remove("active");
+
             recalcRow(firstRow);
             updatePaymentUI();
         });
@@ -607,13 +788,13 @@ require '../layout/single_invoice_header_final.php';
 
         function makeEmptyPreviewRow() {
             return `
-        <tr class="empty-row">
-            <td></td>
-            <td>&nbsp;</td>
-            <td class="text-center">&nbsp;</td>
-            <td class="text-center">&nbsp;</td>
-            <td class="text-center">&nbsp;</td>
-        </tr>`;
+            <tr class="empty-row">
+                <td></td>
+                <td>&nbsp;</td>
+                <td class="text-center">&nbsp;</td>
+                <td class="text-center">&nbsp;</td>
+                <td class="text-center">&nbsp;</td>
+            </tr>`;
         }
 
         function getNonEmptyItemRows() {
@@ -645,13 +826,13 @@ require '../layout/single_invoice_header_final.php';
                 const amount = qty * rate;
 
                 rowsHtml += `
-            <tr>
-                <td>#${idx + 1}</td>
-                <td>${desc}</td>
-                <td class="text-center">${qtyRaw || "1"}</td>
-                <td class="text-center">${rate.toFixed(2)}</td>
-                <td class="text-center">${amount.toFixed(2)}</td>
-            </tr>`;
+                <tr>
+                    <td>#${idx + 1}</td>
+                    <td>${desc}</td>
+                    <td class="text-center">${qtyRaw || "1"}</td>
+                    <td class="text-center">${rate.toFixed(2)}</td>
+                    <td class="text-center">${amount.toFixed(2)}</td>
+                </tr>`;
             });
 
             const emptyRowsNeeded = Math.max(0, MIN_ROWS - filledRows.length);
@@ -774,6 +955,7 @@ require '../layout/single_invoice_header_final.php';
             });
         });
 
+        // ✅ Save / Update
         document.getElementById("add-invoice-btn").addEventListener("click", async function () {
 
             const filledRows = getNonEmptyItemRows();
@@ -800,6 +982,7 @@ require '../layout/single_invoice_header_final.php';
 
             const payload = {
                 school_id: parseInt(document.getElementById("school-id").value, 10),
+                invoice_id: (mode === "edit") ? parseInt(document.getElementById("invoice-id").value, 10) : 0,
                 data: {
                     invoiceNumber: parseInt(document.getElementById("invoice-number").value, 10) || 0,
                     invoiceDate: document.getElementById("invoice-date").value || "",
@@ -823,14 +1006,31 @@ require '../layout/single_invoice_header_final.php';
                 }
             };
 
-            // Basic validation
             if (!payload.data.invoiceNumber || payload.data.invoiceNumber <= 0) {
                 showToast("Invoice Number ঠিক দিন।", "danger");
                 return;
             }
 
+            // ✅ Refresh invoice list just before save (so it's not stale)
+            await loadInvoiceNumbers();
+
+            const dupCheck = checkInvoiceDuplicate(payload.data.invoiceNumber, mode);
+            if (!dupCheck.ok) {
+                showToast(dupCheck.msg, "danger");
+                return;
+            }
+
+            if (mode === "edit" && (!payload.invoice_id || payload.invoice_id <= 0)) {
+                showToast("invoice_id missing/invalid.", "danger");
+                return;
+            }
+
+            const endpoint = (mode === "edit")
+                ? "controllers/invoice_update.php"
+                : "controllers/invoice_save_school.php";
+
             try {
-                const res = await fetch("../controllers/invoice_save_school.php", {
+                const res = await fetch(endpoint, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
@@ -843,10 +1043,7 @@ require '../layout/single_invoice_header_final.php';
                     return;
                 }
 
-                showToast("Invoice Save Successfully", "success");
-
-                // চাইলে: save হওয়ার পর invoice-number auto next করে দিতে পারো
-                document.getElementById("invoice-number").value = payload.data.invoiceNumber + 1;
+                showToast(mode === "edit" ? "Invoice Updated Successfully" : "Invoice Save Successfully", "success");
 
             } catch (err) {
                 console.error(err);
@@ -854,6 +1051,7 @@ require '../layout/single_invoice_header_final.php';
             }
         });
 
+        // Download PDF
         document.getElementById("download-pdf-btn").addEventListener("click", async function () {
             const card = document.getElementById("invoice-preview-card");
             if (!card) {
@@ -863,7 +1061,6 @@ require '../layout/single_invoice_header_final.php';
 
             const invNo = document.getElementById("invoice-number").value || "invoice";
 
-            // ✅ make a visible clone in body (fixes blank canvas)
             const tempWrap = document.createElement("div");
             tempWrap.style.position = "fixed";
             tempWrap.style.left = "0";
@@ -885,7 +1082,6 @@ require '../layout/single_invoice_header_final.php';
             document.body.appendChild(tempWrap);
 
             try {
-                // images load wait (logo/signature)
                 const imgs = Array.from(clone.querySelectorAll("img"));
                 await Promise.all(imgs.map(img => {
                     if (img.complete) return Promise.resolve();
@@ -914,7 +1110,6 @@ require '../layout/single_invoice_header_final.php';
                 if (imgHeight <= pageHeight) {
                     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
                 } else {
-                    // multipage
                     let heightLeft = imgHeight;
                     let position = 0;
                     while (heightLeft > 0) {
@@ -934,8 +1129,6 @@ require '../layout/single_invoice_header_final.php';
                 document.body.removeChild(tempWrap);
             }
         });
-
-
 
     });
 </script>

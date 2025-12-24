@@ -4,4 +4,9 @@
 * print button ta bad dite hobe
 
 # invoices.php file ta thik korte hobe
-* delete ar kaj korte hobe
+* delete ar kaj korte hobe ==> running
+
+
+# dashboard.php 
+* invoice theke income summary aina show korate hobe dashboard a .
+

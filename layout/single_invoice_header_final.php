@@ -88,16 +88,6 @@
             color: #fff;
         }
 
-        .btn-footer-print {
-            background-color: #2563eb;
-            color: #fff;
-        }
-
-        .btn-footer-print:hover {
-            background-color: #1d4ed8;
-            color: #fff;
-        }
-
         .btn-footer-pdf {
             background-color: #ea580c;
             color: #fff;
@@ -216,30 +206,6 @@
             opacity: 0.2;
             pointer-events: none;
             z-index: 0;
-        }
-
-
-        /* Print only the preview card */
-        @media print {
-            /* body * {
-                visibility: hidden !important;
-            } */
-
-            #invoice-preview-card,
-            #invoice-preview-card * {
-                visibility: visible !important;
-            }
-
-            #invoice-preview-card {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100% !important;
-                max-width: 100% !important;
-                box-shadow: none !important;
-                border: none !important;
-                margin: 0 !important;
-            }
         }
     </style>
 
