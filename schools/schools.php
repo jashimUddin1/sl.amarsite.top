@@ -72,28 +72,19 @@ require '../layout/layout_header.php';
         </h2>
 
         <!-- 🔍 Search bar -->
-        <input
-            type="text"
-            name="search"
-            id="schoolSearchInput"
-            placeholder="Search school..."
+        <input type="text" name="search" id="schoolSearchInput" placeholder="Search school..."
             class="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 w-56"
-            onkeyup="searchSchoolTable()"
-        >
+            onkeyup="searchSchoolTable()">
     </div>
 
     <!-- Right: Buttons -->
     <div class="flex items-center gap-2">
-        <button
-            type="button"
-            id="filterToggleBtn"
-            onclick="toggleFilter()"
+        <button type="button" id="filterToggleBtn" onclick="toggleFilter()"
             class="px-3 py-2 rounded border border-slate-300 text-xs sm:text-sm text-slate-700 hover:bg-slate-100">
             <?php echo $filtersActive ? 'Hide Filters' : 'Show Filters'; ?>
         </button>
 
-        <a href="school_create.php"
-           class="px-4 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700">
+        <a href="school_create.php" class="px-4 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700">
             + Add School
         </a>
     </div>
@@ -192,6 +183,7 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                     <th class="p-2 border" style="min-width: 150px;">School Name</th>
                     <th class="p-2 border" style="min-width: 150px;">Address</th>
                     <th class="p-2 border">Mobile</th>
+                    <th class="p-2 border">Fee y/m</th>
                     <th class="p-2 border">Status</th>
                     <th class="p-2 border text-center">Actions</th>
                     <th class="p-2 border">Print</th>
@@ -237,6 +229,13 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                         </td>
 
                         <td class="p-2 border align-center">
+                            <span class="text-xs">
+                                <?php echo number_format((float) ($s['y_fee'] ?? 0), 0); ?> /
+                                <?php echo number_format((float) ($s['m_fee'] ?? 0), 0); ?>
+                            </span>
+                        </td>
+
+                        <td class="p-2 border align-center">
                             <span class="text-xs font-semibold <?php echo $statusClass; ?>">
                                 <?php echo htmlspecialchars($s['status']); ?>
                             </span>
@@ -264,7 +263,9 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                             </div>
                         </td>
                         <td class="border text-center align-center">
-                            <button class="text-blue-600 hover:text-blue-800"><a href="../invoices/invoice_school_final.php?school_id=<?php echo (int) $s['id']; ?>" class="p-2">📄</a></button>
+                            <button class="text-blue-600 hover:text-blue-800"><a
+                                    href="../invoices/invoice_school_final.php?school_id=<?php echo (int) $s['id']; ?>"
+                                    class="p-2">📄</a></button>
                         </td>
 
                     </tr>
@@ -291,16 +292,16 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
     }
 </script>
 <script>
-function searchSchoolTable() {
-    const input = document.getElementById('schoolSearchInput');
-    const filter = input.value.toLowerCase();
-    const rows = document.querySelectorAll('table tbody tr');
+    function searchSchoolTable() {
+        const input = document.getElementById('schoolSearchInput');
+        const filter = input.value.toLowerCase();
+        const rows = document.querySelectorAll('table tbody tr');
 
-    rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(filter) ? '' : 'none';
-    });
-}
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    }
 </script>
 
 

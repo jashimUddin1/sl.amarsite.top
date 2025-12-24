@@ -16,4 +16,33 @@ updated_at
 
 
 
+amar schools table ==> 
+id
+district
+upazila
+school_name
+client_name
+mobile
+m_fee
+y_fee
+status
+photo_path
+created_by
+updated_by
+created_at
+updated_at
 
+invoices table ==>
+id
+in_no = mane invoice number
+school_id
+data
+created_at
+updated_at
+
+ami aber o amar table duita dilam . 
+
+invoices.php te age aktu kaj korte hobe mani check korte hobe ai monht a invoice create hoy nai amon kono school ase ki na . jodi sob school ar ai month a invoice thakbe (tumi invoices table theke check korba) tobe button ta secondary hobe ar jodi create school ba sob school ar invoice invoices table khuje na pawya jay (ai month ar) tobe btn ta success hobe. --
+
+jey koyta school baki ase sei koyta school ar data niye invoices table a invoice create korbe
+amar table onujaye invoice_auto_generate.php ta full  update kore daw

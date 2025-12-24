@@ -12,7 +12,12 @@ $flash = $_SESSION['flash'] ?? ['type' => '', 'msg' => ''];
 unset($_SESSION['flash']);
 
 // ✅ Fetch invoices (latest first)
-$stmt = $pdo->query("SELECT id, school_id, data, created_at, updated_at FROM invoices ORDER BY id DESC");
+$stmt = $pdo->query("
+    SELECT id, in_no, school_id, data, created_at, updated_at
+    FROM invoices
+    ORDER BY in_no DESC
+");
+
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 function safe_json($s)
@@ -24,6 +29,64 @@ function h($s)
 {
     return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
 }
+
+// ✅ Approved schools list
+$approvedStmt = $pdo->prepare("SELECT id, school_name, m_fee FROM schools WHERE status='approved' OR status=1");
+$approvedStmt->execute();
+$approvedSchools = $approvedStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$monthStart = date('Y-m-01 00:00:00');
+$monthEnd = date('Y-m-t 23:59:59');
+
+$remaining = 0;
+
+if ($approvedSchools) {
+    $invCheck = $pdo->prepare("
+        SELECT id, data, created_at
+        FROM invoices
+        WHERE school_id = :sid
+          AND created_at BETWEEN :ms AND :me
+        ORDER BY id DESC
+        LIMIT 30
+    ");
+
+    foreach ($approvedSchools as $s) {
+        $sid = (int) $s['id'];
+
+        // এই মাসে ঐ স্কুলের invoices (created_at ভিত্তিতে) তুলে আনা
+        $invCheck->execute([':sid' => $sid, ':ms' => $monthStart, ':me' => $monthEnd]);
+        $list = $invCheck->fetchAll(PDO::FETCH_ASSOC);
+
+        // ✅ এই মাসে invoice আছে কিনা চেক (invoiceDate থাকলে সেটাও মিলিয়ে দেখবে)
+        $hasThisMonth = false;
+        foreach ($list as $inv) {
+            $data = json_decode($inv['data'] ?? '', true);
+            $invDate = $data['invoiceDate'] ?? null;
+
+            if ($invDate) {
+                $ts = strtotime($invDate);
+                if ($ts && date('Y-m', $ts) === date('Y-m')) {
+                    $hasThisMonth = true;
+                    break;
+                }
+            } else {
+                // invoiceDate না থাকলে created_at মাস ধরবো
+                $ts = strtotime($inv['created_at'] ?? '');
+                if ($ts && date('Y-m', $ts) === date('Y-m')) {
+                    $hasThisMonth = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$hasThisMonth)
+            $remaining++;
+    }
+}
+
+$btnClass = ($remaining > 0) ? 'btn-success' : 'btn-secondary';
+$btnDisabled = ($remaining > 0) ? '' : 'disabled';
+
 
 require '../layout/layout_header.php';
 ?>
@@ -38,10 +101,17 @@ require '../layout/layout_header.php';
             <h5 class="mb-0 fw-semibold text-secondary">Saved Invoices</h5>
         </div>
 
-        
-        <!-- <a href="#" class="btn btn-success">
-            Automatic Generated //pore ai system chalu kora hole atar kaj  korbo appatotto nai tai comment kora
-        </a> -->
+
+        <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0">
+            <button type="submit" title="This Month" class="btn <?php echo $btnClass; ?>" <?php echo $btnDisabled; ?>>
+                Automatic Generate
+                <?php if ($remaining > 0): ?>
+                    <span class="badge bg-light text-dark ms-2"><?php echo (int) $remaining; ?></span>
+                <?php endif; ?>
+            </button>
+        </form>
+
+
     </div>
 
     <?php if (!empty($flash['msg'])): ?>
@@ -62,7 +132,7 @@ require '../layout/layout_header.php';
                     <?php foreach ($rows as $r): ?>
                         <?php
                         $data = safe_json($r['data'] ?? '');
-                        $invNo = $data['invoiceNumber'] ?? $r['id'];
+                        $invNo = $r['in_no'] ?? $r['id'];
                         $schoolName = $data['billTo']['school'] ?? ('School ID: ' . ($r['school_id'] ?? ''));
                         $invoiceDate = $data['invoiceDate'] ?? '';
                         $total = $data['totals']['total'] ?? 0;

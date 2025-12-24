@@ -1,7 +1,7 @@
 <?php //core/create_core.php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../auth/config.php';
 require_login();
-require_once __DIR__ . '/../image_helper.php';
+require_once __DIR__ . '/../helper_functions/image_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || ($_POST['action'] ?? '') !== 'create_school') {
 
@@ -10,18 +10,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || ($_POST['action'] ?? '') !== 'creat
         header('Location: ' . $_SERVER['HTTP_REFERER']);
     } else {
         // কেউ direct ঢুকলে (কোন referer নাই) → fallback page
-        header('Location: ../schools.php');
+        header('Location: ../schools/schools.php');
     }
     exit;
 }
 
 $errors = [];
 
-$district   = trim($_POST['district']     ?? '');
-$upazila    = trim($_POST['upazila']      ?? '');
-$schoolName = trim($_POST['school_name']  ?? '');
-$mobile     = trim($_POST['mobile']       ?? '');
-$status     = trim($_POST['status']       ?? 'Pending');
+$district = trim($_POST['district'] ?? '');
+$upazila = trim($_POST['upazila'] ?? '');
+$schoolName = trim($_POST['school_name'] ?? '');
+$mobile = trim($_POST['mobile'] ?? '');
+$m_fee = $_POST['m_fee'] ?? null;
+$y_fee = $_POST['y_fee'] ?? null;
+$status = trim($_POST['status'] ?? 'Pending');
 
 if ($district === '') {
     $errors[] = "District অবশ্যই দিতে হবে।";
@@ -46,17 +48,17 @@ if (!empty($_FILES['photo']['name'])) {
 if (!empty($errors)) {
     $_SESSION['school_errors'] = $errors;
     $_SESSION['school_old'] = [
-        'district'    => $district,
-        'upazila'     => $upazila,
+        'district' => $district,
+        'upazila' => $upazila,
         'school_name' => $schoolName,
-        'mobile'      => $mobile,
-        'status'      => $status,
+        'mobile' => $mobile,
+        'status' => $status,
     ];
 
     if (!empty($_SERVER['HTTP_REFERER'])) {
         header('Location: ' . $_SERVER['HTTP_REFERER']);
     } else {
-        header('Location: ../schools.php');
+        header('Location: ../schools/schools.php');
     }
     exit;
 }
@@ -67,36 +69,38 @@ try {
     // 🔹 schools টেবিলে insert
     $stmt = $pdo->prepare("
         INSERT INTO schools (
-            district, upazila, school_name, mobile, status,
+            district, upazila, school_name, mobile, m_fee, y_fee, status,
             photo_path, created_by, updated_by
         )
         VALUES (
-            :district, :upazila, :school_name, :mobile, :status,
+            :district, :upazila, :school_name, :mobile, :m_fee, :y_fee, :status,
             :photo_path, :created_by, :updated_by
         )
     ");
     $stmt->execute([
-        ':district'    => $district,
-        ':upazila'     => $upazila,
+        ':district' => $district,
+        ':upazila' => $upazila,
         ':school_name' => $schoolName,
-        ':mobile'      => $mobile,
-        ':status'      => $status,
-        ':photo_path'  => $photoPath,
-        ':created_by'  => $userId,
-        ':updated_by'  => $userId,
+        ':mobile' => $mobile,
+        ':m_fee' => $m_fee,
+        ':y_fee' => $y_fee,
+        ':status' => $status,
+        ':photo_path' => $photoPath,
+        ':created_by' => $userId,
+        ':updated_by' => $userId,
     ]);
 
     // নতুন school_id
-    $schoolId = (int)$pdo->lastInsertId();
+    $schoolId = (int) $pdo->lastInsertId();
 
     // 🔹 history/log data JSON আকারে বানাই
     $newData = [
-        'district'    => $district,
-        'upazila'     => $upazila,
+        'district' => $district,
+        'upazila' => $upazila,
         'school_name' => $schoolName,
-        'mobile'      => $mobile,
-        'status'      => $status,
-        'photo_path'  => $photoPath,
+        'mobile' => $mobile,
+        'status' => $status,
+        'photo_path' => $photoPath,
     ];
     $newDataJson = json_encode($newData, JSON_UNESCAPED_UNICODE);
 
@@ -110,18 +114,18 @@ try {
     ");
 
     $logStmt->execute([
-        ':note_id'   => null,          // স্কুল create, কোনো note না
+        ':note_id' => null,          // স্কুল create, কোনো note না
         ':school_id' => $schoolId,
-        ':user_id'   => $userId,
-        ':action'    => 'create school',     
-        ':old_text'  => null,          
-        ':new_text'  => $newDataJson,  // নতুন ডাটা JSON আকারে
+        ':user_id' => $userId,
+        ':action' => 'create school',
+        ':old_text' => null,
+        ':new_text' => $newDataJson,  // নতুন ডাটা JSON আকারে
     ]);
 
     // ... INSERT সফল হলে
     $_SESSION['school_success'] = 'স্কুল সফলভাবে তৈরি হয়েছে এবং লগ সংরক্ষণ হয়েছে।';
 
-    header("Location: ../schools.php");
+    header("Location: ../schools/schools.php");
     exit;
 
 } catch (Exception $e) {
@@ -133,7 +137,7 @@ try {
     if (!empty($_SERVER['HTTP_REFERER'])) {
         header('Location: ' . $_SERVER['HTTP_REFERER']);
     } else {
-        header('Location: ../schools.php');
+        header('Location: ../schools/schools.php');
     }
     exit;
 }

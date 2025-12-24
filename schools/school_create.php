@@ -61,6 +61,20 @@ require '../layout/layout_header.php';
             <input type="text" name="mobile" class="w-full p-2 border rounded text-sm">
         </div>
 
+        <div class="flex gap-2">
+                     <div class="col-md-6">
+            <label class="form-label">Monthly Fee</label>
+            <input type="number" step="0.01" name="m_fee" class="form-control">
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Yearly Fee</label>
+            <input type="number" step="0.01" name="y_fee" class="form-control">
+        </div>
+
+        </div>
+       
+
         <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700">Status</label>
             <select name="status" class="w-full p-2 border rounded text-sm">

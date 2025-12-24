@@ -27,6 +27,8 @@ $upazila = $school['upazila'] ?? '';
 $schoolName = $school['school_name'] ?? '';
 $clientName = $school['client_name'] ?? '';   // ✅ client_name
 $mobile = $school['mobile'] ?? '';
+$m_fee = $school['m_fee'] ?? '';
+$y_fee = $school['y_fee'] ?? '';
 $status = $school['status'] ?? 'Pending';
 $photoPath = $school['photo_path'] ?? null;
 
@@ -36,6 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $schoolName = trim($_POST['school_name'] ?? '');
     $clientName = trim($_POST['client_name'] ?? '');  // ✅ client_name POST
     $mobile = trim($_POST['mobile'] ?? '');
+    $m_fee = trim($_POST['m_fee'] ?? '');
+    $y_fee = trim($_POST['y_fee'] ?? '');
     $status = trim($_POST['status'] ?? 'Pending');
 
     if ($district === '')
@@ -71,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 school_name = :school_name,
                 client_name = :client_name,   
                 mobile      = :mobile,
+                m_fee       = :m_fee,
+                y_fee       = :y_fee,
                 status      = :status,
                 photo_path  = :photo_path,
                 updated_by  = :updated_by
@@ -81,8 +87,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':district' => $district,
             ':upazila' => $upazila,
             ':school_name' => $schoolName,
-            ':client_name' => $clientName,   // ✅ bind client_name
+            ':client_name' => $clientName,  
             ':mobile' => $mobile,
+            ':m_fee' => $m_fee,
+            ':y_fee' => $y_fee,
             ':status' => $status,
             ':photo_path' => $newPhotoPath,
             ':updated_by' => $userId,
@@ -176,15 +184,33 @@ require '../layout/layout_header.php';
                 <input type="text" name="mobile" class="w-full p-2 border rounded text-sm"
                     value="<?php echo htmlspecialchars($mobile); ?>">
             </div>
+
         </div>
+
+        <div class="flex gap-3" style="max-width: 97%">
+            <div class="col-6"> 
+
+                <label class="block text-xs font-semibold mb-1 text-slate-700">Monthly Fee</label>
+                <input type="number" step="0.01" name="m_fee" value="<?= htmlspecialchars($m_fee) ?>" 
+                    class="form-control">
+            </div>
+
+            <div class="col-6">
+                <label class="block text-xs font-semibold mb-1 text-slate-700">Yearly Fee</label>
+                <input type="number" step="0.01" name="y_fee" value="<?= htmlspecialchars($y_fee) ?>"
+                    class="form-control">
+            </div>
+
+        </div>
+
 
 
         <div class="flex justify-between gap-2" style="max-width: 97%">
             <div class="col-8">
                 <label class="block text-xs font-semibold mb-1 text-slate-700">Current Photo</label>
                 <?php if (!empty($photoPath)): ?>
-                    <img src="../<?php echo htmlspecialchars($photoPath); ?>"
-                        class="rounded border mb-2" style="width: 16rem; height: auto;">
+                    <img src="../<?php echo htmlspecialchars($photoPath); ?>" class="rounded border mb-2"
+                        style="width: 16rem; height: auto;">
                 <?php else: ?>
                     <p class="text-xs text-slate-500 mb-2">No photo uploaded.</p>
                 <?php endif; ?>
@@ -207,7 +233,8 @@ require '../layout/layout_header.php';
                 </div>
 
 
-                <div class="pt-2 flex justify-end gap-2 row col-md-12" style="position: absolute; bottom: 0; right: 0; max-width: 100%;">
+                <div class="pt-2 flex justify-end gap-2 row col-md-12"
+                    style="position: absolute; bottom: 0; right: 0; max-width: 100%;">
                     <a href="schools.php"
                         class="px-4 py-2 rounded border border-slate-300 text-sm text-slate-700 hover:bg-slate-100 col-md-6">
                         Cancel
