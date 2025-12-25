@@ -115,7 +115,7 @@ try {
             ],
             'items' => [
                 [
-                    'description' => 'Monthly Fee - ' . date('F Y'),
+                    'description' => 'Monthly Fee',
                     'qty' => 1,
                     'rate' => $fee,
                     'amount' => $fee

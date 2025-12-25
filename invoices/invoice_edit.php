@@ -173,17 +173,23 @@ require '../layout/single_invoice_header_final.php';
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-school"
-                                value="<?= htmlspecialchars($prefBillSchool) ?>">
+                                value="<?= htmlspecialchars($prefBillSchool) ?>"
+                                placeholder="Institution Name"
+                                >
                         </div>
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-name"
-                                value="<?= htmlspecialchars($prefBillName) ?>">
+                                value="<?= htmlspecialchars($prefBillName) ?>"
+                                placeholder="Client Name"
+                                >
                         </div>
 
                         <div>
                             <input type="text" class="form-control" id="bill-phone"
-                                value="<?= htmlspecialchars($prefBillPhone) ?>">
+                                value="<?= htmlspecialchars($prefBillPhone) ?>"
+                                placeholder="Phone number"
+                                >
                         </div>
                     </div>
 
@@ -708,7 +714,7 @@ require '../layout/single_invoice_header_final.php';
                 </td>
             `;
 
-                row.querySelector(".item-desc").value = (it.desc ?? "").toString();
+                row.querySelector(".item-desc").value = String(it.desc ?? it.description ?? it.item_desc ?? "");
                 row.querySelector(".item-qty").value = (it.qty_raw ?? it.qty ?? "1").toString();
                 row.querySelector(".item-rate").value = Number(it.rate ?? 0).toFixed(2);
 

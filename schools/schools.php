@@ -265,7 +265,12 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                         <td class="border text-center align-center">
                             <button class="text-blue-600 hover:text-blue-800"><a
                                     href="../invoices/invoice_school_final.php?school_id=<?php echo (int) $s['id']; ?>"
-                                    class="p-2">📄</a></button>
+                                    class="p-2 btn btn-outline-scondary">📄</a>
+                            </button>
+                            <a href="../invoices/invoices_by_school.php?school_id=<?php echo (int) $s['id']; ?>"
+                                class="btn btn-outline-success btn-sm" title="View all invoices">
+                                ⋮
+                            </a>
                         </td>
 
                     </tr>

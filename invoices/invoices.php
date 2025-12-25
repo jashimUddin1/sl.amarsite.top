@@ -84,7 +84,7 @@ if ($approvedSchools) {
     }
 }
 
-$btnClass = ($remaining > 0) ? 'btn-success' : 'btn-secondary';
+$btnClass = ($remaining > 0) ? 'btn-outline-success' : 'btn-outline-secondary';
 $btnDisabled = ($remaining > 0) ? '' : 'disabled';
 
 
@@ -101,14 +101,14 @@ require '../layout/layout_header.php';
             <h5 class="mb-0 fw-semibold text-secondary">Saved Invoices</h5>
         </div>
 
-
         <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0">
-            <button type="submit" title="This Month" class="btn <?php echo $btnClass; ?>" <?php echo $btnDisabled; ?>>
-                Automatic Generate
-                <?php if ($remaining > 0): ?>
-                    <span class="badge bg-light text-dark ms-2"><?php echo (int) $remaining; ?></span>
-                <?php endif; ?>
+            <button type="submit" title="Invoice Auto create This Month" class="btn <?php echo $btnClass; ?>" <?php echo $btnDisabled; ?>>
+                Auto create
+                
             </button>
+            <?php if ($remaining > 0): ?>
+                    <span class="btn btn-sm <?php echo $btnClass; ?>"><?php echo (int) $remaining; ?></span>
+                <?php endif; ?>
         </form>
 
 

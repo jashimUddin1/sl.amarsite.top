@@ -91,7 +91,7 @@ if ($user_id) {
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'reports' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">👤</span> User Reports
                 </a>
-                <a href="#"
+                <a href="/school_list/pages/settings.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'settings' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">⚙️</span> Settings
                 </a>

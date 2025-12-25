@@ -15,34 +15,19 @@ created_at
 updated_at
 
 
-
-amar schools table ==> 
+ager invoices table ==> 
 id
-district
-upazila
-school_name
-client_name
-mobile
-m_fee
-y_fee
-status
-photo_path
-created_by
-updated_by
+data  ==> akhone json data ase...-->{"clientInstitution":"Mirpur College","clientName":"sgf","clientPhone":"35345","invoiceNumber":"655","invoiceDate":"2025-12-07","paymentStatus":"UNPAID","invoiceNote":"Two Thousand Five Hundred Taka Only. Taka Only.","invoiceName":"Mirpur College","invoiceStyle":"classic","items":"[{\"description\":\"tetes\",\"quantity\":\"10\",\"amount\":250,\"total\":2500,\"calculated\":\"true\"}]","updatedAt":"2025-12-08T17:06:43.542Z"} 
 created_at
 updated_at
 
-invoices table ==>
+
+invoices table ==> 
 id
-in_no = mane invoice number
+in_no => mani invoice number 
 school_id
-data
+data ==> akhone json data ase ...--> {"invoiceNumber":2,"invoiceDate":"2025-12-24","invoiceStyle":"classic","billTo":{"school":"Mulghor High School","name":"","phone":""},"items":[{"desc":"new in","qty_raw":"32","qty":32,"rate":34,"amount":1088},{"desc":"now","qty_raw":"2","qty":2,"rate":25,"amount":50}],"totals":{"total":1138,"pay":1138,"due":0,"status":"PAID"},"note":"One Thousand Eighty Eight Taka Only."}
 created_at
 updated_at
 
-ami aber o amar table duita dilam . 
-
-invoices.php te age aktu kaj korte hobe mani check korte hobe ai monht a invoice create hoy nai amon kono school ase ki na . jodi sob school ar ai month a invoice thakbe (tumi invoices table theke check korba) tobe button ta secondary hobe ar jodi create school ba sob school ar invoice invoices table khuje na pawya jay (ai month ar) tobe btn ta success hobe. --
-
-jey koyta school baki ase sei koyta school ar data niye invoices table a invoice create korbe
-amar table onujaye invoice_auto_generate.php ta full  update kore daw
+school name ta show hocche na . but keno?
