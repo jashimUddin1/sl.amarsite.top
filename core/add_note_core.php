@@ -1,10 +1,13 @@
 <?php
 // core/add_note_core.php
-require_once '../config.php';
+require_once '../auth/config.php';
 require_login();
 
+$redirectTo = $_POST['redirect_to'] ?? '../index.php';
+
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../index.php');
+    header('Location: ' . $redirectTo);
     exit;
 }
 
@@ -25,7 +28,7 @@ if (!empty($nextMeetingRaw)) {
 
 if ($schoolId <= 0 || $noteText === '') {
     $_SESSION['note_error'] = 'নোট সেভ করা যায়নি। প্রয়োজনীয় তথ্য পাওয়া যায়নি।';
-    header('Location: ../index.php');
+    header('Location: ' . $redirectTo);    
     exit;
 }
 
@@ -65,7 +68,7 @@ try {
 
     $_SESSION['note_success'] = 'নোট সফলভাবে যুক্ত করা হয়েছে এবং লগ সংরক্ষণ করা হয়েছে।';
 
-    header('Location: ../index.php');
+    header('Location: ' . $redirectTo);    
     exit;
 
 } catch (Exception $e) {
@@ -73,6 +76,6 @@ try {
     // echo "<pre>".htmlspecialchars($e->getMessage())."</pre>";
 
     $_SESSION['note_error'] = 'নোট সেভ করতে সমস্যা হয়েছে।';
-    header('Location: ../index.php');
+    header('Location: ' . $redirectTo);    
     exit;
 }

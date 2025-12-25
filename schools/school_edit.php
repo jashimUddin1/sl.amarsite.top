@@ -223,7 +223,7 @@ require '../layout/layout_header.php';
             </div>
 
             <div class="col-4" style="position: relative;">
-                <div>
+                <div class="status" style="min-height: 155px;">
                     <label class="block text-xs font-semibold mb-1 text-slate-700">Status</label>
                     <select name="status" class="w-full p-2 border rounded text-sm">
                         <option value="Pending" <?php echo ($status === 'Pending') ? 'selected' : ''; ?>>Pending</option>

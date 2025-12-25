@@ -77,6 +77,10 @@ if ($user_id) {
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🔔</span> Notifications
                 </a>
+                <a href="/school_list/notes/notes_all.php"
+                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notes' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
+                    <span class="mr-2">📝</span> Notes
+                </a>
                 <a href="/school_list/logs/logs.php"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🧾</span> Logs
@@ -145,6 +149,11 @@ if ($user_id) {
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🔔</span> Notifications
+                    </a>
+                    <a href="/school_list/notes/notes_all.php"
+                        class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notes' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
+                        onclick="toggleSidebar()">
+                        <span class="mr-2">📝</span> Notes
                     </a>
                     <a href="/school_list/logs/logs.php"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"

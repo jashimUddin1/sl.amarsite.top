@@ -28,18 +28,21 @@ require '../layout/layout_header.php';
 
     <form action="../core/create_core.php" method="POST" enctype="multipart/form-data" class="space-y-3">
         <input type="hidden" name="action" value="create_school">
-        <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">
-                District<span class="text-red-500">*</span>
-            </label>
-            <input type="text" name="district" class="w-full p-2 border rounded text-sm" required>
-        </div>
 
-        <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">
-                Upazila<span class="text-red-500">*</span>
-            </label>
-            <input type="text" name="upazila" class="w-full p-2 border rounded text-sm" required>
+        <div class="flex gap-2">
+            <div class="col-6">
+                <label class="block text-xs font-semibold mb-1 text-slate-700">
+                    District<span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="district" class="w-full p-2 border rounded text-sm" required>
+            </div>
+
+            <div class="col-6">
+                <label class="block text-xs font-semibold mb-1 text-slate-700">
+                    Upazila<span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="upazila" class="w-full p-2 border rounded text-sm" required>
+            </div>
         </div>
 
         <div>
@@ -62,34 +65,38 @@ require '../layout/layout_header.php';
         </div>
 
         <div class="flex gap-2">
-                     <div class="col-md-6">
-            <label class="form-label">Monthly Fee</label>
-            <input type="number" step="0.01" name="m_fee" class="form-control">
+            <div class="col-md-6">
+                <label class="form-label">Monthly Fee</label>
+                <input type="number" step="0.01" name="m_fee" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Yearly Fee</label>
+                <input type="number" step="0.01" name="y_fee" class="form-control">
+            </div>
+
         </div>
 
-        <div class="col-md-6">
-            <label class="form-label">Yearly Fee</label>
-            <input type="number" step="0.01" name="y_fee" class="form-control">
+
+        <div class="flex gap-2">
+            <div class="col-6">
+                <label class="block text-xs font-semibold mb-1 text-slate-700">Photo (optional)</label>
+                <input type="file" name="photo" accept="image/*" class="w-full text-sm">
+                <p class="text-[11px] text-slate-500 mt-1">
+                    format: JPG, PNG, JPEG. Maximum file size: 5MB.
+                </p>
+            </div>
+
+            <div class="col-6">
+                <label class="block text-xs font-semibold mb-1 text-slate-700">Status</label>
+                <select name="status" class="w-full p-2 border rounded text-sm">
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                </select>
+            </div>
         </div>
 
-        </div>
-       
 
-        <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">Status</label>
-            <select name="status" class="w-full p-2 border rounded text-sm">
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-            </select>
-        </div>
-
-        <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">Photo (optional)</label>
-            <input type="file" name="photo" accept="image/*" class="w-full text-sm">
-            <p class="text-[11px] text-slate-500 mt-1">
-                format: JPG, PNG, JPEG. Maximum file size: 5MB.
-            </p>
-        </div>
 
         <div class="pt-2 flex justify-end gap-2">
             <a href="schools.php"

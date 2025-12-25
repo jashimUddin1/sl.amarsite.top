@@ -328,9 +328,10 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Total Notes</div>
         <div class="text-2xl font-bold text-slate-800 mb-1"><?php echo $totalNotes; ?></div>
-        <p class="text-[11px] text-slate-500">
-            সকল স্কুলের উপর দেওয়া মোট নোট সংখ্যা।
-        </p>
+        <a href="../notes/notes_all.php"
+           class="inline-block text-xs text-indigo-600 hover:underline">
+            View all
+        </a>
     </div>
 
     <div class="bg-white rounded-xl shadow p-4">
@@ -372,7 +373,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="flex items-center justify-between mb-2">
             <h2 class="text-sm font-semibold text-slate-800">Latest Schools</h2>
-            <a href="schools.php"
+            <a href="../schools/schools.php"
                class="text-xs text-indigo-600 hover:underline">
                 View All
             </a>

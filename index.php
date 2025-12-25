@@ -377,7 +377,7 @@ require 'layout/layout_header_index.php';
                                 <!-- Actions -->
                                 <div class="mt-auto d-flex gap-2">
                                     <!-- সব নোট লিস্ট + edit/delete -->
-                                    <a href="note_view.php?school_id=<?php echo (int) $s['id']; ?>"
+                                    <a href="notes/note_view.php?school_id=<?php echo (int) $s['id']; ?>"
                                        class="btn btn-primary btn-sm w-50">
                                         Manage Note
                                     </a>
@@ -473,7 +473,7 @@ require 'layout/layout_header_index.php';
         contentEl.innerHTML = "<p class='text-muted small mb-0'>Loading...</p>";
 
         // notes.php থেকে HTML রেসপন্স নিয়ে আসছি
-        fetch('notes.php?id=' + encodeURIComponent(schoolId))
+        fetch('notes/notes.php?id=' + encodeURIComponent(schoolId))
             .then(function (res) {
                 return res.text();
             })
@@ -495,16 +495,6 @@ require 'layout/layout_header_index.php';
         }
     }
 
-    // পুরোনো notification_core.php ফেচ: যদি ব্যবহার করো, নাহলে remove করতে পারো
-    fetch("core/notification_core.php")
-        .then(res => res.json())
-        .then(data => {
-            if (data.length > 0 && document.getElementById("notify-badge")) {
-                document.getElementById("notify-badge").innerText = data.length;
-                document.getElementById("notify-badge").style.display = "inline-block";
-            }
-        })
-        .catch(() => {});
 </script>
 
 <script>

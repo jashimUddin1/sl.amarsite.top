@@ -1,6 +1,6 @@
 <?php
 // notes_all.php
-require_once 'config.php';
+require_once '../auth/config.php';
 require_login();
 
 /* =========================
@@ -89,7 +89,7 @@ function banglaDay(?string $dt, array $map): string {
 
 $pageTitle  = 'All Notes';
 $activeMenu = 'home';
-require 'layout_header.php';
+require '../layout/layout_header.php';
 ?>
 
 <div class="container-lg my-4">
@@ -195,4 +195,4 @@ require 'layout_header.php';
 
 </div>
 
-<?php require 'layout_footer.php'; ?>
+<?php require '../layout/layout_footer.php'; ?>

@@ -29,32 +29,37 @@ $notesStmt = $pdo->prepare("
 $notesStmt->execute([':school_id' => $schoolId]);
 $notes = $notesStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$pageTitle   = 'Notes - ' . ($school['school_name'] ?? 'School');
+$pageTitle = 'Notes - ' . ($school['school_name'] ?? 'School');
 $pageHeading = 'Notes - ' . ($school['school_name'] ?? '');
-$activeMenu  = 'home';
+$activeMenu = 'home';
 
 require '../layout/layout_header.php';
 
 $dayBnMap = [
-    'Sunday'    => 'রবিবার',
-    'Monday'    => 'সোমবার',
-    'Tuesday'   => 'মঙ্গলবার',
+    'Sunday' => 'রবিবার',
+    'Monday' => 'সোমবার',
+    'Tuesday' => 'মঙ্গলবার',
     'Wednesday' => 'বুধবার',
-    'Thursday'  => 'বৃহস্পতিবার',
-    'Friday'    => 'শুক্রবার',
-    'Saturday'  => 'শনিবার',
+    'Thursday' => 'বৃহস্পতিবার',
+    'Friday' => 'শুক্রবার',
+    'Saturday' => 'শনিবার',
 ];
 
-function getBanglaDayFromDateTime(?string $dt, array $map): string {
-    if (empty($dt)) return 'N/A';
+function getBanglaDayFromDateTime(?string $dt, array $map): string
+{
+    if (empty($dt))
+        return 'N/A';
     $ts = strtotime($dt);
-    if ($ts === false) return 'N/A';
+    if ($ts === false)
+        return 'N/A';
     $dayEn = date('l', $ts);
     return $map[$dayEn] ?? 'N/A';
 }
 ?>
 <style>
-    .close-custom { padding: 12px 12px !important; }
+    .close-custom {
+        padding: 12px 12px !important;
+    }
 </style>
 
 <div class="container-lg my-4">
@@ -89,9 +94,10 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string {
             </p>
         </div>
         <div class="d-flex gap-2">
-            <a href="index.php" class="btn btn-sm btn-secondary">← Back to List</a>
+            <a href="../index.php" class="btn btn-sm btn-secondary">← Back to List</a>
 
-            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addNoteModalInline">
+            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal"
+                data-bs-target="#addNoteModalInline">
                 + Add Note
             </button>
         </div>
@@ -119,8 +125,8 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string {
                             <?php $sl = 1; ?>
                             <?php foreach ($notes as $n): ?>
                                 <?php
-                                    $nextMeet = $n['next_meet'] ?? null;
-                                    $dayNameBn = getBanglaDayFromDateTime($nextMeet, $dayBnMap);
+                                $nextMeet = $n['next_meet'] ?? null;
+                                $dayNameBn = getBanglaDayFromDateTime($nextMeet, $dayBnMap);
                                 ?>
                                 <tr class="small">
                                     <td><?php echo $sl++; ?></td>
@@ -130,11 +136,9 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string {
                                     <td><?php echo htmlspecialchars($n['admin_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($n['created_at'] ?? 'N/A'); ?></td>
                                     <td class="text-end">
-                                        <button type="button"
-                                            class="btn btn-sm btn-outline-primary btn-edit-note"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editNoteModal"
-                                            data-note-id="<?php echo (int)($n['id'] ?? 0); ?>"
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-edit-note"
+                                            data-bs-toggle="modal" data-bs-target="#editNoteModal"
+                                            data-note-id="<?php echo (int) ($n['id'] ?? 0); ?>"
                                             data-note-text="<?php echo htmlspecialchars($n['note_text'] ?? ''); ?>"
                                             data-next-meet="<?php echo htmlspecialchars($nextMeet ?? ''); ?>">
                                             Edit
@@ -142,8 +146,8 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string {
 
                                         <form method="POST" action="core/delete_note_core.php" class="d-inline"
                                             onsubmit="return confirm('নোট ডিলিট করতে চান?');">
-                                            <input type="hidden" name="note_id" value="<?php echo (int)($n['id'] ?? 0); ?>">
-                                            <input type="hidden" name="school_id" value="<?php echo (int)$schoolId; ?>">
+                                            <input type="hidden" name="note_id" value="<?php echo (int) ($n['id'] ?? 0); ?>">
+                                            <input type="hidden" name="school_id" value="<?php echo (int) $schoolId; ?>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                         </form>
                                     </td>
@@ -158,20 +162,31 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string {
 </div>
 
 <!-- Inline Add Note Modal -->
-<div class="modal fade" id="addNoteModalInline" tabindex="-1" aria-labelledby="addNoteModalInlineLabel" aria-hidden="true">
+<div class="modal fade" id="addNoteModalInline" tabindex="-1" aria-labelledby="addNoteModalInlineLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="core/add_note_core.php" class="modal-content">
+        <form method="POST" action="../core/add_note_core.php" class="modal-content">
+            <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
             <div class="modal-header py-2">
                 <h5 class="modal-title" id="addNoteModalInlineLabel">Add Note</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" name="school_id" value="<?php echo (int)$schoolId; ?>">
+                <input type="hidden" name="school_id" value="<?php echo (int) $schoolId; ?>">
                 <div class="mb-2">
                     <label class="form-label small mb-1">Note</label>
-                    <textarea name="note_text" rows="4" class="form-control form-control-sm" required></textarea>
+                    <textarea name="note_text" rows="3"
+                        placeholder="Write note for <?php echo htmlspecialchars($school['school_name']); ?>"
+                        class="form-control form-control-sm" required></textarea>
+                </div>
+
+                <div class="mb-2">
+                    <label for="nextMeeting" class="form-label small mb-1">Next Meeting</label>
+                    <input type="datetime-local" id="nextMeeting" name="next_meeting_date"
+                        class="form-control form-control-sm">
                 </div>
             </div>
+
             <div class="modal-footer py-2">
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="submit" class="btn btn-sm btn-primary">Save</button>
@@ -190,16 +205,18 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string {
             </div>
             <div class="modal-body">
                 <input type="hidden" name="note_id" id="editNoteId">
-                <input type="hidden" name="school_id" value="<?php echo (int)$schoolId; ?>">
+                <input type="hidden" name="school_id" value="<?php echo (int) $schoolId; ?>">
 
                 <div class="mb-2">
                     <label class="form-label small mb-1">Note</label>
-                    <textarea name="note_text" id="editNoteText" rows="4" class="form-control form-control-sm" required></textarea>
+                    <textarea name="note_text" id="editNoteText" rows="4" class="form-control form-control-sm"
+                        required></textarea>
                 </div>
 
                 <div class="mb-2">
                     <label for="nextMeeting" class="form-label small mb-1">Next Meeting</label>
-                    <input type="datetime-local" id="nextMeeting" name="next_meeting_date" class="form-control form-control-sm">
+                    <input type="datetime-local" id="nextMeeting" name="next_meeting_date"
+                        class="form-control form-control-sm">
                 </div>
             </div>
             <div class="modal-footer py-2">
@@ -211,33 +228,33 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const editButtons = document.querySelectorAll('.btn-edit-note');
-    const editNoteIdInput = document.getElementById('editNoteId');
-    const editNoteTextInput = document.getElementById('editNoteText');
-    const nextMeetingInput = document.getElementById('nextMeeting');
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButtons = document.querySelectorAll('.btn-edit-note');
+        const editNoteIdInput = document.getElementById('editNoteId');
+        const editNoteTextInput = document.getElementById('editNoteText');
+        const nextMeetingInput = document.getElementById('nextMeeting');
 
-    editButtons.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const noteId = this.getAttribute('data-note-id');
-            const noteText = this.getAttribute('data-note-text') || '';
-            const nextMeet = this.getAttribute('data-next-meet') || '';
+        editButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const noteId = this.getAttribute('data-note-id');
+                const noteText = this.getAttribute('data-note-text') || '';
+                const nextMeet = this.getAttribute('data-next-meet') || '';
 
-            if (editNoteIdInput) editNoteIdInput.value = noteId;
-            if (editNoteTextInput) editNoteTextInput.value = noteText;
+                if (editNoteIdInput) editNoteIdInput.value = noteId;
+                if (editNoteTextInput) editNoteTextInput.value = noteText;
 
-            // MySQL DATETIME -> datetime-local (YYYY-MM-DDTHH:MM)
-            if (nextMeetingInput) {
-                if (nextMeet) {
-                    const formatted = nextMeet.replace(' ', 'T').slice(0, 16);
-                    nextMeetingInput.value = formatted;
-                } else {
-                    nextMeetingInput.value = '';
+                // MySQL DATETIME -> datetime-local (YYYY-MM-DDTHH:MM)
+                if (nextMeetingInput) {
+                    if (nextMeet) {
+                        const formatted = nextMeet.replace(' ', 'T').slice(0, 16);
+                        nextMeetingInput.value = formatted;
+                    } else {
+                        nextMeetingInput.value = '';
+                    }
                 }
-            }
+            });
         });
     });
-});
 </script>
 
 <?php require '../layout/layout_footer.php'; ?>
