@@ -5,7 +5,7 @@ require_once '../helper_functions/image_helper.php';
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($id <= 0) {
-    header("Location: /school_list/schools/schools.php");
+    header("Location: /schools/schools.php");
     exit;
 }
 
@@ -15,7 +15,7 @@ $stmt->execute([':id' => $id]);
 $school = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$school) {
-    header("Location: /school_list/schools/schools.php");
+    header("Location: /schools/schools.php");
     exit;
 }
 

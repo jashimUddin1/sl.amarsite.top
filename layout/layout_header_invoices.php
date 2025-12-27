@@ -1,5 +1,5 @@
 <?php
-// layout_header.php
+// layout_header_invoices.php
 if (!isset($pageTitle))   $pageTitle = 'Admin Panel';
 if (!isset($pageHeading)) $pageHeading = '';
 if (!isset($activeMenu))  $activeMenu = 'home';
@@ -41,17 +41,16 @@ if ($user_id) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- ✅ Font Awesome (Invoice generator) -->
+    <!-- ✅ Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
           referrerpolicy="no-referrer" />
 
-    <!-- ✅ html2pdf + html2canvas (Invoice generator) -->
+    <!-- ✅ html2pdf + html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <!-- ✅ Merged global styles (Invoice generator এর দরকারি অংশ) -->
     <style>
         body{
             font-family: 'Inter', sans-serif;
@@ -59,7 +58,6 @@ if ($user_id) {
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Invoice generator support classes (যেখানে দরকার সেখানে use করবে) */
         .form-section{ transition: all 0.3s ease-in-out; }
 
         .render-area{
@@ -107,57 +105,60 @@ if ($user_id) {
 
 <body class="bg-slate-100">
 
-<div class="h-screen flex">
+<div class="min-h-screen flex">
 
     <!-- ✅ Desktop Sidebar -->
     <aside id="sidebarDesktop"
         class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 bg-slate-900 text-slate-100 shadow-xl z-30">
+
         <div class="h-16 flex items-center px-4 border-b border-slate-800">
-            <img src="../assets/edur.png" style="width: 160px;" alt="logo">
+            <a href="<?= base_url('index.php') ?>" class="inline-block">
+                <img src="<?= base_url('assets/edur.png') ?>" style="width:160px;" alt="logo">
+            </a>
         </div>
 
         <nav class="flex-1 overflow-y-auto py-4">
-            <a href="/school_list/index.php"
+            <a href="<?= base_url('index.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'home' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🏠</span> Home
             </a>
 
-            <a href="/school_list/pages/dashboard.php"
+            <a href="<?= base_url('pages/dashboard.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'dashboard' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">📊</span> Dashboard
             </a>
 
-            <a href="/school_list/schools/schools.php"
+            <a href="<?= base_url('schools/schools.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🏫</span> Schools
             </a>
 
-            <a href="/school_list/invoices/invoices.php"
+            <a href="<?= base_url('invoices/invoices.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'invoices' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🧾</span> Invoices
             </a>
 
-            <a href="/school_list/pages/notifications.php"
+            <a href="<?= base_url('pages/notifications.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🔔</span> Notifications
             </a>
 
-            <a href="/school_list/logs/logs.php"
+            <a href="<?= base_url('logs/logs.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🧾</span> Logs
             </a>
 
-            <a href="/school_list/pages/trash.php"
+            <a href="<?= base_url('pages/trash.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'trash' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🗑️</span> Trash
             </a>
 
-            <a href="/school_list/pages/user_reports.php"
+            <a href="<?= base_url('pages/user_reports.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'reports' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">👤</span> User Reports
             </a>
 
-            <a href="#"
+            <a href="<?= base_url('pages/settings.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'settings' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">⚙️</span> Settings
             </a>
@@ -165,7 +166,7 @@ if ($user_id) {
 
         <div class="border-t border-slate-800 px-4 py-3 text-xs">
             <div class="font-semibold"><?php echo $userName; ?></div>
-            <a href="/school_list/auth/logout.php" class="text-slate-300 hover:text-white">Logout</a>
+            <a href="<?= base_url('auth/logout.php') ?>" class="text-slate-300 hover:text-white">Logout</a>
         </div>
     </aside>
 
@@ -192,8 +193,9 @@ if ($user_id) {
 
             <div class="flex items-center gap-3">
                 <div class="relative">
-                    <a href="../pages/notifications.php"
-                       class="text-sm px-2 py-1 rounded text-white <?php echo ($notifyCount > 0) ? 'bg-success' : 'bg-secondary'; ?> hover:bg-secondary">
+                    <a href="<?= base_url('pages/notifications.php') ?>"
+                       class="text-sm px-2 py-1 rounded text-white <?php echo ($notifyCount > 0) ? 'bg-success' : 'bg-secondary'; ?> hover:bg-secondary"
+                       title="Notifications">
                         &#128276;
                     </a>
 
@@ -208,14 +210,12 @@ if ($user_id) {
                     <?php echo $userName; ?>
                 </span>
 
-                <a href="../auth/logout.php"
+                <a href="<?= base_url('auth/logout.php') ?>"
                    class="text-xs sm:text-sm px-3 py-1.5 rounded bg-slate-900 text-white hover:bg-slate-800">
                     Logout
                 </a>
             </div>
         </header>
 
-   
-        <!-- <main class="mt-16 p-4 h-[calc(100vh-4rem)] overflow-y-auto"> -->
-
-        <main class="mt-4 p-1 overflow-y-auto">
+        <!-- Page content wrapper -->
+        <main class="mt-16 p-1 overflow-y-auto">

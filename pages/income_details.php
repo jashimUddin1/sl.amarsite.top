@@ -138,7 +138,7 @@ $summaryLabel = $summaryLabelMap[$type] ?? 'Summary';
                 ৳ <?= number_format($sum, 0) ?>
             </span>
 
-            <a href="/school_list/pages/dashboard.php?range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+            <a href="/pages/dashboard.php?range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
                 class="btn btn-outline-dark btn-sm" title="Back to Dashboard">
                 Back
             </a>

@@ -31,7 +31,7 @@ function h($s)
 }
 
 // ✅ Approved schools list
-$approvedStmt = $pdo->prepare("SELECT id, school_name, m_fee FROM schools WHERE status='approved' OR status=1");
+$approvedStmt = $pdo->prepare("SELECT id, school_name, m_fee FROM schools WHERE status='Approved' ");
 $approvedStmt->execute();
 $approvedSchools = $approvedStmt->fetchAll(PDO::FETCH_ASSOC);
 

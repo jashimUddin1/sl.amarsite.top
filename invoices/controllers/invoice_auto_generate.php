@@ -26,7 +26,7 @@ try {
     $approvedStmt = $pdo->prepare("
         SELECT id, school_name, client_name, mobile, m_fee
         FROM schools
-        WHERE status='approved' OR status=1
+        WHERE status='Approved'
         ORDER BY id ASC
     ");
     $approvedStmt->execute();

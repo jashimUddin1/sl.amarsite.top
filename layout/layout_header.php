@@ -53,47 +53,47 @@ if ($user_id) {
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4">
-                <a href="/school_list/index.php"
+                <a href="<?= base_url('index.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'home' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🏠</span> Home
                 </a>
 
-                <a href="/school_list/pages/dashboard.php"
+                <a href="<?= base_url('pages/dashboard.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'dashboard' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">📊</span> Dashboard
                 </a>
 
-                <a href="/school_list/schools/schools.php"
+                <a href="<?= base_url('schools/schools.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🏫</span> Schools
                 </a>
 
-                <a href="/school_list/invoices/invoices.php"
+                <a href="<?= base_url('invoices/invoices.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'invoices' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🧾</span> Invoices
                 </a>
 
-                <a href="/school_list/pages/notifications.php"
+                <a href="<?= base_url('pages/notifications.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🔔</span> Notifications
                 </a>
-                <a href="/school_list/notes/notes_all.php"
+                <a href="<?= base_url('notes/notes_all.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notes' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">📝</span> Notes
                 </a>
-                <a href="/school_list/logs/logs.php"
+                <a href="<?= base_url('logs/logs.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🧾</span> Logs
                 </a>
-                <a href="/school_list/pages/trash.php"
+                <a href="<?= base_url('pages/trash.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'trash' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">🗑️</span> Trash
                 </a>
-                <a href="/school_list/pages/user_reports.php"
+                <a href="<?= base_url('pages/user_reports.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'reports' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">👤</span> User Reports
                 </a>
-                <a href="/school_list/pages/settings.php"
+                <a href="<?= base_url('pages/settings.php') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'settings' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">⚙️</span> Settings
                 </a>
@@ -103,7 +103,7 @@ if ($user_id) {
                 <div class="font-semibold">
                     <?php echo $userName; ?>
                 </div>
-                <a href="/school_list/auth/logout.php" class="text-slate-300 hover:text-white">
+                <a href="<?= base_url('auth/logout.php') ?>" class="text-slate-300 hover:text-white">
                     Logout
                 </a>
             </div>
@@ -115,7 +115,7 @@ if ($user_id) {
 
             <aside class="absolute inset-y-0 left-0 w-64 bg-slate-900 text-slate-100 shadow-xl flex flex-col">
                 <div class="h-16 flex items-center px-4 border-b border-slate-800 justify-between">
-                    <img src="/school_list/assets/edur.png" style="width: 160px; " alt="logo">
+                    <img src="/assets/edur.png" style="width: 160px; " alt="logo">
                     <!-- <span class="text-lg font-bold tracking-wide">
                     School List
                 </span> -->
@@ -125,52 +125,52 @@ if ($user_id) {
                 </div>
 
                 <nav class="flex-1 overflow-y-auto py-4">
-                    <a href="/school_list/index.php"
+                    <a href="<?= base_url('index.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'home' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🏠</span> Home
                     </a>
-                    <a href="/school_list/pages/dashboard.php"
+                    <a href="<?= base_url('pages/dashboard.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'dashboard' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">📊</span> Dashboard
                     </a>
-                    <a href="/school_list/schools/schools.php"
+                    <a href="<?= base_url('schools/schools.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🏫</span> Schools
                     </a>
-                    <a href="/school_list/invoices/invoices.php"
+                    <a href="<?= base_url('invoices/invoices.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'invoices' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🏫</span> Invoices
                     </a>
-                    <a href="/school_list/pages/notifications.php"
+                    <a href="<?= base_url('pages/notifications.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🔔</span> Notifications
                     </a>
-                    <a href="/school_list/notes/notes_all.php"
+                    <a href="<?= base_url('notes/notes_all.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notes' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">📝</span> Notes
                     </a>
-                    <a href="/school_list/logs/logs.php"
+                    <a href="<?= base_url('logs/logs.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🧾</span> Logs
                     </a>
-                    <a href="/school_list/pages/trash.php"
+                    <a href="<?= base_url('pages/trash.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'trash' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">🗑️</span> Trash
                     </a>
-                    <a href="/school_list/pages/user_reports.php"
+                    <a href="<?= base_url('pages/user_reports.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'reports' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">👤</span> User Reports
                     </a>
-                    <a href="#"
+                    <a href="<?= base_url('pages/settings.php') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'settings' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">⚙️</span> Settings
@@ -181,7 +181,7 @@ if ($user_id) {
                     <div class="font-semibold">
                         <?php echo $userName; ?>
                     </div>
-                    <a href="/school_list/auth/logout.php" class="text-slate-300 hover:text-white">
+                    <a href="<?= base_url('auth/logout.php') ?>" class="text-slate-300 hover:text-white">
                         Logout
                     </a>
                 </div>
@@ -239,7 +239,7 @@ if ($user_id) {
                     <span class="hidden sm:inline-block text-sm text-slate-600">
                         <?php echo $userName; ?>
                     </span>
-                    <a href="../auth/logout.php"
+                    <a href="<?= base_url('auth/logout.php') ?>"
                         class="text-xs sm:text-sm px-3 py-1.5 rounded bg-slate-900 text-white hover:bg-slate-800">
                         Logout
                     </a>

@@ -239,7 +239,7 @@ require '../layout/layout_header.php';
             <div class="text-2xl font-bold text-slate-800 mt-1">
                 ৳ <?= number_format($income['total'], 2); ?>
             </div>
-            <a href="/school_list/pages/income_details.php?type=income&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+            <a href="/pages/income_details.php?type=income&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
@@ -256,7 +256,7 @@ require '../layout/layout_header.php';
             <div class="text-2xl font-bold text-emerald-600 mt-1">
                 ৳ <?= number_format($income['collected'], 2); ?>
             </div>
-            <a href="/school_list/pages/income_details.php?type=collected&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+            <a href="/pages/income_details.php?type=collected&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
@@ -273,7 +273,7 @@ require '../layout/layout_header.php';
             <div class="text-2xl font-bold text-red-500 mt-1">
                 ৳ <?= number_format($income['due'], 2); ?>
             </div>
-            <a href="/school_list/pages/income_details.php?type=due&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+            <a href="/pages/income_details.php?type=due&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
@@ -288,7 +288,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Total Schools</div>
         <div class="text-2xl font-bold text-slate-800 mb-1"><?php echo $totalSchools; ?></div>
-        <a href="/school_list/schools/schools.php"
+        <a href="/schools/schools.php"
            class="inline-block text-xs text-indigo-600 hover:underline">
             View All
         </a>
@@ -297,7 +297,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Approved Schools</div>
         <div class="text-2xl font-bold text-green-600 mb-1"><?php echo $approvedSchools; ?></div>
-        <a href="/school_list/schools/schools.php?status=Approved"
+        <a href="/schools/schools.php?status=Approved"
            class="inline-block text-xs text-indigo-600 hover:underline">
             View Approved
         </a>
@@ -306,7 +306,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Pending Schools</div>
         <div class="text-2xl font-bold text-orange-500 mb-1"><?php echo $pendingSchools; ?></div>
-        <a href="/school_list/schools/schools.php?status=Pending"
+        <a href="/schools/schools.php?status=Pending"
            class="inline-block text-xs text-indigo-600 hover:underline">
             View Pending
         </a>
@@ -315,7 +315,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Trashed Schools</div>
         <div class="text-2xl font-bold text-red-500 mb-1"><?php echo $trashedSchools; ?></div>
-        <a href="/school_list/pages/trash.php"
+        <a href="/pages/trash.php"
            class="inline-block text-xs text-indigo-600 hover:underline">
             Open Trash
         </a>
@@ -346,19 +346,19 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Quick Actions</div>
         <div class="flex flex-wrap gap-2 mt-2 text-sm">
-            <a href="/school_list/schools/school_create.php"
+            <a href="/schools/school_create.php"
                class="px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700">
                 + Add School
             </a>
-            <a href="/school_list/schools/schools.php"
+            <a href="/schools/schools.php"
                class="px-3 py-1.5 rounded bg-slate-800 text-white hover:bg-slate-900">
                 Manage Schools
             </a>
-            <a href="/school_list/logs/logs.php"
+            <a href="/logs/logs.php"
                class="px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">
                 View Logs
             </a>
-            <a href="/school_list/invoices/invoices.php"
+            <a href="/invoices/invoices.php"
                class="px-3 py-1.5 rounded bg-orange-600 text-white hover:bg-orange-700">
                 View Invoices
             </a>
@@ -434,7 +434,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="flex items-center justify-between mb-2">
             <h2 class="text-sm font-semibold text-slate-800">Recent Note Activity</h2>
-            <a href="/school_list/logs/logs.php"
+            <a href="/logs/logs.php"
                class="text-xs text-indigo-600 hover:underline">
                 View All Logs
             </a>

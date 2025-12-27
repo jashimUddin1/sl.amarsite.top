@@ -1,3 +1,7 @@
+# sl.amarsite.top version-1.05
+
+
+
 # sl.amarsite.top version-1.04
 
 # database change
@@ -21,5 +25,5 @@ ADD COLUMN y_fee DECIMAL(10,2) NULL AFTER m_fee;
 * school add ,edit ar monthly fee yearly, fee column add kore kaj korte hobe --> done
 * automatic invoice generates --> oi school ar under koyta invoice ase tai... --> done
 * schools a oi school sob invoice dekhano --> done
-* old invoice thik kore connection  kora --> running
+* old invoice thik kore connection  kora --> running --> remove
 * server a upload and test
