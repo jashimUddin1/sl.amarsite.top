@@ -9,6 +9,8 @@ if ($id <= 0) {
     exit;
 }
 
+$userId = $_SESSION['user_id'];
+
 // পুরনো school ডাটা
 $stmt = $pdo->prepare("SELECT * FROM schools WHERE id = :id");
 $stmt->execute([':id' => $id]);

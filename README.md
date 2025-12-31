@@ -32,24 +32,9 @@
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-* CREATE TABLE starting_balances (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    month_year VARCHAR(7) NOT NULL, -- 2025-01
-    amount DECIMAL(10,2) NOT NULL,
-    is_locked TINYINT(1) DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-* CREATE TABLE month_closing_balances (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    month_year VARCHAR(7) NOT NULL,
-    closing_balance DECIMAL(10,2) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
 
 
 
-* accounts/index.php a start balance set korar system korte hobe
 
 # Remove duplicate file # done
 * layout a invoice header onk gula relative akta rekhe bakigula delete korte hobe. => done
@@ -69,9 +54,9 @@
 
 # korte hobe
 * logs aro akta banate hobe jeno sob support day school, invoice, account everything , akhon ase just school wise.
-
-
-
+* started cash ata pore korte hobe. And monthly balance ..
+* accounts/index.php a start balance set korar system korte hobe
+* invoice ar edit validation aktu low kora hoice simple invoice ar jonno , pore thik korte hobe
 
 
 

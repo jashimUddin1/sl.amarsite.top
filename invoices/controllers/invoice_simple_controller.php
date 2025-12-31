@@ -26,14 +26,7 @@ if (!is_array($payload)) {
     exit;
 }
 
-$school_id = (int) ($payload['school_id'] ?? 0);
 $data = $payload['data'] ?? null;
-
-if ($school_id <= 0 || !is_array($data)) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'msg' => 'Missing School Id or data']);
-    exit;
-}
 
 $in_no = (int)($payload['in_no'] ?? ($payload['invoice_number'] ?? 0));
 if ($in_no <= 0) {
@@ -77,7 +70,7 @@ try {
 
     $ins = $pdo->prepare("INSERT INTO invoices (school_id, in_no, data, created_at) VALUES (:school_id, :in_no, :data, NOW())");
     $ins->execute([
-        'school_id' => $school_id,
+        'school_id' => null,
         'in_no' => $in_no,
         'data' => $json
     ]);
@@ -85,11 +78,11 @@ try {
     $invoice_id = (int) $pdo->lastInsertId();
 
     //note_logs insert this information
-    $action = 'INVOICE CREATED';
+    $action = 'Simple Invoice Created';
     $log = $pdo->prepare("INSERT INTO note_logs (user_id, school_id, action, new_text, action_at) VALUES (:user_id, :school_id, :action, :new_text, NOW()) ");
     $log->execute([
         'user_id' => $user_id,
-        'school_id' => $school_id,
+        'school_id' => null,
         'action' => $action,
         'new_text' => $json
     ]);
@@ -110,7 +103,7 @@ try {
     //database and mysql error hangle
     if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
         http_response_code(409);
-        echo json_encode(['ok' => false, 'msg' => 'এই Invoice Number ইতিমধ্যে আছে। নতুন নম্বর দিন।']);
+        echo json_encode(['ok' => false, 'msg' => 'এই Invoice Number ইতিমধ্যে আছে। নতুন নম্বর দিন। @2']);
         exit;
     }
 
