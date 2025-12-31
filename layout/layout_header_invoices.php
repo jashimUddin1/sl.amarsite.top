@@ -143,6 +143,11 @@ if ($user_id) {
                 <span class="mr-2">🔔</span> Notifications
             </a>
 
+             <a href="<?= base_url('account') ?>"
+               class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
+                <span class="mr-2">💰</span> Accounts
+            </a>
+
             <a href="<?= base_url('logs/logs.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'logs' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🧾</span> Logs

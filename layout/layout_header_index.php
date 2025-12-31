@@ -32,6 +32,7 @@ if ($user_id) {
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -73,6 +74,11 @@ if ($user_id) {
             <a href="<?= base_url('pages/notifications.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🔔</span> Notifications
+            </a>
+
+            <a href="<?= base_url('Accounts') ?>"
+                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
+                    <span class="mr-2">💰</span> Accounts
             </a>
 
             <a href="<?= base_url('notes/notes_all.php') ?>"
@@ -151,6 +157,12 @@ if ($user_id) {
                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                    onclick="toggleSidebar()">
                     <span class="mr-2">🔔</span> Notifications
+                </a>
+
+                <a href="<?= base_url('accounts') ?>"
+                   class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
+                   onclick="toggleSidebar()">
+                    <span class="mr-2">💰</span> Accounts
                 </a>
 
                 <a href="<?= base_url('notes/notes_all.php') ?>"

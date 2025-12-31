@@ -21,6 +21,8 @@ if ($deleteId <= 0) {
 $stmt = $pdo->prepare("DELETE FROM invoices WHERE id = :id");
 $ok = $stmt->execute([':id' => $deleteId]);
 
+
+
 $_SESSION['flash'] = $ok
     ? ['type' => 'success', 'msg' => 'Invoice deleted successfully.']
     : ['type' => 'danger', 'msg' => 'Delete failed.'];
