@@ -661,6 +661,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
         <form action="core/add_core.php" method="post"
             class="row g-3 align-items-center top-row <?= ($showInsert ? '' : 'd-none') ?>">
             <input type="hidden" name="action" value="insert_add">
+            <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
 
             <div class="col-12 col-md-2">
                 <input type="date" class="form-control" id="date" name="date" required>
@@ -720,6 +721,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
         <form action="core/add_core.php" method="post"
             class="row g-3 align-items-center top-row <?= ($showInsert ? '' : 'd-none') ?>">
             <input type="hidden" name="action" value="insert_add">
+            <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
 
             <div class="col-6 col-md-2">
                 <input type="date" class="form-control" id="date" name="date" required>
@@ -886,6 +888,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                                             onsubmit="return confirm('Delete this record?')" class="w-100 m-0">
                                             <input type="hidden" name="csrf"
                                                 value="<?= htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="id" value="<?= (int) $r['row_id'] ?>">
                                             <button type="submit" class="btn btn-outline-danger btn-sm w-100">
                                                 <i class="bi bi-trash"></i>
@@ -952,6 +955,8 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
             <div class="modal-content">
 
                 <form action="core/update_core.php" method="post" id="editForm">
+                    <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
+
                     <div class="modal-header">
                         <h5 class="modal-title">Edit Record</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1002,10 +1007,10 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                         <div class="col-4">
                             <label class="form-label">Category</label>
                             <select class="form-select" name="category" id="edit_category" required>
-                                <option value="buy">buy</option>
-                                <option value="marketing_cost">Marketing Cost</option>
-                                <option value="office_supply">Office Supply</option>
-                                <option value="cost2">cost2</option>
+                                <option value="Buy">buy</option>
+                                <option value="Marketing Cost">Marketing Cost</option>
+                                <option value="Office Supply">Office Supply</option>
+                                <option value="Repair">Repair</option>
                                 <option value="Transport">Transport</option>
                                 <option value="Rent">Rent</option>
                                 <option value="Utilities">Utilities</option>

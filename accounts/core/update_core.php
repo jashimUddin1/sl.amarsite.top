@@ -3,29 +3,50 @@
 require_once "../../auth/config.php";
 require_login();
 
+function safe_return_url(string $fallback = '../index.php'): string {
+    $ret = $_POST['return'] ?? '';
+    if ($ret === '') return $fallback;
+
+    // only allow relative internal urls
+    $parts = parse_url($ret);
+    $path = $parts['path'] ?? '';
+    $qs   = isset($parts['query']) ? ('?' . $parts['query']) : '';
+
+    // allow only your accounts index page
+    if ($path !== '' && (str_ends_with($path, '/accounts/index.php') || str_ends_with($path, '/accounts/index_up.php') || str_ends_with($path, '/accounts/index.php'))) {
+        return $path . $qs;
+    }
+    // if it's relative like "index.php?sheet=income"
+    if ($path === 'index.php' || $path === './index.php' || $path === '../index.php') {
+        return '../index.php' . $qs;
+    }
+    return $fallback;
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_SESSION['flash_error'] = 'Invalid request method';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
 if (empty($_POST['csrf']) || empty($_SESSION['csrf']) || !hash_equals($_SESSION['csrf'], $_POST['csrf'])) {
     $_SESSION['flash_error'] = 'Invalid CSRF token';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
 $user_id = (int)($_SESSION['user_id'] ?? 0);
 if ($user_id <= 0) {
     $_SESSION['flash_error'] = 'Unauthorized';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
 $id = (int)($_POST['id'] ?? 0);
 if ($id <= 0) {
     $_SESSION['flash_error'] = 'Invalid id';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
@@ -41,7 +62,7 @@ $cat_raw    = $_POST['category'] ?? '';
 $dt = DateTime::createFromFormat('Y-m-d', $date_raw);
 if (!$dt || $dt->format('Y-m-d') !== $date_raw) {
     $_SESSION['flash_error'] = 'Invalid date';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 $date = $dt->format('Y-m-d');
@@ -50,20 +71,20 @@ $date = $dt->format('Y-m-d');
 $description = trim($desc_raw);
 if ($description === '' || mb_strlen($description) > 255) {
     $_SESSION['flash_error'] = 'Invalid description';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
 /* ---------- Validate amount ---------- */
 if (!is_numeric($amount_raw)) {
     $_SESSION['flash_error'] = 'Invalid amount';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 $amount = (float)$amount_raw;
 if ($amount < 0) {
     $_SESSION['flash_error'] = 'Amount must be >= 0';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
@@ -71,7 +92,7 @@ if ($amount < 0) {
 $type = strtolower(trim($type_raw));
 if (!in_array($type, ['income', 'expense'], true)) {
     $_SESSION['flash_error'] = 'Invalid type';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
@@ -80,7 +101,7 @@ $allowedMethods = ['Cash','bKash','Nagad','Bank','Card','Other'];
 $method = trim($method_raw);
 if (!in_array($method, $allowedMethods, true)) {
     $_SESSION['flash_error'] = 'Invalid method';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
@@ -89,7 +110,7 @@ $allowedCats = ['Buy','Marketing Cost','Office Supply','Repair','Transport','Ren
 $category = trim($cat_raw);
 if (!in_array($category, $allowedCats, true)) {
     $_SESSION['flash_error'] = 'Invalid category';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
@@ -111,7 +132,7 @@ try {
     if (!$oldRow) {
         $pdo->rollBack();
         $_SESSION['flash_error'] = 'Record not found or not yours';
-        header("Location: ../index.php");
+        header("Location: " . safe_return_url('../index.php'));
         exit;
     }
 
@@ -143,7 +164,7 @@ try {
         // কিছু পরিবর্তনই হয়নি (same data) — তবু log চাইলে log করব না
         $pdo->commit();
         $_SESSION['flash_error'] = 'Nothing updated (same data)';
-        header("Location: ../index.php");
+        header("Location: " . safe_return_url('../index.php'));
         exit;
     }
 
@@ -186,5 +207,5 @@ try {
     $_SESSION['flash_error'] = 'Update failed';
 }
 
-header("Location: ../index.php");
+header("Location: " . safe_return_url('../index.php'));
 exit;

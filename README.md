@@ -15,7 +15,7 @@
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
-CREATE TABLE accounts_trash (
+* CREATE TABLE accounts_trash (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     del_acc_id BIGINT UNSIGNED NOT NULL,
@@ -31,6 +31,21 @@ CREATE TABLE accounts_trash (
     deleted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+* CREATE TABLE starting_balances (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    month_year VARCHAR(7) NOT NULL, -- 2025-01
+    amount DECIMAL(10,2) NOT NULL,
+    is_locked TINYINT(1) DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+* CREATE TABLE month_closing_balances (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    month_year VARCHAR(7) NOT NULL,
+    closing_balance DECIMAL(10,2) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
 
 
@@ -50,7 +65,7 @@ CREATE TABLE accounts_trash (
 
 # problem
 * view all logs a button a error ase fixed
-
+* update_core and delete_core ar redirect a problem ase thik korte hobe.
 
 # korte hobe
 * logs aro akta banate hobe jeno sob support day school, invoice, account everything , akhon ase just school wise.

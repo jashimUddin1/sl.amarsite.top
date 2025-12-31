@@ -3,29 +3,50 @@
 require_once "../../auth/config.php";
 require_login();
 
+function safe_return_url(string $fallback = '../index.php'): string {
+    $ret = $_POST['return'] ?? '';
+    if ($ret === '') return $fallback;
+
+    // only allow relative internal urls
+    $parts = parse_url($ret);
+    $path = $parts['path'] ?? '';
+    $qs   = isset($parts['query']) ? ('?' . $parts['query']) : '';
+
+    // allow only your accounts index page
+    if ($path !== '' && (str_ends_with($path, '/accounts/index.php') || str_ends_with($path, '/accounts/index_up.php') || str_ends_with($path, '/accounts/index.php'))) {
+        return $path . $qs;
+    }
+    // if it's relative like "index.php?sheet=income"
+    if ($path === 'index.php' || $path === './index.php' || $path === '../index.php') {
+        return '../index.php' . $qs;
+    }
+    return $fallback;
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_SESSION['flash_error'] = 'Invalid request method';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
 if (empty($_POST['csrf']) || empty($_SESSION['csrf']) || !hash_equals($_SESSION['csrf'], $_POST['csrf'])) {
     $_SESSION['flash_error'] = 'Invalid CSRF token';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
 $user_id = (int)($_SESSION['user_id'] ?? 0);
 if ($user_id <= 0) {
     $_SESSION['flash_error'] = 'Unauthorized';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
 $id = (int)($_POST['id'] ?? 0);
 if ($id <= 0) {
     $_SESSION['flash_error'] = 'Invalid id';
-    header("Location: ../index.php");
+    header("Location: " . safe_return_url('../index.php'));
     exit;
 }
 
@@ -47,7 +68,7 @@ try {
     if (!$row) {
         $pdo->rollBack();
         $_SESSION['flash_error'] = 'Delete failed (not found or not yours)';
-        header("Location: ../index.php");
+        header("Location: " . safe_return_url('../index.php'));
         exit;
     }
 
@@ -81,7 +102,7 @@ try {
         // Row existed earlier, so this is unexpected. Roll back to avoid half-operations.
         $pdo->rollBack();
         $_SESSION['flash_error'] = 'Delete failed (could not delete)';
-        header("Location: ../index.php");
+        header("Location: " . safe_return_url('../index.php'));
         exit;
     }
 
@@ -115,5 +136,5 @@ try {
     $_SESSION['flash_error'] = 'Delete failed';
 }
 
-header("Location: ../index.php");
+header("Location: " . safe_return_url('../index.php'));
 exit;
