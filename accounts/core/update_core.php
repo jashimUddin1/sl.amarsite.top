@@ -1,4 +1,5 @@
 <?php
+// accounts/core/update_core.php (তুমি যে নামে রেখেছো সেটাই রাখবে)
 require_once "../../auth/config.php";
 require_login();
 
@@ -28,6 +29,7 @@ if ($id <= 0) {
     exit;
 }
 
+/* ---------- Collect raw inputs ---------- */
 $date_raw   = $_POST['date'] ?? '';
 $desc_raw   = $_POST['description'] ?? '';
 $amount_raw = $_POST['amount'] ?? '';
@@ -35,7 +37,7 @@ $type_raw   = $_POST['type'] ?? '';
 $method_raw = $_POST['payment_method'] ?? '';
 $cat_raw    = $_POST['category'] ?? '';
 
-// date validate
+/* ---------- Validate date (YYYY-MM-DD strict) ---------- */
 $dt = DateTime::createFromFormat('Y-m-d', $date_raw);
 if (!$dt || $dt->format('Y-m-d') !== $date_raw) {
     $_SESSION['flash_error'] = 'Invalid date';
@@ -44,7 +46,7 @@ if (!$dt || $dt->format('Y-m-d') !== $date_raw) {
 }
 $date = $dt->format('Y-m-d');
 
-// description
+/* ---------- Validate description ---------- */
 $description = trim($desc_raw);
 if ($description === '' || mb_strlen($description) > 255) {
     $_SESSION['flash_error'] = 'Invalid description';
@@ -52,7 +54,7 @@ if ($description === '' || mb_strlen($description) > 255) {
     exit;
 }
 
-// amount
+/* ---------- Validate amount ---------- */
 if (!is_numeric($amount_raw)) {
     $_SESSION['flash_error'] = 'Invalid amount';
     header("Location: ../index.php");
@@ -65,7 +67,7 @@ if ($amount < 0) {
     exit;
 }
 
-// type
+/* ---------- Validate type ---------- */
 $type = strtolower(trim($type_raw));
 if (!in_array($type, ['income', 'expense'], true)) {
     $_SESSION['flash_error'] = 'Invalid type';
@@ -73,7 +75,7 @@ if (!in_array($type, ['income', 'expense'], true)) {
     exit;
 }
 
-// method
+/* ---------- Validate method ---------- */
 $allowedMethods = ['Cash','bKash','Nagad','Bank','Card','Other'];
 $method = trim($method_raw);
 if (!in_array($method, $allowedMethods, true)) {
@@ -82,8 +84,8 @@ if (!in_array($method, $allowedMethods, true)) {
     exit;
 }
 
-// category
-$allowedCats = ['buy','marketing_cost','office_supply','cost2','Transport','Rent','Utilities','revenue','Other'];
+/* ---------- Validate category ---------- */
+$allowedCats = ['Buy','Marketing Cost','Office Supply','Repair','Transport','Rent','Utilities','Revenue','Other'];
 $category = trim($cat_raw);
 if (!in_array($category, $allowedCats, true)) {
     $_SESSION['flash_error'] = 'Invalid category';
@@ -92,6 +94,28 @@ if (!in_array($category, $allowedCats, true)) {
 }
 
 try {
+    $pdo->beginTransaction();
+
+    /* ---------- 1) Fetch old data (must be yours) ---------- */
+    $oldSql = "SELECT id, user_id, date, description, method, amount, category, type, created_at, updated_at
+               FROM accounts
+               WHERE id = :id AND user_id = :user_id
+               LIMIT 1";
+    $oldStmt = $pdo->prepare($oldSql);
+    $oldStmt->execute([
+        ':id' => $id,
+        ':user_id' => $user_id
+    ]);
+    $oldRow = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$oldRow) {
+        $pdo->rollBack();
+        $_SESSION['flash_error'] = 'Record not found or not yours';
+        header("Location: ../index.php");
+        exit;
+    }
+
+    /* ---------- 2) Update accounts ---------- */
     $sql = "UPDATE accounts
             SET date = :date,
                 description = :description,
@@ -116,12 +140,48 @@ try {
     ]);
 
     if ($stmt->rowCount() === 0) {
-        $_SESSION['flash_error'] = 'Nothing updated (not found or not yours)';
-    } else {
-        $_SESSION['flash_success'] = 'Record updated successfully';
+        // কিছু পরিবর্তনই হয়নি (same data) — তবু log চাইলে log করব না
+        $pdo->commit();
+        $_SESSION['flash_error'] = 'Nothing updated (same data)';
+        header("Location: ../index.php");
+        exit;
     }
 
+    /* ---------- 3) Prepare new data (log) ---------- */
+    $newRow = [
+        'id'          => $id,
+        'user_id'     => $user_id,
+        'date'        => $date,
+        'description' => $description,
+        'method'      => $method,
+        'amount'      => $amount,
+        'category'    => $category,
+        'type'        => $type,
+    ];
+
+    /* ---------- 4) Insert note_logs ---------- */
+    $logSql = "INSERT INTO note_logs
+              (note_id, school_id, user_id, action, old_text, new_text, action_at)
+              VALUES
+              (:note_id, :school_id, :user_id, :action, :old_text, :new_text, NOW())";
+
+    $logStmt = $pdo->prepare($logSql);
+    $logStmt->execute([
+        ':note_id'   => null,
+        ':school_id' => null,
+        ':user_id'   => $user_id,
+        ':action'    => 'Entry Updated',
+        ':old_text'  => json_encode($oldRow, JSON_UNESCAPED_UNICODE),
+        ':new_text'  => json_encode($newRow, JSON_UNESCAPED_UNICODE),
+    ]);
+
+    $pdo->commit();
+    $_SESSION['flash_success'] = 'Record updated successfully';
+
 } catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     // error_log($e->getMessage());
     $_SESSION['flash_error'] = 'Update failed';
 }

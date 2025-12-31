@@ -697,14 +697,14 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
             <div class="col-12 col-md-1">
                 <select class="form-select" name="category" id="category" required>
                     <option value="" selected disabled>Select Category</option>
-                    <option value="buy">buy</option>
-                    <option value="marketing_cost">Marketing Cost</option>
-                    <option value="office_supply">Office Supply</option>
-                    <option value="cost2">cost2</option>
+                    <option value="Buy">Buy</option>
+                    <option value="Marketing Cost">Marketing Cost</option>
+                    <option value="Office Supply">Office Supply</option>
+                    <option value="Repair">Repair</option>
                     <option value="Transport">Transport</option>
                     <option value="Rent">Rent</option>
                     <option value="Utilities">Utilities</option>
-                    <option value="revenue">Revenue</option>
+                    <option value="Revenue">Revenue</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
@@ -1066,7 +1066,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
             <div class="modal-body">
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" role="switch" id="toggleInsert" <?= ($showInsert ? 'checked' : '') ?>>
-                    <label class="form-check-label" for="toggleInsert">Insert / Add show</label>
+                    <label class="form-check-label" for="toggleInsert">Insert Entry show</label>
                 </div>
 
                 <div class="form-check form-switch mb-3">
@@ -1080,7 +1080,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                 </div>
 
                 <div class="small text-muted mt-3">
-                    Notes: sheet change in desktop mood are reload required.
+                    Notes: Sheet change in desktop mood are reload required.
                 </div>
             </div>
             <div class="modal-footer">

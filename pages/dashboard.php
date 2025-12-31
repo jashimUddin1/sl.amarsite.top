@@ -434,7 +434,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="flex items-center justify-between mb-2">
             <h2 class="text-sm font-semibold text-slate-800">Recent Note Activity</h2>
-            <a href="/logs/logs.php"
+            <a href="<?= base_url('/logs/logs.php') ?>"
                class="text-xs text-indigo-600 hover:underline">
                 View All Logs
             </a>
@@ -453,7 +453,8 @@ require '../layout/layout_header.php';
                     elseif ($action === 'update') $badgeClass = 'bg-blue-50 text-blue-700';
                     elseif ($action === 'delete') $badgeClass = 'bg-red-50 text-red-700';
 
-                    $schoolName = $log['school_name'] ?? ('School #' . (int)$log['school_id']);
+                    // $schoolName = $log['school_name'] ?? ('School #' . (int)$log['school_id']); old
+                    $schoolName = $log['school_name'] ?? ('Accounts');
                     $userName   = $log['user_name']   ?? 'Unknown User';
                     $time       = $log['action_at']   ?? '';
                     ?>

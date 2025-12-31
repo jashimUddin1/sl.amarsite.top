@@ -15,9 +15,32 @@
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
+CREATE TABLE accounts_trash (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    del_acc_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+
+    date DATE NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    method VARCHAR(20) NOT NULL,
+    amount DECIMAL(12,0) NOT NULL,
+    category VARCHAR(91) NOT NULL,
+    type ENUM('income','expense') NOT NULL,
+
+    deleted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+* accounts/index.php a start balance set korar system korte hobe
 
 # Remove duplicate file # done
 * layout a invoice header onk gula relative akta rekhe bakigula delete korte hobe. => done
+
+# invoices/ create_new_invoice.php # pending
+* notun akta invoice create korte hobe without fill data 
 
 # invoices/ invoice_delete.php # pending
 * delete ar age invoice_trash  a data insert korte hobe.
@@ -25,6 +48,12 @@
 
 
 
+# problem
+* view all logs a button a error ase fixed
+
+
+# korte hobe
+* logs aro akta banate hobe jeno sob support day school, invoice, account everything , akhon ase just school wise.
 
 
 

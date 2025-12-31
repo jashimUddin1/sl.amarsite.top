@@ -122,8 +122,8 @@ try {
         ':new_text' => $newDataJson,  // নতুন ডাটা JSON আকারে
     ]);
 
-    // ... INSERT সফল হলে
-    $_SESSION['school_success'] = 'স্কুল সফলভাবে তৈরি হয়েছে এবং লগ সংরক্ষণ হয়েছে।';
+    // ... INSERT success msg
+    $_SESSION['school_success'] = 'স্কুল সফলভাবে তৈরি হয়েছে ';
 
     header("Location: ../schools/schools.php");
     exit;

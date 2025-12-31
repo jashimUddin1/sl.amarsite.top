@@ -68,8 +68,8 @@ if (!in_array($method, $allowedMethods, true)) {
 
 /* ---------- Validate category ---------- */
 $allowedCats = [
-    'buy','marketing_cost','office_supply',
-    'Transport','Rent','Utilities','revenue','Other'
+    'Buy','Marketing Cost','Office Supply', 'Repair',
+    'Transport','Rent','Utilities','Revenue','Other'
 ];
 $category = trim($cat_raw);
 if (!in_array($category, $allowedCats, true)) {
@@ -87,8 +87,11 @@ if (!$user_id || !is_numeric($user_id)) {
 }
 $user_id = (int)$user_id;
 
-/* ---------- Insert using PDO ---------- */
+/* ---------- Insert using PDO + note_logs (transaction) ---------- */
 try {
+    $pdo->beginTransaction();
+
+    // 1) accounts insert
     $sql = "INSERT INTO accounts
             (user_id, date, description, method, amount, category, type, created_at, updated_at)
             VALUES
@@ -105,10 +108,46 @@ try {
         ':type'        => $type
     ]);
 
+    $account_id = (int)$pdo->lastInsertId();
+
+    // 2) note_logs insert (account entry)
+    $new_text_arr = [
+        'account_id'     => $account_id,
+        'user_id'        => $user_id,
+        'date'           => $date,
+        'description'    => $description,
+        'payment_method' => $method,
+        'amount'         => $amount,
+        'category'       => $category,
+        'type'           => $type,
+    ];
+
+    $logSql = "INSERT INTO note_logs
+              (note_id, school_id, user_id, action, old_text, new_text, action_at)
+              VALUES
+              (:note_id, :school_id, :user_id, :action, :old_text, :new_text, NOW())";
+
+    $logStmt = $pdo->prepare($logSql);
+    $logStmt->execute([
+        ':note_id'   => null,
+        ':school_id' => null,
+        ':user_id'   => $user_id,
+        ':action'    => 'Add Entry',
+        ':old_text'  => null,
+        ':new_text'  => json_encode($new_text_arr, JSON_UNESCAPED_UNICODE),
+    ]);
+
+    $pdo->commit();
+
     $_SESSION['flash_success'] = 'Record added successfully';
 
 } catch (Throwable $e) {
-    // error_log($e->getMessage()); // production এ রাখলে ভালো
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    // production এ চাইলে লগ অন করো:
+    // error_log($e->getMessage());
+
     $_SESSION['flash_error'] = 'Failed to add record';
 }
 
