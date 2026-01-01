@@ -93,38 +93,39 @@ require '../layout/layout_header.php';
 
 <div class="container-fluid">
 
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <div class="d-flex align-items-center gap-2">
-            <a href="invoices.php" class="btn btn-light border d-none d-md-inline" title="Refresh">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="invoices.php" class="btn btn-light border" title="Refresh">
                 ↩
             </a>
-            <h5 class="mb-0 fw-semibold text-secondary d-none d-md-inline" style="min-width: 110px;">Saved Invoices</h5>
+            <h5 class="mb-0 fw-semibold text-secondary d-none d-md-inline">Saved Invoices</h5>
 
             <!-- 🔍 Search (schools.php-এর মতো live filter) -->
-            <div class="input-group input-group-sm ms-md-2" >
-                  <input type="text" name="search" id="invoiceSearchInput" placeholder="Search Invoice..." class="form-control" style=""
-                 onkeyup="searchInvoiceList()">
+            <div class="input-group input-group-sm ms-md-2" style="max-width: 320px;">
+                <span class="input-group-text bg-light">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text"
+                       id="invoiceSearchInput"
+                       class="form-control"
+                       placeholder="Search invoice..."
+                       onkeyup="searchInvoiceList()">
             </div>
-
-          
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-items-center">
             <div class="me-2">
-                <button class="btn btn-sm btn-outline-success py-1 d-inline d-md-none">
-                    <a href="invoice_simple.php">
-                        <i class="bi bi-plus "></i>
-                    </a>
-                </button>
-                <button class="btn btn-sm btn-outline-success d-none d-md-inline">
-                    <a href="invoice_simple.php">
-                        Simple Invoice
-                    </a> 
-                </button>
+                <a href="invoice_simple.php" class="btn btn-sm btn-outline-success py-1 d-inline d-md-none" title="Simple Invoice">
+                    <i class="bi bi-plus"></i>
+                </a>
+                <a href="invoice_simple.php" class="btn btn-sm btn-outline-success d-none d-md-inline" title="Simple Invoice">
+                    Simple Invoice
+                </a>
             </div>
-            <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0">
-                <button type="submit" title="Invoice Auto create This Month" class="btn btn-sm <?php echo $btnClass; ?>"
-                    <?php echo $btnDisabled; ?>>
+
+            <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0 d-flex align-items-center gap-2">
+                <button type="submit" title="Invoice Auto create This Month"
+                        class="btn btn-sm <?php echo $btnClass; ?>" <?php echo $btnDisabled; ?>>
                     <span class="d-none d-md-inline">Auto create</span>
                     <i class="bi bi-magic d-inline d-md-none"></i>
                 </button>
@@ -133,10 +134,9 @@ require '../layout/layout_header.php';
                 <?php endif; ?>
             </form>
         </div>
-
     </div>
 
-    <?php if (!empty($flash['msg'])): ?>
+<?php if (!empty($flash['msg'])): ?>
         <div class="alert alert-<?php echo h($flash['type']); ?> alert-dismissible fade show" role="alert">
             <?php echo h($flash['msg']); ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -310,20 +310,22 @@ require '../layout/layout_header.php';
     </div>
 </div>
 
+
+
 <script>
-function searchInvoiceList() {
-    const input = document.getElementById('invoiceSearchInput');
-    if (!input) return;
+    // schools.php-এর মতো simple live search
+    function searchInvoiceList() {
+        const input = document.getElementById('invoiceSearchInput');
+        if (!input) return;
 
-    const filter = (input.value || '').toLowerCase();
-    const rows = document.querySelectorAll('.invoice-row');
+        const filter = (input.value || '').toLowerCase();
+        const rows = document.querySelectorAll('.invoice-row');
 
-    rows.forEach(row => {
-        const text = (row.innerText || '').toLowerCase();
-        row.style.display = text.includes(filter) ? '' : 'none';
-    });
-}
+        rows.forEach(row => {
+            const text = (row.innerText || '').toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    }
 </script>
-
 
 <?php require '../layout/layout_footer.php'; ?>

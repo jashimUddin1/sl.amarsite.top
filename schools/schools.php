@@ -250,7 +250,7 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                                 </a>
 
                                 <!-- Delete -->
-                                <form method="POST" action="/controllers/schoolController.php"
+                                <form method="POST" action="<?= base_url('/controllers/schoolController.php') ?>"
                                     onsubmit="return confirm('এই স্কুলটি delete করতে নিশ্চিত?');">
                                     <input type="hidden" name="action" value="delete_school">
                                     <input type="hidden" name="id" value="<?php echo (int) $s['id']; ?>">

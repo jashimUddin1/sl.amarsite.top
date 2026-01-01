@@ -35,6 +35,7 @@ if ($user_id) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -119,7 +120,7 @@ if ($user_id) {
 
             <aside class="absolute inset-y-0 left-0 w-64 bg-slate-900 text-slate-100 shadow-xl flex flex-col">
                 <div class="h-16 flex items-center px-4 border-b border-slate-800 justify-between">
-                    <img src="/assets/edur.png" style="width: 160px; " alt="logo">
+                    <img src="<?= base_url('/assets/edur.png') ?>" style="width: 160px; " alt="logo">
                     <!-- <span class="text-lg font-bold tracking-wide">
                     School List
                 </span> -->

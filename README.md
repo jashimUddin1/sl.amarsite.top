@@ -1,36 +1,20 @@
+# sl.amarsite.top version-1.06
+
+# korte hobe
+* logs aro akta banate hobe jeno sob support day school, invoice, account everything , akhon ase just school wise.
+* started cash ata pore korte hobe. And monthly balance ..
+* accounts/index.php a start balance set korar system korte hobe
+* invoice ar edit validation aktu low kora hoice simple invoice ar jonno , pore thik korte hobe
+* update_core and delete_core ar redirect a problem ase thik korte hobe.
+* time zone asia dite hobe
+
+
+
+
 # sl.amarsite.top version-1.05
 
 # income and cost statement add
 # create table =>
-* 	CREATE TABLE `accounts` (
- `id` int(11) NOT NULL AUTO_INCREMENT,
- `user_id` int(11) NOT NULL,
- `description` varchar(255) NOT NULL,
- `method` varchar(91) NOT NULL,
- `amount` decimal(10,0) NOT NULL,
- `category` varchar(255) NOT NULL,
- `type` varchar(91) NOT NULL,
- `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
- `updated_at` timestamp NULL DEFAULT NULL,
- PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-
-* CREATE TABLE accounts_trash (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
-    del_acc_id BIGINT UNSIGNED NOT NULL,
-    user_id BIGINT UNSIGNED NOT NULL,
-
-    date DATE NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    method VARCHAR(20) NOT NULL,
-    amount DECIMAL(12,0) NOT NULL,
-    category VARCHAR(91) NOT NULL,
-    type ENUM('income','expense') NOT NULL,
-
-    deleted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -50,13 +34,9 @@
 
 # problem
 * view all logs a button a error ase fixed
-* update_core and delete_core ar redirect a problem ase thik korte hobe.
 
-# korte hobe
-* logs aro akta banate hobe jeno sob support day school, invoice, account everything , akhon ase just school wise.
-* started cash ata pore korte hobe. And monthly balance ..
-* accounts/index.php a start balance set korar system korte hobe
-* invoice ar edit validation aktu low kora hoice simple invoice ar jonno , pore thik korte hobe
+
+
 
 
 
