@@ -531,7 +531,6 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
 
         <div class="d-flex flex-column flex-sm-row align-items-center gap-2">
             <div class="small text-muted text-center text-md-end">
-                Income Summary
                 <span class="text-secondary">(<?= htmlspecialchars($selected, ENT_QUOTES, 'UTF-8') ?>)</span>
             </div>
 
@@ -1014,7 +1013,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                                 <option value="Transport">Transport</option>
                                 <option value="Rent">Rent</option>
                                 <option value="Utilities">Utilities</option>
-                                <option value="revenue">Revenue</option>
+                                <option value="Revenue">Revenue</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>

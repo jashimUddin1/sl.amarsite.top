@@ -76,7 +76,7 @@ if ($user_id) {
                 <span class="mr-2">🔔</span> Notifications
             </a>
 
-            <a href="<?= base_url('Accounts') ?>"
+            <a href="<?= base_url('accounts') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">💰</span> Accounts
             </a>

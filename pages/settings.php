@@ -143,11 +143,11 @@ require '../layout/layout_header.php';
                             <div class="d-flex flex-wrap gap-3">
                                 <div>
                                     <div class="fw-semibold text-dark">Current Version</div>
-                                    <div>v1.04</div>
+                                    <div>v1.05 (Release: 1 January 2026)</div>
                                 </div>
                                 <div>
                                     <div class="fw-semibold text-dark">Upcoming Version</div>
-                                    <div>v1.5 (Release: 6 January 2026)</div>
+                                    <div>v1.10 (Release: 6 February 2026)</div>
                                 </div>
                             </div>
                         </div>

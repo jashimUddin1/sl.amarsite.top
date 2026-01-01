@@ -88,7 +88,7 @@ function banglaDay(?string $dt, array $map): string {
 }
 
 $pageTitle  = 'All Notes';
-$activeMenu = 'home';
+$activeMenu = 'notes';
 require '../layout/layout_header.php';
 ?>
 

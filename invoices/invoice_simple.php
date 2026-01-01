@@ -45,7 +45,6 @@ require '../layout/single_invoice_header_final.php';
                 <div class="row g-4 mb-4">
 
                     <!-- hidden input for school ID -->
-                    <input type="hidden" id="school-id" value="<?= $school['id'] ?>">
 
                     <!-- Bill To -->
                     <div class="col-md-6">
@@ -791,7 +790,6 @@ require '../layout/single_invoice_header_final.php';
             const invNo = parseInt(document.getElementById("invoice-number").value, 10) || 0;
 
             const payload = {
-                school_id: parseInt(document.getElementById("school-id").value, 10),
                 in_no: invNo,
                 data: {
                     invoiceNumber: invNo,

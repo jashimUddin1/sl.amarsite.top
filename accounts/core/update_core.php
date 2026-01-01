@@ -3,6 +3,7 @@
 require_once "../../auth/config.php";
 require_login();
 
+
 function safe_return_url(string $fallback = '../index.php'): string {
     $ret = $_POST['return'] ?? '';
     if ($ret === '') return $fallback;
@@ -161,7 +162,7 @@ try {
     ]);
 
     if ($stmt->rowCount() === 0) {
-        // কিছু পরিবর্তনই হয়নি (same data) — তবু log চাইলে log করব না
+        // jodi kono kichu change na hoy..
         $pdo->commit();
         $_SESSION['flash_error'] = 'Nothing updated (same data)';
         header("Location: " . safe_return_url('../index.php'));
