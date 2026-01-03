@@ -89,9 +89,9 @@ if (!in_array($method, $allowedMethods, true)) {
 
 /* ---------- Validate category ---------- */
 $allowedCats = [
-    'Buy','Marketing Cost','Office Supply', 'Repair',
-    'Transport','Rent','Utilities','Revenue','Other'
+    'Buy','Marketing Cost','Office Supply', 'Repair', 'Transport','Rent','Utilities','Revenue',  'Bike Service Cost', 'Office Cost',     'Bike Oil Cost',     'Nasta Pani',     'Paper Cost',     'Raja',     'Yasin' ,'Other'
 ];
+
 $category = trim($cat_raw);
 if (!in_array($category, $allowedCats, true)) {
     $_SESSION['flash_error'] = 'Invalid category';

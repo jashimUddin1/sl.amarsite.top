@@ -215,7 +215,7 @@ function build_range_where(string $range, string $from, string $to, string $toda
 
 /* -------------------- Filter inputs -------------------- */
 // Default range: this month
-$range = $_GET['range'] ?? 'this_month';
+$range = $_GET['range'] ?? 'lifetime';
 $from = $_GET['from'] ?? '';
 $to = $_GET['to'] ?? '';
 
@@ -536,23 +536,23 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
 
 
             <!-- Desktop & Tab (md and up) -->
-             <?php if($showSheet == 1): ?>
-            <div id="sheetSystemDesktop" class="me-2 d-none d-md-block <?= ($showSheet ? '' : 'd-none') ?>">
-                <select class="form-select form-select-sm" onchange="if(this.value) window.location.href=this.value">
+            <?php if ($showSheet == 1): ?>
+                <div id="sheetSystemDesktop" class="me-2 d-none d-md-block <?= ($showSheet ? '' : 'd-none') ?>">
+                    <select class="form-select form-select-sm" onchange="if(this.value) window.location.href=this.value">
 
-                    <option value="<?= htmlspecialchars($allUrl, ENT_QUOTES, 'UTF-8') ?>" <?= ($sheet === 'all') ? 'selected' : '' ?>>
-                        All Sheet
-                    </option>
+                        <option value="<?= htmlspecialchars($allUrl, ENT_QUOTES, 'UTF-8') ?>" <?= ($sheet === 'all') ? 'selected' : '' ?>>
+                            All Sheet
+                        </option>
 
-                    <option value="<?= htmlspecialchars($incomeUrl, ENT_QUOTES, 'UTF-8') ?>" <?= ($sheet === 'income') ? 'selected' : '' ?>>
-                        Income Sheet
-                    </option>
+                        <option value="<?= htmlspecialchars($incomeUrl, ENT_QUOTES, 'UTF-8') ?>" <?= ($sheet === 'income') ? 'selected' : '' ?>>
+                            Income Sheet
+                        </option>
 
-                    <option value="<?= htmlspecialchars($expenseUrl, ENT_QUOTES, 'UTF-8') ?>" <?= ($sheet === 'expense') ? 'selected' : '' ?>>
-                        Expense Sheet
-                    </option>
-                </select>
-            </div>
+                        <option value="<?= htmlspecialchars($expenseUrl, ENT_QUOTES, 'UTF-8') ?>" <?= ($sheet === 'expense') ? 'selected' : '' ?>>
+                            Expense Sheet
+                        </option>
+                    </select>
+                </div>
             <?php endif ?>
 
             <!-- Mobile only (below md) -->
@@ -660,7 +660,8 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
         <form action="core/add_core.php" method="post"
             class="row g-3 align-items-center top-row <?= ($showInsert ? '' : 'd-none') ?>">
             <input type="hidden" name="action" value="insert_add">
-            <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
+            <input type="hidden" name="return"
+                value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
 
             <div class="col-12 col-md-2">
                 <input type="date" class="form-control" id="date" name="date" required>
@@ -697,17 +698,20 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
             <div class="col-12 col-md-1">
                 <select class="form-select" name="category" id="category" required>
                     <option value="" selected disabled>Select Category</option>
-                    <option value="Buy">Buy</option>
+
+                    <option value="Bike Service Cost">Bike Service Cost</option>
+                    <option value="Bike Oil Cost">Bike Oil Cost</option>
                     <option value="Marketing Cost">Marketing Cost</option>
-                    <option value="Office Supply">Office Supply</option>
-                    <option value="Repair">Repair</option>
-                    <option value="Transport">Transport</option>
-                    <option value="Rent">Rent</option>
-                    <option value="Utilities">Utilities</option>
+                    <option value="Office Cost">Office Cost</option>
+                    <option value="Nasta Pani">Nasta Pani</option>
+                    <option value="Paper Cost">Paper Cost</option>
+                    <option value="Raja">Raja</option>
+                    <option value="Yasin">Yasin</option>
                     <option value="Revenue">Revenue</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
+
 
             <div class="col-12 col-md-1 d-grid">
                 <button type="submit" class="btn btn-success btn-add" id="addBtn">Add</button>
@@ -720,7 +724,8 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
         <form action="core/add_core.php" method="post"
             class="row g-3 align-items-center top-row <?= ($showInsert ? '' : 'd-none') ?>">
             <input type="hidden" name="action" value="insert_add">
-            <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
+            <input type="hidden" name="return"
+                value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
 
             <div class="col-6 col-md-2">
                 <input type="date" class="form-control" id="date" name="date" required>
@@ -759,14 +764,15 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
             <div class="col-4 col-md-1">
                 <select class="form-select" name="category" id="category" required>
                     <option value="" selected disabled>Select Category</option>
-                    <option value="buy">buy</option>
-                    <option value="marketing_cost">Marketing Cost</option>
-                    <option value="office_supply">Office Supply</option>
-                    <option value="cost2">cost2</option>
-                    <option value="Transport">Transport</option>
-                    <option value="Rent">Rent</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="revenue">Revenue</option>
+                    <option value="Bike Service Cost">Bike Service Cost</option>
+                    <option value="Bike Oil Cost">Bike Oil Cost</option>
+                    <option value="Marketing Cost">Marketing Cost</option>
+                    <option value="Office Cost">Office Cost</option>
+                    <option value="Nasta Pani">Nasta Pani</option>
+                    <option value="Paper Cost">Paper Cost</option>
+                    <option value="Raja">Raja</option>
+                    <option value="Yasin">Yasin</option>
+                    <option value="Revenue">Revenue</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
@@ -887,7 +893,8 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                                             onsubmit="return confirm('Delete this record?')" class="w-100 m-0">
                                             <input type="hidden" name="csrf"
                                                 value="<?= htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8') ?>">
-                                            <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="return"
+                                                value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="id" value="<?= (int) $r['row_id'] ?>">
                                             <button type="submit" class="btn btn-outline-danger btn-sm w-100">
                                                 <i class="bi bi-trash"></i>
@@ -954,7 +961,8 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
             <div class="modal-content">
 
                 <form action="core/update_core.php" method="post" id="editForm">
-                    <input type="hidden" name="return" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="return"
+                        value="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
 
                     <div class="modal-header">
                         <h5 class="modal-title">Edit Record</h5>
@@ -1006,13 +1014,14 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                         <div class="col-4">
                             <label class="form-label">Category</label>
                             <select class="form-select" name="category" id="edit_category" required>
-                                <option value="Buy">buy</option>
+                                <option value="Bike Service Cost">Bike Service Cost</option>
+                                <option value="Bike Oil Cost">Bike Oil Cost</option>
                                 <option value="Marketing Cost">Marketing Cost</option>
-                                <option value="Office Supply">Office Supply</option>
-                                <option value="Repair">Repair</option>
-                                <option value="Transport">Transport</option>
-                                <option value="Rent">Rent</option>
-                                <option value="Utilities">Utilities</option>
+                                <option value="Office Cost">Office Cost</option>
+                                <option value="Nasta Pani">Nasta Pani</option>
+                                <option value="Paper Cost">Paper Cost</option>
+                                <option value="Raja">Raja</option>
+                                <option value="Yasin">Yasin</option>
                                 <option value="Revenue">Revenue</option>
                                 <option value="Other">Other</option>
                             </select>
@@ -1147,7 +1156,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                 // Use force-hide to override Bootstrap responsive display utilities (e.g., d-md-block)
                 el.classList.toggle('force-hide', !showSheet);
             });
-}
+        }
 
         async function savePrefs() {
             const prefs = {

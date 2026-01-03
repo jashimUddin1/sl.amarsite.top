@@ -42,7 +42,7 @@ try {
 } catch (Exception $e) { $latestLogs = []; }
 
 // ====== Income Summary Range ======
-$range = $_GET['range'] ?? 'this_month'; // default
+$range = $_GET['range'] ?? 'lifetime'; // default
 $allowedRanges = ['today','this_month','this_year','last_year','lifetime','custom'];
 if (!in_array($range, $allowedRanges, true)) $range = 'this_month';
 

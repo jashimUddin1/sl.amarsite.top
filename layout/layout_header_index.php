@@ -1,7 +1,7 @@
 <?php
 // layout_header_index.php
 
-if (!isset($pageTitle))   $pageTitle = 'Admin Panel';
+if (!isset($pageTitle))   $pageTitle = 'School Manager';
 if (!isset($pageHeading)) $pageHeading = '';
 if (!isset($activeMenu))  $activeMenu = 'home';
 
@@ -61,6 +61,11 @@ if ($user_id) {
                 <span class="mr-2">📊</span> Dashboard
             </a>
 
+            <a href="<?= base_url('accounts') ?>"
+                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
+                    <span class="mr-2">💰</span> Accounts
+            </a>
+
             <a href="<?= base_url('schools/schools.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                 <span class="mr-2">🏫</span> Schools
@@ -76,10 +81,7 @@ if ($user_id) {
                 <span class="mr-2">🔔</span> Notifications
             </a>
 
-            <a href="<?= base_url('accounts') ?>"
-                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
-                    <span class="mr-2">💰</span> Accounts
-            </a>
+            
 
             <a href="<?= base_url('notes/notes_all.php') ?>"
                class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notes' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
@@ -141,6 +143,12 @@ if ($user_id) {
                     <span class="mr-2">📊</span> Dashboard
                 </a>
 
+                <a href="<?= base_url('accounts') ?>"
+                   class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
+                   onclick="toggleSidebar()">
+                    <span class="mr-2">💰</span> Accounts
+                </a>
+                
                 <a href="<?= base_url('schools/schools.php') ?>"
                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'schools' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                    onclick="toggleSidebar()">
@@ -157,12 +165,6 @@ if ($user_id) {
                    class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'notifications' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                    onclick="toggleSidebar()">
                     <span class="mr-2">🔔</span> Notifications
-                </a>
-
-                <a href="<?= base_url('accounts') ?>"
-                   class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
-                   onclick="toggleSidebar()">
-                    <span class="mr-2">💰</span> Accounts
                 </a>
 
                 <a href="<?= base_url('notes/notes_all.php') ?>"
