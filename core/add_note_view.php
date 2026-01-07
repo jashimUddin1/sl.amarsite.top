@@ -3,7 +3,7 @@
 require_once '../auth/config.php';
 require_login();
 
-$redirectTo = $_POST['redirect_to'] ?? '../index.php';
+$redirectTo = $_POST['redirect_to'] ?? '../notes/note_view.php';
 
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

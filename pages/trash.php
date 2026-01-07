@@ -4,179 +4,6 @@ require_login();
 
 $userId = $_SESSION['user_id'] ?? null;
 
-// ====== Restore / Delete Handler ======
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action  = $_POST['action'] ?? '';
-    $trashId = isset($_POST['trash_id']) ? (int) $_POST['trash_id'] : 0;
-
-    if ($trashId > 0) {
-        // ---------- RESTORE ----------
-        if ($action === 'restore_trash') {
-            try {
-                $pdo->beginTransaction();
-
-                // 1) trash row আনো
-                $stmt = $pdo->prepare("SELECT * FROM school_trash WHERE id = :id");
-                $stmt->execute([':id' => $trashId]);
-                $trash = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($trash) {
-                    $photoPath    = $trash['photo_path'] ?? null;
-                    $newPhotoPath = $photoPath;
-                    $schoolId     = (int)($trash['school_id'] ?? 0); // মূল school_id
-
-                    // 2) যদি trash_schools এ থাকে, তাহলে আবার uploads/schools এ move করব
-                    if (!empty($photoPath) && strpos($photoPath, 'uploads/trash_schools/') === 0) {
-                        $oldFull = __DIR__ . '/' . $photoPath;
-                        if (is_file($oldFull)) {
-                            $mainDir = __DIR__ . '/uploads/schools';
-                            if (!is_dir($mainDir)) {
-                                mkdir($mainDir, 0777, true);
-                            }
-
-                            $baseName   = basename($photoPath);
-                            $targetFull = $mainDir . '/' . $baseName;
-
-                            // নাম conflict হলে suffix যোগ
-                            if (is_file($targetFull)) {
-                                $nameNoExt = pathinfo($baseName, PATHINFO_FILENAME);
-                                $ext       = pathinfo($baseName, PATHINFO_EXTENSION);
-                                $baseName  = $nameNoExt . '_' . time() . '.' . $ext;
-                                $targetFull = $mainDir . '/' . $baseName;
-                            }
-
-                            if (@rename($oldFull, $targetFull)) {
-                                $newPhotoPath = 'uploads/schools/' . $baseName;
-                            } else {
-                                // move fail হলে পুরানো path রেখে দিচ্ছি
-                                $newPhotoPath = $photoPath;
-                            }
-                        }
-                    }
-
-                    // 3) schools এ আবার insert
-                    // এখানে পুরোনো school_id দিয়েই id সেট করছি,
-                    // যেন school_notes / note_trash এর school_id এর সাথে ম্যাচ করে
-                    $stmtIns = $pdo->prepare("
-                        INSERT INTO schools (
-                            id,
-                            district, upazila, school_name, mobile, status,
-                            photo_path, created_by, updated_by
-                        )
-                        VALUES (
-                            :id,
-                            :district, :upazila, :school_name, :mobile, :status,
-                            :photo_path, :created_by, :updated_by
-                        )
-                    ");
-
-                    $stmtIns->execute([
-                        ':id'          => $schoolId,
-                        ':district'    => $trash['district'],
-                        ':upazila'     => $trash['upazila'],
-                        ':school_name' => $trash['school_name'],
-                        ':mobile'      => $trash['mobile'],
-                        ':status'      => $trash['status'],
-                        ':photo_path'  => $newPhotoPath,
-                        ':created_by'  => $trash['created_by'] ?? null,
-                        // restore করল যে user, তাকে updated_by দিলে future ট্র্যাক সহজ হবে
-                        ':updated_by'  => $userId,
-                    ]);
-
-                    // 4) note_trash থেকে এই school এর সব নোট আবার school_notes এ ফেরত আনা
-                    // (আগে schools.php তে delete করার সময় note_trash এ কপি করা হয়েছিল)
-                    $stmtRestoreNotes = $pdo->prepare("
-                        INSERT INTO school_notes (
-                            school_id,
-                            note_text,
-                            note_date,
-                            updated_by,
-                            created_at
-                        )
-                        SELECT
-                            school_id,
-                            note_text,
-                            note_date,
-                            updated_by,
-                            created_at
-                        FROM note_trash
-                        WHERE school_id = :school_id
-                    ");
-                    $stmtRestoreNotes->execute([
-                        ':school_id' => $schoolId,
-                    ]);
-
-                    // 5) note_trash থেকে নোটগুলো মুছে দাও (already restored)
-                    $stmtDelNotesTrash = $pdo->prepare("
-                        DELETE FROM note_trash
-                        WHERE school_id = :school_id
-                    ");
-                    $stmtDelNotesTrash->execute([
-                        ':school_id' => $schoolId,
-                    ]);
-
-                    // 6) school_trash থেকে এই row মুছে দাও
-                    $stmtDelTrash = $pdo->prepare("DELETE FROM school_trash WHERE id = :id");
-                    $stmtDelTrash->execute([':id' => $trashId]);
-                }
-
-                $pdo->commit();
-            } catch (Exception $e) {
-                $pdo->rollBack();
-                // চাইলে এখানে error log করতে পারো
-            }
-        }
-
-        // ---------- PERMANENT DELETE ----------
-        if ($action === 'delete_trash') {
-            try {
-                $pdo->beginTransaction();
-
-                // আগে school_id + photo_path নিয়ে আসি
-                $stmt = $pdo->prepare("SELECT school_id, photo_path FROM school_trash WHERE id = :id");
-                $stmt->execute([':id' => $trashId]);
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($row) {
-                    $schoolId  = (int)($row['school_id'] ?? 0);
-                    $photoPath = $row['photo_path'] ?? null;
-
-                    // ছবিটা ফাইল সিস্টেম থেকে ডিলিট
-                    if (!empty($photoPath) && strpos($photoPath, 'uploads/trash_schools/') === 0) {
-                        $fileFull = __DIR__ . '/' . $photoPath;
-                        if (is_file($fileFull)) {
-                            @unlink($fileFull);
-                        }
-                    }
-
-                    // এই school_id এর note_trash থেকেও সব নোট permanently delete
-                    if ($schoolId > 0) {
-                        $stmtDelNotes = $pdo->prepare("
-                            DELETE FROM note_trash
-                            WHERE school_id = :school_id
-                        ");
-                        $stmtDelNotes->execute([
-                            ':school_id' => $schoolId,
-                        ]);
-                    }
-
-                    // সর্বশেষ school_trash থেকে রেকর্ড ডিলিট
-                    $stmtDel = $pdo->prepare("DELETE FROM school_trash WHERE id = :id");
-                    $stmtDel->execute([':id' => $trashId]);
-                }
-
-                $pdo->commit();
-            } catch (Exception $e) {
-                $pdo->rollBack();
-                // চাইলে error log করতে পারো
-            }
-        }
-    }
-
-    header("Location: trash.php");
-    exit;
-}
-
 // ====== Filter/Search ======
 $search = trim($_GET['q'] ?? '');
 
@@ -207,12 +34,37 @@ $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // layout
-$pageTitle   = 'Trash - School List';
+$pageTitle = 'Trash - School List';
 $pageHeading = 'Trash';
-$activeMenu  = 'trash';
+$activeMenu = 'trash';
 
 require '../layout/layout_header.php';
 ?>
+
+<?php if (!empty($_SESSION['flash']) && is_array($_SESSION['flash'])): ?>
+    <?php
+        $flashType = $_SESSION['flash']['type'] ?? 'info';
+        $flashMsg  = $_SESSION['flash']['msg']  ?? '';
+        unset($_SESSION['flash']);
+
+        $flashClass = 'bg-blue-100 text-blue-800';
+        if ($flashType === 'success') $flashClass = 'bg-green-100 text-green-800';
+        if ($flashType === 'error')   $flashClass = 'bg-red-100 text-red-800';
+        if ($flashType === 'warning') $flashClass = 'bg-yellow-100 text-yellow-800';
+    ?>
+    <div class="mb-3 p-3 rounded border <?= $flashClass ?>">
+        <div class="flex justify-between items-center">
+            <div class="text-sm font-semibold">
+                <?= htmlspecialchars($flashMsg) ?>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()"
+                    style="border:0;background:transparent;font-size:14px;cursor:pointer;">
+                ✕
+            </button>
+        </div>
+    </div>
+<?php endif; ?>
+
 
 <div class="bg-white rounded-xl shadow p-4 mb-4">
     <form method="GET" class="flex flex-wrap gap-3 items-end">
@@ -220,25 +72,14 @@ require '../layout/layout_header.php';
             <label class="block text-xs font-semibold text-slate-600 mb-1">
                 Search by School Name
             </label>
-            <input
-                type="text"
-                name="q"
-                class="w-full p-2 border rounded text-sm"
-                placeholder="Type school name..."
-                value="<?php echo htmlspecialchars($search); ?>"
-            >
+            <input type="text" name="q" class="w-full p-2 border rounded text-sm" placeholder="Type school name..."
+                value="<?php echo htmlspecialchars($search); ?>">
         </div>
         <div class="flex gap-2">
-            <button
-                type="submit"
-                class="px-4 py-2 rounded bg-slate-900 text-white text-sm hover:bg-slate-800"
-            >
+            <button type="submit" class="px-4 py-2 rounded bg-slate-900 text-white text-sm hover:bg-slate-800">
                 Search
             </button>
-            <a
-                href="trash.php"
-                class="px-4 py-2 rounded bg-slate-200 text-slate-700 text-sm hover:bg-slate-300"
-            >
+            <a href="trash.php" class="px-4 py-2 rounded bg-slate-200 text-slate-700 text-sm hover:bg-slate-300">
                 Reset
             </a>
         </div>
@@ -254,108 +95,196 @@ require '../layout/layout_header.php';
     <?php else: ?>
         <table class="min-w-full text-sm border-collapse">
             <thead>
-            <tr class="bg-slate-100 text-left">
-                <th class="p-2 border">Trash ID</th>
-                <th class="p-2 border">School ID / Photo</th>
-                <th class="p-2 border" style="min-width: 150px;">School Name</th>
-                <th class="p-2 border" style="min-width: 160px;">Address</th>
-                <th class="p-2 border">Status</th>
-                <th class="p-2 border">Deleted By</th>
-                <th class="p-2 border">Deleted At</th>
-                <th class="p-2 border">Actions</th>
-            </tr>
+                <tr class="bg-slate-100 text-left">
+                    <th class="p-2 border">Photo</th>
+                    <th class="p-2 border">School ID</th>
+
+                    <th class="p-2 border" style="min-width: 150px;">School Name</th>
+                    <th class="p-2 border" style="min-width: 160px;">Address</th>
+                    <th class="p-2 border">Status</th>
+                    <th class="p-2 border">Deleted By</th>
+                    <th class="p-2 border">Deleted At</th>
+                    <th class="p-2 border">Actions</th>
+                </tr>
             </thead>
             <tbody>
-            <?php foreach ($rows as $r): ?>
-                <?php
-                $address = trim(
-                    ($r['district'] ?? '') .
-                    (($r['district'] ?? '') && ($r['upazila'] ?? '') ? ', ' : '') .
-                    ($r['upazila'] ?? '')
-                );
-                if ($address === '') {
-                    $address = 'N/A';
-                }
+                <?php foreach ($rows as $r): ?>
+                    <?php
+                    $address = trim(
+                        ($r['district'] ?? '') .
+                        (($r['district'] ?? '') && ($r['upazila'] ?? '') ? ', ' : '') .
+                        ($r['upazila'] ?? '')
+                    );
+                    if ($address === '') {
+                        $address = 'N/A';
+                    }
 
-                $statusClass = ($r['status'] === 'Approved')
-                    ? 'text-green-600'
-                    : 'text-orange-600';
+                    $statusClass = ($r['status'] === 'Approved')
+                        ? 'text-green-600'
+                        : 'text-orange-600';
 
-                $deletedByName = $r['deleted_name'] ?? 'Unknown';
-                $deletedAt     = $r['deleted_at'] ?? '';
-                ?>
-                <tr class="hover:bg-slate-50">
-                    <td class="p-2 border align-top text-xs">
-                        <?php echo (int)$r['id']; ?>
-                    </td>
-                    <td class="p-2 border align-top text-xs">
-                        <div class="flex flex-col items-start gap-1">
-                            <div>SID: <?php echo (int)$r['school_id']; ?></div>
-                            <?php if (!empty($r['photo_path'])): ?>
-                                <img
-                                    src="../<?php echo htmlspecialchars($r['photo_path']); ?>"
-                                    style="width: 80px;"
-                                    alt="trash"
-                                >
-                            <?php endif; ?>
-                        </div>
-                    </td>
-                    <td class="p-2 border align-top font-semibold">
-                        <?php echo htmlspecialchars($r['school_name'] ?? '(No name)'); ?>
-                    </td>
-                    <td class="p-2 border align-top text-xs text-slate-700">
-                        <?php echo htmlspecialchars($address); ?>
-                    </td>
-                    <td class="p-2 border align-top">
-                        <span class="text-xs font-semibold <?php echo $statusClass; ?>">
-                            <?php echo htmlspecialchars($r['status'] ?? ''); ?>
-                        </span>
-                    </td>
-                    <td class="p-2 border align-top text-xs">
-                        <?php echo htmlspecialchars($deletedByName); ?>
-                    </td>
-                    <td class="p-2 border align-top text-xs">
-                        <?php
-                        if (!empty($deletedAt)) {
-                            echo date("d M Y h:i A", strtotime($deletedAt));
-                        } else {
-                            echo "";
-                        }
-                        ?>
-                    </td>
+                    $deletedByName = $r['deleted_name'] ?? 'Unknown';
+                    $deletedAt = $r['deleted_at'] ?? '';
+                    ?>
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2 border align-top text-xs">
+                            <div class="flex flex-col items-start gap-1">
 
-                    <td class="p-2 border align-top">
-                        <div class="flex flex-col sm:flex-row gap-1 text-xs">
-                            <form method="POST" onsubmit="return confirm('এই স্কুলটি restore করতে চান?');">
-                                <input type="hidden" name="action" value="restore_trash">
-                                <input type="hidden" name="trash_id" value="<?php echo (int)$r['id']; ?>">
-                                <button
-                                    type="submit"
-                                    class="px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 w-full"
-                                >
-                                    Restore
-                                </button>
-                            </form>
+                                <?php if (!empty($r['photo_path'])): ?>
+                                    <img src="../<?php echo htmlspecialchars($r['photo_path']); ?>"
+                                        style="width: 40px; height: 23px; cursor:pointer;" alt="trash"
+                                        onclick="openPhotoModal(this.src)">
 
-                            <form method="POST"
-                                  onsubmit="return confirm('Permanent delete? এই school_trash রেকর্ড, নোট এবং ছবিটা আর ফিরিয়ে আনা যাবে না।');">
-                                <input type="hidden" name="action" value="delete_trash">
-                                <input type="hidden" name="trash_id" value="<?php echo (int)$r['id']; ?>">
-                                <button
-                                    type="submit"
-                                    class="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 w-full"
-                                >
-                                    Delete
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+
+                        <td class="p-2 border align-top text-xs">
+                            <?php echo (int) $r['school_id']; ?>
+                        </td>
+
+                        <td class="p-2 border align-top font-semibold">
+                            <?php echo htmlspecialchars($r['school_name'] ?? '(No name)'); ?>
+                        </td>
+                        <td class="p-2 border align-top text-xs text-slate-700">
+                            <?php echo htmlspecialchars($address); ?>
+                        </td>
+                        <td class="p-2 border align-top">
+                            <span class="text-xs font-semibold <?php echo $statusClass; ?>">
+                                <?php echo htmlspecialchars($r['status'] ?? ''); ?>
+                            </span>
+                        </td>
+                        <td class="p-2 border align-top text-xs">
+                            <?php echo htmlspecialchars($deletedByName); ?>
+                        </td>
+                        <td class="p-2 border align-top text-xs">
+                            <?php
+                            if (!empty($deletedAt)) {
+                                echo date("d M Y h:i A", strtotime($deletedAt));
+                            } else {
+                                echo "";
+                            }
+                            ?>
+                        </td>
+
+                        <td class="p-2 border align-top">
+                            <div class="flex flex-col sm:flex-row gap-1 text-xs">
+                                <form method="POST" action="core/trash_core.php" onsubmit="return confirm('এই স্কুলটি restore করতে চান?');">
+                                    <input type="hidden" name="action" value="restore_trash">
+                                    <input type="hidden" name="trash_id" value="<?php echo (int) $r['id']; ?>">
+                                    <button type="submit"
+                                        class="px-3 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 w-full">
+                                        Restore
+                                    </button>
+                                </form>
+
+                                <form method="POST" action="core/trash_core.php" class="deleteForm">
+                                    <input type="hidden" name="action" value="delete_trash">
+                                    <input type="hidden" name="trash_id" value="<?php echo (int) $r['id']; ?>">
+                                    <input type="hidden" name="reason" value="">
+                                    <button type="submit"
+                                        class="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 w-full">
+                                        Delete
+                                    </button>
+                                </form>
+
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
             </tbody>
         </table>
     <?php endif; ?>
 </div>
+
+
+<!-- Photo Preview Modal -->
+<div id="photoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:9999;"
+    onclick="closePhotoModal()">
+
+    <div style="display:flex; align-items:center; justify-content:center; height:100%;">
+        <img id="modalPhoto" src=""
+            style="max-width:90%; max-height:90%; background:#fff; padding:8px; border-radius:6px;">
+    </div>
+</div>
+
+<!-- Delete Reason Modal -->
+<div id="deleteModal"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9999;">
+  <div style="max-width:520px; margin:8% auto; background:#fff; border-radius:10px; padding:16px;">
+    <h3 style="margin:0 0 10px; font-size:16px;">Permanent Delete Reason</h3>
+
+    <textarea id="deleteReason"
+              style="width:100%; height:90px; padding:10px; border:1px solid #ddd; border-radius:8px;"
+              placeholder="Reason লিখুন..."></textarea>
+
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+      <button type="button"
+              onclick="closeDeleteModal()"
+              style="padding:8px 12px; border-radius:8px; border:1px solid #ddd; background:#f3f4f6;">
+        Cancel
+      </button>
+
+      <button type="button"
+              onclick="confirmDeleteSubmit()"
+              style="padding:8px 12px; border-radius:8px; border:0; background:#dc2626; color:#fff;">
+        Delete Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentDeleteForm = null;
+
+document.querySelectorAll('form.deleteForm').forEach(form => {
+  form.addEventListener('submit', function(e){
+    e.preventDefault(); // stop normal submit
+    currentDeleteForm = form;
+    document.getElementById('deleteReason').value = '';
+    document.getElementById('deleteModal').style.display = 'block';
+  });
+});
+
+function closeDeleteModal(){
+  document.getElementById('deleteModal').style.display = 'none';
+  currentDeleteForm = null;
+}
+
+function confirmDeleteSubmit(){
+  if(!currentDeleteForm) return;
+
+  const reason = document.getElementById('deleteReason').value.trim();
+  if(reason.length < 3){
+    alert('Reason কমপক্ষে 3 অক্ষর লিখুন।');
+    return;
+  }
+
+  // confirm (extra safety)
+  if(!confirm("Permanent delete নিশ্চিত তো? এটা আর ফিরিয়ে আনা যাবে না!")) return;
+
+  // set hidden reason input
+  const reasonInput = currentDeleteForm.querySelector('input[name="reason"]');
+  if(reasonInput) reasonInput.value = reason;
+
+  currentDeleteForm.submit();
+}
+</script>
+
+
+<script>
+    function openPhotoModal(src) {
+        const modal = document.getElementById('photoModal');
+        const img = document.getElementById('modalPhoto');
+        img.src = src;
+        modal.style.display = 'block';
+    }
+
+    function closePhotoModal() {
+        document.getElementById('photoModal').style.display = 'none';
+    }
+</script>
+
 
 <?php
 require '../layout/layout_footer.php';

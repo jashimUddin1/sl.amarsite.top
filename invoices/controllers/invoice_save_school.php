@@ -85,7 +85,7 @@ try {
     $invoice_id = (int) $pdo->lastInsertId();
 
     //note_logs insert this information
-    $action = 'INVOICE CREATED';
+    $action = 'Invoice Create';
     $log = $pdo->prepare("INSERT INTO note_logs (user_id, school_id, action, new_text, action_at) VALUES (:user_id, :school_id, :action, :new_text, NOW()) ");
     $log->execute([
         'user_id' => $user_id,

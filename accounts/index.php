@@ -316,18 +316,42 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($execParams);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* -------------------- Running balance for table (in displayed order) -------------------- */
+
+/* -------------------- Running balance (top → bottom ) -------------------- */
+// $runningBalance = 0.0;
+// foreach ($rows as &$r) {
+//     $amt = (float) ($r['amount'] ?? 0);
+//     if (($r['type'] ?? '') === 'income') {
+//         $runningBalance += $amt;
+//     } elseif (($r['type'] ?? '') === 'expense') {
+//         $runningBalance -= $amt;
+//     }
+//     $r['balance'] = $runningBalance;
+// }
+// unset($r);
+
+
+
+/* -------------------- Running balance (bottom → top) -------------------- */
+$rowsAsc = array_reverse($rows); //age row ta ulte dite hobe
+
 $runningBalance = 0.0;
-foreach ($rows as &$r) {
+foreach ($rowsAsc as &$r) {
     $amt = (float) ($r['amount'] ?? 0);
+
     if (($r['type'] ?? '') === 'income') {
         $runningBalance += $amt;
     } elseif (($r['type'] ?? '') === 'expense') {
         $runningBalance -= $amt;
     }
+
     $r['balance'] = $runningBalance;
 }
 unset($r);
+
+// akhon row ta aber thik hobe
+$rows = array_reverse($rowsAsc);
+
 
 
 
@@ -1240,3 +1264,5 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
 
 
 <?php require '../layout/layout_footer.php'; ?>
+
+Balance showing ta upore theke nicher dike ase aita niche theke uporer dike korte hobe

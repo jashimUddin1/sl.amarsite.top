@@ -57,9 +57,7 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string
 }
 ?>
 <style>
-    .close-custom {
-        padding: 12px 12px !important;
-    }
+    .close-custom { padding: 12px 12px !important; }
 </style>
 
 <div class="container-lg my-4">
@@ -144,7 +142,7 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string
                                             Edit
                                         </button>
 
-                                        <form method="POST" action="core/delete_note_core.php" class="d-inline"
+                                        <form method="POST" action="../core/delete_note_core.php" class="d-inline"
                                             onsubmit="return confirm('নোট ডিলিট করতে চান?');">
                                             <input type="hidden" name="note_id" value="<?php echo (int) ($n['id'] ?? 0); ?>">
                                             <input type="hidden" name="school_id" value="<?php echo (int) $schoolId; ?>">
@@ -165,7 +163,7 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string
 <div class="modal fade" id="addNoteModalInline" tabindex="-1" aria-labelledby="addNoteModalInlineLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="../core/add_note_core.php" class="modal-content">
+        <form method="POST" action="../core/add_note_view.php" class="modal-content">
             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']); ?>">
             <div class="modal-header py-2">
                 <h5 class="modal-title" id="addNoteModalInlineLabel">Add Note</h5>
@@ -181,8 +179,8 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string
                 </div>
 
                 <div class="mb-2">
-                    <label for="nextMeeting" class="form-label small mb-1">Next Meeting</label>
-                    <input type="datetime-local" id="nextMeeting" name="next_meeting_date"
+                    <label for="addNextMeeting" class="form-label small mb-1">Next Meeting</label>
+                    <input type="datetime-local" id="addNextMeeting" name="next_meeting_date"
                         class="form-control form-control-sm">
                 </div>
             </div>
@@ -198,7 +196,7 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string
 <!-- Edit Note Modal -->
 <div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="core/update_note_core.php" class="modal-content">
+        <form method="POST" action="../core/update_note_core.php" class="modal-content">
             <div class="modal-header py-2">
                 <h5 class="modal-title" id="editNoteModalLabel">Edit Note</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -214,8 +212,8 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string
                 </div>
 
                 <div class="mb-2">
-                    <label for="nextMeeting" class="form-label small mb-1">Next Meeting</label>
-                    <input type="datetime-local" id="nextMeeting" name="next_meeting_date"
+                    <label for="editNextMeeting" class="form-label small mb-1">Next Meeting</label>
+                    <input type="datetime-local" id="editNextMeeting" name="next_meeting_date"
                         class="form-control form-control-sm">
                 </div>
             </div>
@@ -228,33 +226,33 @@ function getBanglaDayFromDateTime(?string $dt, array $map): string
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const editButtons = document.querySelectorAll('.btn-edit-note');
-        const editNoteIdInput = document.getElementById('editNoteId');
-        const editNoteTextInput = document.getElementById('editNoteText');
-        const nextMeetingInput = document.getElementById('nextMeeting');
+document.addEventListener('DOMContentLoaded', function () {
+    const editButtons = document.querySelectorAll('.btn-edit-note');
+    const editNoteIdInput = document.getElementById('editNoteId');
+    const editNoteTextInput = document.getElementById('editNoteText');
+    const editNextMeetingInput = document.getElementById('editNextMeeting');
 
-        editButtons.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const noteId = this.getAttribute('data-note-id');
-                const noteText = this.getAttribute('data-note-text') || '';
-                const nextMeet = this.getAttribute('data-next-meet') || '';
+    editButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const noteId = this.getAttribute('data-note-id');
+            const noteText = this.getAttribute('data-note-text') || '';
+            const nextMeet = this.getAttribute('data-next-meet') || '';
 
-                if (editNoteIdInput) editNoteIdInput.value = noteId;
-                if (editNoteTextInput) editNoteTextInput.value = noteText;
+            if (editNoteIdInput) editNoteIdInput.value = noteId;
+            if (editNoteTextInput) editNoteTextInput.value = noteText;
 
-                // MySQL DATETIME -> datetime-local (YYYY-MM-DDTHH:MM)
-                if (nextMeetingInput) {
-                    if (nextMeet) {
-                        const formatted = nextMeet.replace(' ', 'T').slice(0, 16);
-                        nextMeetingInput.value = formatted;
-                    } else {
-                        nextMeetingInput.value = '';
-                    }
+            // MySQL DATETIME -> datetime-local (YYYY-MM-DDTHH:MM)
+            if (editNextMeetingInput) {
+                if (nextMeet) {
+                    const formatted = nextMeet.replace(' ', 'T').slice(0, 16);
+                    editNextMeetingInput.value = formatted;
+                } else {
+                    editNextMeetingInput.value = '';
                 }
-            });
+            }
         });
     });
+});
 </script>
 
 <?php require '../layout/layout_footer.php'; ?>

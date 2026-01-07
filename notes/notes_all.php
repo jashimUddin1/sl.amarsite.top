@@ -7,18 +7,17 @@ require_login();
    Filter values (POST)
 ========================= */
 $school_id  = (int)($_POST['school_id'] ?? 0);
-$admin_id   = (int)($_POST['admin_id'] ?? 0);
 $day        = trim($_POST['day'] ?? '');
 $q          = trim($_POST['q'] ?? '');
 
 /* =========================
    Dropdown data
 ========================= */
-$schools = $pdo->query("SELECT id, school_name FROM schools ORDER BY school_name ASC")
-               ->fetchAll(PDO::FETCH_ASSOC);
-
-$admins  = $pdo->query("SELECT id, name FROM users ORDER BY name ASC")
-               ->fetchAll(PDO::FETCH_ASSOC);
+$schools = $pdo->query("
+    SELECT id, school_name
+    FROM schools
+    ORDER BY school_name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
 
 /* =========================
    Build query dynamically
@@ -33,7 +32,7 @@ SELECT
     u.name AS admin_name
 FROM school_notes sn
 LEFT JOIN schools s ON s.id = sn.school_id
-LEFT JOIN users u   ON u.id = sn.updated_by
+LEFT JOIN users   u ON u.id = sn.updated_by
 ";
 
 if ($school_id > 0) {
@@ -41,13 +40,7 @@ if ($school_id > 0) {
     $params[':school_id'] = $school_id;
 }
 
-if ($admin_id > 0) {
-    $where[] = "sn.updated_by = :admin_id";
-    $params[':admin_id'] = $admin_id;
-}
-
 if ($day !== '') {
-    // DAYNAME() → Sunday, Monday...
     $where[] = "sn.next_meet IS NOT NULL AND DAYNAME(sn.next_meet) = :day";
     $params[':day'] = $day;
 }
@@ -101,7 +94,7 @@ require '../layout/layout_header.php';
         <div class="card-body">
             <div class="row g-2 align-items-end">
 
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label small">School</label>
                     <select name="school_id" class="form-select form-select-sm">
                         <option value="0">All Schools</option>
@@ -113,19 +106,7 @@ require '../layout/layout_header.php';
                     </select>
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label small">Admin</label>
-                    <select name="admin_id" class="form-select form-select-sm">
-                        <option value="0">All</option>
-                        <?php foreach ($admins as $a): ?>
-                            <option value="<?= $a['id'] ?>" <?= ($admin_id==$a['id'])?'selected':'' ?>>
-                                <?= htmlspecialchars($a['name']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label small">Day (Next Meet)</label>
                     <select name="day" class="form-select form-select-sm">
                         <option value="">All</option>
@@ -139,14 +120,18 @@ require '../layout/layout_header.php';
 
                 <div class="col-md-3">
                     <label class="form-label small">Search Note</label>
-                    <input type="text" name="q" value="<?= htmlspecialchars($q) ?>"
+                    <input type="text" name="q"
+                           value="<?= htmlspecialchars($q) ?>"
                            class="form-control form-control-sm"
                            placeholder="নোট লিখে খুঁজুন">
                 </div>
 
                 <div class="col-md-2 d-flex gap-2">
                     <button class="btn btn-sm btn-primary w-100">Filter</button>
-                    <a href="notes_all.php" class="btn btn-sm btn-outline-secondary w-100">Reset</a>
+                    <a href="notes_all.php"
+                       class="btn btn-sm btn-outline-secondary w-100">
+                        Reset
+                    </a>
                 </div>
 
             </div>

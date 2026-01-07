@@ -850,8 +850,8 @@ require '../layout/single_invoice_header_final.php';
 
                 showToast("Invoice Save Successfully", "success");
 
-                // চাইলে: save হওয়ার পর invoice-number auto next করে দিতে পারো
-                document.getElementById("invoice-number").value = payload.in_no + 1;
+                //  save hole invoice-number auto next kore dite pore line ta comment sorai daw
+                // document.getElementById("invoice-number").value = payload.in_no + 1;
 
             } catch (err) {
                 console.error(err);

@@ -16,7 +16,7 @@ if ($action !== 'delete_school') {
     exit;
 }
 
-$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+$id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
 if ($id <= 0) {
     $_SESSION['school_errors'] = ['Invalid school id.'];
     header('Location: ../schools/schools.php');
@@ -35,7 +35,7 @@ try {
 
         // ✅ uploads path (project root)
         $rootDir = dirname(__DIR__); // school_list
-        $photoPath      = $school['photo_path'] ?? null;
+        $photoPath = $school['photo_path'] ?? null;
         $trashPhotoPath = null;
 
         // 2) move photo to uploads/trash_schools
@@ -49,7 +49,7 @@ try {
                 }
 
                 $fileName = basename($photoPath);
-                $newFull  = $trashDir . '/' . $fileName;
+                $newFull = $trashDir . '/' . $fileName;
 
                 if (@rename($oldFull, $newFull)) {
                     $trashPhotoPath = 'uploads/trash_schools/' . $fileName;
@@ -78,16 +78,16 @@ try {
         ");
 
         $stmtTrash->execute([
-            ':school_id'   => $school['id'],
-            ':district'    => $school['district'],
-            ':upazila'     => $school['upazila'],
+            ':school_id' => $school['id'],
+            ':district' => $school['district'],
+            ':upazila' => $school['upazila'],
             ':school_name' => $school['school_name'],
-            ':mobile'      => $school['mobile'],
-            ':status'      => $school['status'],
-            ':photo_path'  => $trashPhotoPath,
-            ':created_by'  => $school['created_by'] ?? null,
-            ':updated_by'  => $school['updated_by'] ?? null,
-            ':deleted_by'  => $userId,
+            ':mobile' => $school['mobile'],
+            ':status' => $school['status'],
+            ':photo_path' => $trashPhotoPath,
+            ':created_by' => $school['created_by'] ?? null,
+            ':updated_by' => $school['updated_by'] ?? null,
+            ':deleted_by' => $userId,
         ]);
 
         // 4) notes -> note_trash
@@ -116,8 +116,47 @@ try {
         ");
         $stmtNotesTrash->execute([
             ':deleted_by' => $userId,
-            ':school_id'  => $school['id'],
+            ':school_id' => $school['id'],
         ]);
+
+        // count notes 
+        $stmtCountNotes = $pdo->prepare("SELECT COUNT(*) FROM school_notes WHERE school_id = :id");
+        $stmtCountNotes->execute([':id' => $school['id']]);
+        $notesCount = (int) ($stmtCountNotes->fetchColumn() ?? 0);
+
+        // INSERT INTO note_logs
+        $oldText = json_encode([
+            'school' => [
+                'id' => (int) $school['id'],
+                'school_name' => $school['school_name'] ?? null,
+                'district' => $school['district'] ?? null,
+                'upazila' => $school['upazila'] ?? null,
+                'mobile' => $school['mobile'] ?? null,
+                'status' => $school['status'] ?? null,
+                'photo_path' => $school['photo_path'] ?? null,
+            ]
+        ], JSON_UNESCAPED_UNICODE);
+
+        $newText = json_encode([
+            'result' => 'Moved school to trash and deleted from schools table',
+            'trash_photo_path' => $trashPhotoPath,  
+            'notes_moved_to_trash' => $notesCount,
+        ], JSON_UNESCAPED_UNICODE);
+
+        $stmtLog = $pdo->prepare("
+            INSERT INTO note_logs (note_id, school_id, user_id, action, old_text, new_text, action_at)
+            VALUES (:note_id, :school_id, :user_id, :action, :old_text, :new_text, NOW())
+        ");
+
+        $stmtLog->execute([
+            ':note_id' => null,             
+            ':school_id' => (int) $school['id'],
+            ':user_id' => $userId,
+            ':action' => 'School Delete',  
+            ':old_text' => $oldText,
+            ':new_text' => $newText,
+        ]);
+
     }
 
     // 5) delete from school_notes

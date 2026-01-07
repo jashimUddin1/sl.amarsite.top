@@ -2,6 +2,9 @@
 // config.php
 session_start();
 
+/* ================= TIMEZONE ================= */
+date_default_timezone_set('Asia/Dhaka');
+
 $host = "localhost";
 $db   = "amarsite_school_notes";
 $user = "root";

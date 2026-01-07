@@ -95,7 +95,7 @@ try {
     try {
         $userId = $_SESSION['user']['id'] ?? ($_SESSION['user_id'] ?? 0);
         if ($userId) {
-            $action = 'INVOICE UPDATED';
+            $action = 'Invoice Updated';
             $log = $pdo->prepare("INSERT INTO note_logs (user_id, school_id, action, new_text, action_at) VALUES (:user_id, :school_id, :action, :new_text, NOW())");
             $log->execute([
                 'user_id'   => (int)$userId,

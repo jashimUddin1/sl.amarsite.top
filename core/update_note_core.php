@@ -1,9 +1,9 @@
 <?php
-require_once '../config.php';
+require_once '../auth/config.php';
 require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../index.php');
+    header('Location: ../notes/note_view.php');
     exit;
 }
 
@@ -37,7 +37,7 @@ try {
     if (!$oldRow) {
         // নোটই না পাওয়া গেলে, আপডেট করার কোনো মানে নেই
         $_SESSION['note_error'] = 'নোট পাওয়া যায়নি, আপডেট করা যায়নি।';
-        header('Location: ../note_view.php?school_id=' . $schoolId);
+        header('Location: ../notes/note_view.php?school_id=' . $schoolId);
         exit;
     }
 
@@ -72,7 +72,7 @@ try {
         ':note_id'   => $noteId,
         ':school_id' => $schoolId,
         ':user_id'   => $user_id,
-        ':action'    => 'update note',  
+        ':action'    => 'Update Note',  
         ':old_text'  => $oldText,
         ':new_text'  => $noteText,
     ]);
@@ -85,6 +85,6 @@ try {
     $_SESSION['note_error'] = 'নোট আপডেট করতে সমস্যা হয়েছে।';
 }
 
-header('Location: ../note_view.php?school_id=' . $schoolId);
+header('Location: ../notes/note_view.php?school_id=' . $schoolId);
 exit;
 

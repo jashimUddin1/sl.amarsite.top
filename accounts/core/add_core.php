@@ -153,7 +153,7 @@ try {
         ':note_id'   => null,
         ':school_id' => null,
         ':user_id'   => $user_id,
-        ':action'    => 'Add Entry',
+        ':action'    => 'Entry Add',
         ':old_text'  => null,
         ':new_text'  => json_encode($new_text_arr, JSON_UNESCAPED_UNICODE),
     ]);

@@ -3,16 +3,22 @@ require_once '../auth/config.php';
 require_login();
 
 // ====== Basic Counts ======
-$totalSchools    = (int)($pdo->query("SELECT COUNT(*) FROM schools")->fetchColumn() ?? 0);
-$approvedSchools = (int)($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Approved'")->fetchColumn() ?? 0);
-$pendingSchools  = (int)($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Pending'")->fetchColumn() ?? 0);
-$trashedSchools  = (int)($pdo->query("SELECT COUNT(*) FROM school_trash")->fetchColumn() ?? 0);
+$totalSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools")->fetchColumn() ?? 0);
+$approvedSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Approved'")->fetchColumn() ?? 0);
+$pendingSchools = (int) ($pdo->query("SELECT COUNT(*) FROM schools WHERE status = 'Pending'")->fetchColumn() ?? 0);
+$trashedSchools = (int) ($pdo->query("SELECT COUNT(*) FROM school_trash")->fetchColumn() ?? 0);
 
 // নোটস আর users থাকলে তাদেরও কাউন্ট
 $totalNotes = 0;
-try { $totalNotes = (int)($pdo->query("SELECT COUNT(*) FROM school_notes")->fetchColumn() ?? 0); } catch (Exception $e) {}
+try {
+    $totalNotes = (int) ($pdo->query("SELECT COUNT(*) FROM school_notes")->fetchColumn() ?? 0);
+} catch (Exception $e) {
+}
 $totalUsers = 0;
-try { $totalUsers = (int)($pdo->query("SELECT COUNT(*) FROM users")->fetchColumn() ?? 0); } catch (Exception $e) {}
+try {
+    $totalUsers = (int) ($pdo->query("SELECT COUNT(*) FROM users")->fetchColumn() ?? 0);
+} catch (Exception $e) {
+}
 
 // ====== Latest Schools (সর্বশেষ ৫টা) ======
 $latestSchools = [];
@@ -25,7 +31,9 @@ try {
         LIMIT 5
     ");
     $latestSchools = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) { $latestSchools = []; }
+} catch (Exception $e) {
+    $latestSchools = [];
+}
 
 // ====== Latest Note Logs (সর্বশেষ ৫টা অ্যাকশন) ======
 $latestLogs = [];
@@ -39,28 +47,31 @@ try {
         LIMIT 5
     ");
     $latestLogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) { $latestLogs = []; }
+} catch (Exception $e) {
+    $latestLogs = [];
+}
 
 // ====== Income Summary Range ======
 $range = $_GET['range'] ?? 'lifetime'; // default
-$allowedRanges = ['today','this_month','this_year','last_year','lifetime','custom'];
-if (!in_array($range, $allowedRanges, true)) $range = 'this_month';
+$allowedRanges = ['today', 'this_month', 'this_year', 'last_year', 'lifetime', 'custom'];
+if (!in_array($range, $allowedRanges, true))
+    $range = 'this_month';
 
 $from = $_GET['from'] ?? '';
-$to   = $_GET['to'] ?? '';
+$to = $_GET['to'] ?? '';
 
-$isValidDate = function(string $d): bool {
-    return (bool)preg_match('/^\d{4}-\d{2}-\d{2}$/', $d);
+$isValidDate = function (string $d): bool {
+    return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $d);
 };
 
 $selected = match ($range) {
-    'today'      => 'Today',
+    'today' => 'Today',
     'this_month' => 'This Month',
-    'this_year'  => 'This Year',
-    'last_year'  => 'Last Year',
-    'lifetime'   => 'Life Time',
-    'custom'     => ($from && $to ? ($from . ' to ' . $to) : 'Custom'),
-    default      => 'This Month',
+    'this_year' => 'This Year',
+    'last_year' => 'Last Year',
+    'lifetime' => 'Life Time',
+    'custom' => ($from && $to ? ($from . ' to ' . $to) : 'Custom'),
+    default => 'This Month',
 };
 
 // SQL WHERE based on JSON invoiceDate
@@ -90,12 +101,12 @@ if ($range === 'today') {
 
 // ====== Income Summary (3 cards + separate counts) ======
 $income = [
-    'total'           => 0.0,
-    'collected'       => 0.0,
-    'due'             => 0.0,
-    'income_count'    => 0,  // matched invoices count
+    'total' => 0.0,
+    'collected' => 0.0,
+    'due' => 0.0,
+    'income_count' => 0,  // matched invoices count
     'collected_count' => 0,  // pay>0 invoices count
-    'due_count'       => 0,  // due>0 invoices count
+    'due_count' => 0,  // due>0 invoices count
 ];
 
 try {
@@ -148,13 +159,13 @@ try {
 
     $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-    $income['income_count']    = (int)($row['income_count'] ?? 0);
-    $income['collected_count'] = (int)($row['collected_count'] ?? 0);
-    $income['due_count']       = (int)($row['due_count'] ?? 0);
+    $income['income_count'] = (int) ($row['income_count'] ?? 0);
+    $income['collected_count'] = (int) ($row['collected_count'] ?? 0);
+    $income['due_count'] = (int) ($row['due_count'] ?? 0);
 
-    $income['total']     = (float)($row['total_income'] ?? 0);
-    $income['collected'] = (float)($row['total_collected'] ?? 0);
-    $income['due']       = (float)($row['total_due'] ?? 0);
+    $income['total'] = (float) ($row['total_income'] ?? 0);
+    $income['collected'] = (float) ($row['total_collected'] ?? 0);
+    $income['due'] = (float) ($row['total_due'] ?? 0);
 
 } catch (Exception $e) {
     // debug চাইলে:
@@ -162,9 +173,9 @@ try {
 }
 
 // ====== Layout Vars ======
-$pageTitle   = 'Dashboard - School List';
+$pageTitle = 'Dashboard - School List';
 $pageHeading = 'Dashboard';
-$activeMenu  = 'dashboard';
+$activeMenu = 'dashboard';
 
 require '../layout/layout_header.php';
 ?>
@@ -178,51 +189,46 @@ require '../layout/layout_header.php';
             Income Summary <span class="text-slate-500 text-xs sm:text-sm">(<?= htmlspecialchars($selected) ?>)</span>
         </h2>
 
-        <form method="get"
-              class="flex items-center gap-1 sm:gap-2 flex-nowrap"
-              id="rangeForm"
-              title="Select range to filter income summary">
+        <form method="get" class="flex items-center gap-1 sm:gap-2 flex-nowrap" id="rangeForm"
+            title="Select range to filter income summary">
 
-            <select name="range" id="rangeSelect"
-                    class="border rounded-md px-2 py-1 text-xs sm:text-sm"
-                    title="Range">
-                <option value="today"      <?= $range==='today'?'selected':'' ?>>Today</option>
-                <option value="this_month" <?= $range==='this_month'?'selected':'' ?>>This Month</option>
-                <option value="this_year"  <?= $range==='this_year'?'selected':'' ?>>This Year</option>
-                <option value="last_year"  <?= $range==='last_year'?'selected':'' ?>>Last Year</option>
-                <option value="lifetime"   <?= $range==='lifetime'?'selected':'' ?>>Life Time</option>
-                <option value="custom"     <?= $range==='custom'?'selected':'' ?>>Custom</option>
+            <select name="range" id="rangeSelect" class="border rounded-md px-2 py-1 text-xs sm:text-sm" title="Range">
+                <option value="today" <?= $range === 'today' ? 'selected' : '' ?>>Today</option>
+                <option value="this_month" <?= $range === 'this_month' ? 'selected' : '' ?>>This Month</option>
+                <option value="this_year" <?= $range === 'this_year' ? 'selected' : '' ?>>This Year</option>
+                <option value="last_year" <?= $range === 'last_year' ? 'selected' : '' ?>>Last Year</option>
+                <option value="lifetime" <?= $range === 'lifetime' ? 'selected' : '' ?>>Life Time</option>
+                <option value="custom" <?= $range === 'custom' ? 'selected' : '' ?>>Custom</option>
             </select>
 
             <div id="customFields" class="flex items-center gap-1">
                 <input type="date" name="from" value="<?= htmlspecialchars($from) ?>"
-                       class="border rounded-md px-2 py-1 text-xs sm:text-sm"
-                       title="From (YYYY-MM-DD)">
+                    class="border rounded-md px-2 py-1 text-xs sm:text-sm" title="From (YYYY-MM-DD)">
                 <input type="date" name="to" value="<?= htmlspecialchars($to) ?>"
-                       class="border rounded-md px-2 py-1 text-xs sm:text-sm"
-                       title="To (YYYY-MM-DD)">
+                    class="border rounded-md px-2 py-1 text-xs sm:text-sm" title="To (YYYY-MM-DD)">
             </div>
 
-            <button class="px-2.5 sm:px-3 py-1 rounded-md bg-indigo-600 text-white text-xs sm:text-sm hover:bg-indigo-700"
-                    title="Apply">
+            <button
+                class="px-2.5 sm:px-3 py-1 rounded-md bg-indigo-600 text-white text-xs sm:text-sm hover:bg-indigo-700"
+                title="Apply">
                 Apply
             </button>
         </form>
     </div>
 
     <script>
-    (function(){
-      const sel = document.getElementById('rangeSelect');
-      const custom = document.getElementById('customFields');
-      function toggleCustom(){
-        if (!sel || !custom) return;
-        custom.style.display = (sel.value === 'custom') ? 'flex' : 'none';
-      }
-      if (sel){
-        sel.addEventListener('change', toggleCustom);
-        toggleCustom();
-      }
-    })();
+        (function () {
+            const sel = document.getElementById('rangeSelect');
+            const custom = document.getElementById('customFields');
+            function toggleCustom() {
+                if (!sel || !custom) return;
+                custom.style.display = (sel.value === 'custom') ? 'flex' : 'none';
+            }
+            if (sel) {
+                sel.addEventListener('change', toggleCustom);
+                toggleCustom();
+            }
+        })();
     </script>
 
     <!-- Cards: mobile => income full width, next row 2 cards -->
@@ -233,14 +239,14 @@ require '../layout/layout_header.php';
             <div class="flex items-center justify-between">
                 <div class="text-xs text-slate-500">Total Income</div>
                 <div class="text-[11px] text-slate-500" title="Matched invoices count">
-                    (<?= (int)$income['income_count'] ?>)
+                    (<?= (int) $income['income_count'] ?>)
                 </div>
             </div>
             <div class="text-2xl font-bold text-slate-800 mt-1">
                 ৳ <?= number_format($income['total'], 2); ?>
             </div>
             <a href="/pages/income_details.php?type=income&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
-               class="inline-block text-xs text-indigo-600 hover:underline mt-2">
+                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
         </div>
@@ -250,14 +256,14 @@ require '../layout/layout_header.php';
             <div class="flex items-center justify-between">
                 <div class="text-xs text-slate-500">Total Collected</div>
                 <div class="text-[11px] text-slate-500" title="Invoices where pay > 0">
-                    (<?= (int)$income['collected_count'] ?>)
+                    (<?= (int) $income['collected_count'] ?>)
                 </div>
             </div>
             <div class="text-2xl font-bold text-emerald-600 mt-1">
                 ৳ <?= number_format($income['collected'], 2); ?>
             </div>
             <a href="/pages/income_details.php?type=collected&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
-               class="inline-block text-xs text-indigo-600 hover:underline mt-2">
+                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
         </div>
@@ -267,14 +273,14 @@ require '../layout/layout_header.php';
             <div class="flex items-center justify-between">
                 <div class="text-xs text-slate-500">Total Due</div>
                 <div class="text-[11px] text-slate-500" title="Invoices where due > 0">
-                    (<?= (int)$income['due_count'] ?>)
+                    (<?= (int) $income['due_count'] ?>)
                 </div>
             </div>
             <div class="text-2xl font-bold text-red-500 mt-1">
                 ৳ <?= number_format($income['due'], 2); ?>
             </div>
             <a href="/pages/income_details.php?type=due&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
-               class="inline-block text-xs text-indigo-600 hover:underline mt-2">
+                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
         </div>
@@ -288,8 +294,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Total Schools</div>
         <div class="text-2xl font-bold text-slate-800 mb-1"><?php echo $totalSchools; ?></div>
-        <a href="/schools/schools.php"
-           class="inline-block text-xs text-indigo-600 hover:underline">
+        <a href="/schools/schools.php" class="inline-block text-xs text-indigo-600 hover:underline">
             View All
         </a>
     </div>
@@ -297,8 +302,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Approved Schools</div>
         <div class="text-2xl font-bold text-green-600 mb-1"><?php echo $approvedSchools; ?></div>
-        <a href="/schools/schools.php?status=Approved"
-           class="inline-block text-xs text-indigo-600 hover:underline">
+        <a href="/schools/schools.php?status=Approved" class="inline-block text-xs text-indigo-600 hover:underline">
             View Approved
         </a>
     </div>
@@ -306,8 +310,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Pending Schools</div>
         <div class="text-2xl font-bold text-orange-500 mb-1"><?php echo $pendingSchools; ?></div>
-        <a href="/schools/schools.php?status=Pending"
-           class="inline-block text-xs text-indigo-600 hover:underline">
+        <a href="/schools/schools.php?status=Pending" class="inline-block text-xs text-indigo-600 hover:underline">
             View Pending
         </a>
     </div>
@@ -315,8 +318,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Trashed Schools</div>
         <div class="text-2xl font-bold text-red-500 mb-1"><?php echo $trashedSchools; ?></div>
-        <a href="/pages/trash.php"
-           class="inline-block text-xs text-indigo-600 hover:underline">
+        <a href="/pages/trash.php" class="inline-block text-xs text-indigo-600 hover:underline">
             Open Trash
         </a>
     </div>
@@ -328,8 +330,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Total Notes</div>
         <div class="text-2xl font-bold text-slate-800 mb-1"><?php echo $totalNotes; ?></div>
-        <a href="../notes/notes_all.php"
-           class="inline-block text-xs text-indigo-600 hover:underline">
+        <a href="../notes/notes_all.php" class="inline-block text-xs text-indigo-600 hover:underline">
             View all
         </a>
     </div>
@@ -337,8 +338,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Total Users</div>
         <div class="text-2xl font-bold text-slate-800 mb-1"><?php echo $totalUsers; ?></div>
-        <a href="user_reports.php"
-           class="inline-block text-xs text-indigo-600 hover:underline">
+        <a href="user_reports.php" class="inline-block text-xs text-indigo-600 hover:underline">
             View User Activity
         </a>
     </div>
@@ -347,19 +347,16 @@ require '../layout/layout_header.php';
         <div class="text-xs text-slate-500 mb-1">Quick Actions</div>
         <div class="flex flex-wrap gap-2 mt-2 text-sm">
             <a href="/schools/school_create.php"
-               class="px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                class="px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700">
                 + Add School
             </a>
-            <a href="/schools/schools.php"
-               class="px-3 py-1.5 rounded bg-slate-800 text-white hover:bg-slate-900">
+            <a href="/schools/schools.php" class="px-3 py-1.5 rounded bg-slate-800 text-white hover:bg-slate-900">
                 Manage Schools
             </a>
-            <a href="/logs/logs.php"
-               class="px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">
+            <a href="/logs/all_logs.php" class="px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">
                 View Logs
             </a>
-            <a href="/invoices/invoices.php"
-               class="px-3 py-1.5 rounded bg-orange-600 text-white hover:bg-orange-700">
+            <a href="/invoices/invoices.php" class="px-3 py-1.5 rounded bg-orange-600 text-white hover:bg-orange-700">
                 View Invoices
             </a>
         </div>
@@ -373,8 +370,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="flex items-center justify-between mb-2">
             <h2 class="text-sm font-semibold text-slate-800">Latest Schools</h2>
-            <a href="../schools/schools.php"
-               class="text-xs text-indigo-600 hover:underline">
+            <a href="../schools/schools.php" class="text-xs text-indigo-600 hover:underline">
                 View All
             </a>
         </div>
@@ -398,12 +394,13 @@ require '../layout/layout_header.php';
                             $addr = trim(($s['district'] ?? '') .
                                 (($s['district'] ?? '') && ($s['upazila'] ?? '') ? ', ' : '') .
                                 ($s['upazila'] ?? ''));
-                            if ($addr === '') $addr = 'N/A';
+                            if ($addr === '')
+                                $addr = 'N/A';
 
                             $statusClass = ($s['status'] === 'Approved') ? 'text-green-600' : 'text-orange-600';
                             ?>
                             <tr class="hover:bg-slate-50">
-                                <td class="p-2 border align-top"><?php echo (int)$s['id']; ?></td>
+                                <td class="p-2 border align-top"><?php echo (int) $s['id']; ?></td>
                                 <td class="p-2 border align-top">
                                     <div class="font-semibold text-[13px]">
                                         <?php echo htmlspecialchars($s['school_name']); ?>
@@ -433,9 +430,8 @@ require '../layout/layout_header.php';
     <!-- Recent Note Activity -->
     <div class="bg-white rounded-xl shadow p-4">
         <div class="flex items-center justify-between mb-2">
-            <h2 class="text-sm font-semibold text-slate-800">Recent Note Activity</h2>
-            <a href="<?= base_url('/logs/logs.php') ?>"
-               class="text-xs text-indigo-600 hover:underline">
+            <h2 class="text-sm font-semibold text-slate-800">Recent Activity</h2>
+            <a href="<?= base_url('/logs/all_logs.php') ?>" class="text-xs text-indigo-600 hover:underline">
                 View All Logs
             </a>
         </div>
@@ -446,17 +442,34 @@ require '../layout/layout_header.php';
             <ul class="space-y-2 text-[13px]">
                 <?php foreach ($latestLogs as $log): ?>
                     <?php
-                    $action = $log['action'] ?? '';
-                    $actionLabel = ucfirst($action);
-                    $badgeClass = 'bg-slate-100 text-slate-700';
-                    if ($action === 'create') $badgeClass = 'bg-emerald-50 text-emerald-700';
-                    elseif ($action === 'update') $badgeClass = 'bg-blue-50 text-blue-700';
-                    elseif ($action === 'delete') $badgeClass = 'bg-red-50 text-red-700';
+                    $actionRaw = $log['action'] ?? '';
+                    $action = trim($actionRaw);
 
-                    // $schoolName = $log['school_name'] ?? ('School #' . (int)$log['school_id']); old
-                    $schoolName = $log['school_name'] ?? ('Accounts');
-                    $userName   = $log['user_name']   ?? 'Unknown User';
-                    $time       = $log['action_at']   ?? '';
+                    // --------- Action Groups ---------
+                    $accountsActions = ['Entry Add', 'Entry Updated', 'Entry Delete'];
+                    $invoiceActions = ['Simple Invoice Created', 'INVOICE UPDATED', 'Invoice delete'];
+
+                    $isAccounts = in_array($action, $accountsActions, true);
+                    $isInvoice = in_array($action, $invoiceActions, true);
+
+                    // --------- School/Accounts/Invoices/Activity label ---------
+                    // school_name থাকলে সেটা, না থাকলে rules অনুযায়ী
+                    $schoolName = $log['school_name'] ?? ($isAccounts ? 'Accounts' : ($isInvoice ? 'Invoices' : 'Activity'));
+
+                    // --------- Badge label (pretty) ---------
+                    // "INVOICE UPDATED" -> "Invoice Updated"
+                    $actionLabel = $action !== '' ? ucwords(strtolower($action)) : 'Activity';
+
+                    // --------- Badge class ---------
+                    $badgeClass = 'bg-slate-100 text-slate-700';
+                    if ($isAccounts)
+                        $badgeClass = 'bg-emerald-50 text-emerald-700';
+                    elseif ($isInvoice)
+                        $badgeClass = 'bg-orange-50 text-orange-700';
+
+                    // --------- meta ---------
+                    $userName = $log['user_name'] ?? 'Unknown User';
+                    $time = $log['action_at'] ?? '';
                     ?>
                     <li class="border border-slate-100 rounded-lg px-3 py-2 hover:bg-slate-50">
                         <div class="flex items-center justify-between mb-1">
@@ -474,6 +487,7 @@ require '../layout/layout_header.php';
             </ul>
         <?php endif; ?>
     </div>
+
 
 </div>
 

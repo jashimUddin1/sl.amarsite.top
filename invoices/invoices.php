@@ -101,12 +101,12 @@ require '../layout/layout_header.php';
             <h5 class="mb-0 fw-semibold text-secondary d-none d-md-inline" style="min-width: 110px;">Saved Invoices</h5>
 
             <!-- 🔍 Search (schools.php-এর মতো live filter) -->
-            <div class="input-group input-group-sm ms-md-2" >
-                  <input type="text" name="search" id="invoiceSearchInput" placeholder="Search Invoice..." class="form-control" style=""
-                 onkeyup="searchInvoiceList()">
+            <div class="input-group input-group-sm ms-md-2">
+                <input type="text" name="search" id="invoiceSearchInput" placeholder="Search Invoice..."
+                    class="form-control" onkeyup="searchInvoiceList()">
             </div>
 
-          
+
         </div>
 
         <div class="d-flex">
@@ -119,7 +119,7 @@ require '../layout/layout_header.php';
                 <button class="btn btn-sm btn-outline-success d-none d-md-inline">
                     <a href="invoice_simple.php">
                         Simple Invoice
-                    </a> 
+                    </a>
                 </button>
             </div>
             <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0">
@@ -217,11 +217,12 @@ require '../layout/layout_header.php';
                                         Edit
                                     </a>
 
-                                    <form method="POST" action="controllers/invoice_delete.php" class="d-inline"
-                                        onsubmit="return confirm('Delete this invoice?');">
-                                        <input type="hidden" name="delete_id" value="<?php echo (int) $r['id']; ?>">
-                                        <button type="submit" class="btn btn-outline-danger fw-semibold btn-sm">Delete</button>
-                                    </form>
+
+                                    <button type="button" class="btn btn-outline-danger fw-semibold btn-sm"
+                                        onclick="openDeleteModal(<?= (int) $r['id'] ?>)">
+                                        Delete
+                                    </button>
+
 
                                 </div>
 
@@ -238,7 +239,7 @@ require '../layout/layout_header.php';
 </div>
 
 
-<!-- ✅ View Modal -->
+<!--  View Modal -->
 <div class="modal fade" id="viewInvoiceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
@@ -310,19 +311,72 @@ require '../layout/layout_header.php';
     </div>
 </div>
 
+<!-- Delete Reason Modal -->
+<div class="modal fade" id="deleteReasonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="controllers/invoice_delete.php" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Invoice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" name="delete_id" id="del_invoice_id">
+
+                <!-- CSRF থাকলে -->
+                <?php if (!empty($_SESSION['csrf'])): ?>
+                    <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+                <?php endif; ?>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Reason for delete <span class="text-danger">*</span>
+                    </label>
+                    <textarea name="reason" id="delete_reason" class="form-control" rows="3" required
+                        placeholder="Write the reason for deleting this invoice..."></textarea>
+                </div>
+
+                <div class="alert alert-warning small mb-0">
+                    This action cannot be undone.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    Delete Invoice
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <script>
-function searchInvoiceList() {
-    const input = document.getElementById('invoiceSearchInput');
-    if (!input) return;
+    function searchInvoiceList() {
+        const input = document.getElementById('invoiceSearchInput');
+        if (!input) return;
 
-    const filter = (input.value || '').toLowerCase();
-    const rows = document.querySelectorAll('.invoice-row');
+        const filter = (input.value || '').toLowerCase();
+        const rows = document.querySelectorAll('.invoice-row');
 
-    rows.forEach(row => {
-        const text = (row.innerText || '').toLowerCase();
-        row.style.display = text.includes(filter) ? '' : 'none';
-    });
-}
+        rows.forEach(row => {
+            const text = (row.innerText || '').toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    }
+
+    function openDeleteModal(id) {
+        document.getElementById('del_invoice_id').value = id;
+        document.getElementById('delete_reason').value = '';
+
+        const modal = new bootstrap.Modal(
+            document.getElementById('deleteReasonModal')
+        );
+        modal.show();
+    }
 </script>
 
 

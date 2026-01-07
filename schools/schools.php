@@ -208,7 +208,11 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
                         <td class="p-2 border align-center">
                             <?php if (!empty($s['photo_path'])): ?>
                                 <img src="../<?php echo htmlspecialchars($s['photo_path']); ?>"
-                                    class="h-10 w-16 object-cover rounded border" alt="photo">
+                                    data-full="../<?php echo htmlspecialchars($s['photo_path']); ?>"
+                                    data-school="<?php echo htmlspecialchars($s['school_name']); ?>"
+                                    class="h-10 w-16 object-cover rounded border cursor-pointer js-photo-thumb" alt="photo">
+
+
                             <?php else: ?>
                                 <span class="text-xs text-gray-400">No photo</span>
                             <?php endif; ?>
@@ -279,6 +283,55 @@ if (!empty($_SESSION['school_errors']) && is_array($_SESSION['school_errors'])):
         </table>
     <?php endif; ?>
 </div>
+
+<!-- Photo Viewer Modal -->
+<div id="photoViewer" style="display:none;
+     position:fixed; inset:0; background:rgba(0,0,0,.7);
+     z-index:9999; align-items:center; justify-content:center;">
+
+    <div style="background:#fff; padding:10px; border-radius:8px; max-width:90%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <div id="photoViewerSchoolName" style="font-weight:600; font-size:16px;">
+            </div>
+
+            <button onclick="closePhotoViewer()" class="btn btn-outline-secondary btn-sm"
+                style="padding:4px 10px; font-size:12px;">
+                Close
+            </button>
+        </div>
+
+        <img id="photoViewerImg" src="" style="max-width:100%; max-height:80vh;">
+    </div>
+</div>
+
+<script>
+    document.addEventListener('click', function (e) {
+        const img = e.target.closest('.js-photo-thumb');
+        if (!img) return;
+
+        const full = img.getAttribute('data-full');
+        if (!full) return;
+
+        const school = img.getAttribute('data-school') || '';
+
+        document.getElementById('photoViewerImg').src = full;
+        document.getElementById('photoViewerSchoolName').textContent = school;
+        document.getElementById('photoViewer').style.display = 'flex';
+    });
+
+    function closePhotoViewer() {
+        document.getElementById('photoViewer').style.display = 'none';
+        document.getElementById('photoViewerImg').src = '';
+        document.getElementById('photoViewerSchoolName').textContent = '';
+    }
+
+    document.getElementById('photoViewer').addEventListener('click', function (e) {
+        // যদি overlay তে ক্লিক হয় (ভেতরের image/container নয়)
+        if (e.target === this) {
+            closePhotoViewer();
+        }
+    });
+</script>
 
 <script>
     function toggleFilter() {

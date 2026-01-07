@@ -1,59 +1,105 @@
-# running work
-* 
+# 📘 School Note Manager
 
-# problem
-* 
+A powerful and evolving **School Management & Activity Tracking System** designed to manage  
+schools, notes, invoices, accounts, and logs — all in one place.
 
-# korte hobe
-* logs aro akta banate hobe jeno sob support day school, invoice, account everything , akhon ase just school wise.
-* started cash ata pore korte hobe. And monthly balance ..
-* accounts/index.php a start balance set korar system korte hobe
-* invoice ar edit validation aktu low kora hoice simple invoice ar jonno , pore thik korte hobe
-* update_core and delete_core ar redirect a problem ase thik korte hobe.
-* time zone asia dite hobe
-* Balance showing ta upore theke nicher dike ase aita niche theke uporer dike korte hobe
+🌐 **Live Project:** https://sl.amarsite.top  
 
-# invoices.php file ta thik korte hobe
-* delete ar kaj korte hobe ==> running
+---
 
-# invoices/ invoice_delete.php # pending
-* delete ar age invoice_trash  a data insert korte hobe.
-* delete hole note_logs a data insert 
+## 🚀 Latest Release
 
-# sl.amarsite.top version-1.05.01
-* single_invoice_header and layout_header_invoice kono file a use kora hoy nai tai remove kora hoice.  => local change
-*       modified:   README.md
-        modified:   accounts/core/add_core.php     
-        modified:   accounts/core/update_core.php    
-        modified:   accounts/index.php
-        modified:   layout/layout_header.php
-        modified:   layout/layout_header_index.php   
-        deleted:    layout/layout_header_invoices.php
-        deleted:    layout/single_invoice_header.php 
-        modified:   pages/dashboard.php
+### 🔖 Version `1.05.02` — **Major Update**
+> This release focuses on **logging accuracy, activity tracking, UI improvements, and data integrity**.
 
+#### ✨ What’s New
+- 🧾 **Invoice Delete Logging**
+  - Deleted invoices are now logged properly  
+  - Visible in **Dashboard → Recent Activity**
+- 📊 **Dashboard Improvements**
+  - Log view links fixed and fully functional
+- 🏫 **School Logs History**
+  - History view updated  
+  - Redirect issues resolved
+- 🖼️ **Favicon Added**
+  - PNG logo added to title bar  
+  - Source: https://edurlab.com
+- 📝 **Complete Logging System**
+  - Note updates
+  - School invoice creation & deletion
+  - School delete & restore  
+  → **All actions are now fully logged**
+- ⏱️ **Note Update Time Bug Fixed**
+- 🗑️ **Trash System Improved**
+  - Session handling fixed
+  - Error issues resolved
+- 🔍 **Notes Filtering Removed**
+  - Simplified note browsing
+- 💰 **Balance Tracking Fixed**
+  - Corrected running balance (bottom → top logic)
+- 🏷️ **School Name Preserved in Logs**
+  - Even after school deletion, logs retain school name  
+  *(Effective from this version onward)*
+- 🖼️ **Image Preview Enhancement**
+  - Click on school photo to view it in large size
+- ♻️ **Smooth Restore Workflow**
+  - Restore works seamlessly
+  - Restore actions are logged correctly
 
-requirement 02.01.2026
-1. ['Buy','Marketing Cost','Office Supply','Repair','Transport','Rent','Utilities','Revenue','Other']; remove all
+---
 
-add ->
-bike service cost
-Marketing Cost
-Office cost
-bike oil cost 
-nasta pani
-paper cost
-raja
-yasin
+### 🔖 Version `1.05.01`
 
+#### ✨ Improvements
+- 💼 **Accounts Module**
+  - Category handling updated while adding entries
+- 📂 **Sidebar UI**
+  - Sidebar order rearranged for better usability
+- 📅 **Account Dashboard**
+  - Default time range changed  
+    **From:** This Month → **To:** Lifetime
+- 🔐 **Category Validation**
+  - Hard validation applied to categories to prevent invalid data
 
-2. Sidebar change order # done local &  server
-a. dashboard por accounts hobe -> 2 sidebar file changes
+---
 
-# local changes
-* accounts/index.php line:218 this month to lifetime  # done local & server
-* pages/dashboard.php line:45 this month to lifetime  # done local & server
-* accounts/index.php line:701767,1068 category change  # done local & server
-* accounts/core/add_core.php line:91 add category validation change  # done local & server
-* accounts/core/update_core.php line:110 add category validation change  # done local & server
-* 
+## 🧠 Core Features
+
+- 🏫 School management (Create, Update, Delete, Restore)
+- 📝 Notes with full activity logs
+- 🧾 Invoice management with logging
+- 💰 Accounts & balance tracking
+- 🗑️ Trash system with restore support
+- 📊 Action-based logs & history view
+- 🖼️ Image preview modal support
+- 🔔 Dashboard recent activity feed
+
+---
+
+## 🛠️ Tech Stack
+
+- **Backend:** PHP (PDO / MySQL)
+- **Frontend:** Bootstrap 5, JavaScript
+- **Database:** MySQL
+- **Logging:** Custom activity log system
+- **UI Enhancements:** Modal previews, dynamic dashboards
+
+---
+
+## 📌 Versioning Strategy
+
+- **Major Updates:** Feature-level & logic changes  
+- **Minor Updates:** UI tweaks, validations, bug fixes  
+- **Patch Updates:** Small fixes & optimizations  
+
+---
+
+## 📄 License
+This project is currently **private / internal use**.  
+Licensing terms may be updated later.
+
+---
+
+## ✨ Author
+Built & maintained with ❤️  
+for real-world school data management and tracking.
