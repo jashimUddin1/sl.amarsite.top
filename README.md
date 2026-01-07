@@ -1,5 +1,6 @@
 # 📘 School Note Manager
 
+<a name="English"></a>
 🌐 **Language:** English | [বাংলা](#বাংলা)
 
 A powerful and evolving **School Management & Activity Tracking System** designed to manage  
