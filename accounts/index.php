@@ -156,14 +156,12 @@ function build_range_where(string $range, string $from, string $to, string $toda
     if ($range === 'today') {
         $where .= " AND $dateExpr = :d";
         $params[':d'] = $today;
-
     } elseif ($range === 'this_month') {
         $start = (new DateTime('first day of this month'))->format('Y-m-d');
         $end = (new DateTime('last day of this month'))->format('Y-m-d');
         $where .= " AND $dateExpr BETWEEN :from AND :to";
         $params[':from'] = $start;
         $params[':to'] = $end;
-
     } elseif ($range === 'this_year') {
         $y = date('Y');
         $start = (new DateTime("first day of January $y"))->format('Y-m-d');
@@ -171,7 +169,6 @@ function build_range_where(string $range, string $from, string $to, string $toda
         $where .= " AND $dateExpr BETWEEN :from AND :to";
         $params[':from'] = $start;
         $params[':to'] = $end;
-
     } elseif ($range === 'last_year') {
         $y = date('Y') - 1;
         $start = (new DateTime("first day of January $y"))->format('Y-m-d');
@@ -179,7 +176,6 @@ function build_range_where(string $range, string $from, string $to, string $toda
         $where .= " AND $dateExpr BETWEEN :from AND :to";
         $params[':from'] = $start;
         $params[':to'] = $end;
-
     } elseif ($range === 'custom') {
         if (valid_date_ymd($from) && valid_date_ymd($to)) {
             if ($from > $to) {
@@ -198,7 +194,6 @@ function build_range_where(string $range, string $from, string $to, string $toda
             $params[':from'] = $start;
             $params[':to'] = $end;
         }
-
     } elseif ($range === 'lifetime') {
         // no filter
     } else {
@@ -625,7 +620,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
     </div>
 
     <script>
-        (function () {
+        (function() {
             const sel = document.getElementById('rangeSelect');
             const custom = document.getElementById('customFields');
 
@@ -843,7 +838,16 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
                                 <?= htmlspecialchars($r['description'] ?? '', ENT_QUOTES, 'UTF-8') ?>
 
                             </td>
-                            <td class="text-end"><?= number_format((float) ($r['amount'] ?? 0), 0) ?></td>
+                            <?php
+                            $amt = (float)($r['amount'] ?? 0);
+                            $isPlus = (($r['type'] ?? '') === 'income');   
+                            $amtClass = $isPlus ? 'text-success' : 'text-danger';
+                            $amtSign  = $isPlus ? '+' : '-';
+                            ?>
+                            <td class="text-end fw-semibold <?= $amtClass ?>">
+                                <?= $amtSign . number_format($amt, 0) ?>
+                            </td>
+
                             <td
                                 class="text-end fw-semibold <?= ((float) ($r['balance'] ?? 0) < 0) ? 'text-danger' : 'text-success' ?>">
                                 <?= number_format((float) ($r['balance'] ?? 0), 0) ?>
@@ -1077,7 +1081,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
     })();
 
     // Fill edit modal
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-edit');
         if (!btn) return;
 
@@ -1150,11 +1154,16 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
 </div>
 
 <script>
-    (function () {
+    (function() {
         const csrf = "<?= htmlspecialchars($_SESSION['csrf'] ?? '', ENT_QUOTES, 'UTF-8') ?>";
 
-        function qs(sel, root = document) { return root.querySelector(sel); }
-        function qsa(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
+        function qs(sel, root = document) {
+            return root.querySelector(sel);
+        }
+
+        function qsa(sel, root = document) {
+            return Array.from(root.querySelectorAll(sel));
+        }
 
         function applyPrefs(prefs) {
             const showInsert = !!prefs.show_insert;
@@ -1199,10 +1208,15 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
             fd.append('show_sheet', prefs.show_sheet);
 
             try {
-                const res = await fetch(window.location.pathname, { method: 'POST', body: fd, credentials: 'same-origin' });
+                const res = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin'
+                });
                 // If something fails, keep UI as-is; user will notice next refresh if not saved.
                 await res.json().catch(() => null);
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+                /* ignore */ }
         }
 
         // Toggle listeners
@@ -1214,7 +1228,7 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
         // View modal populate
         const viewModal = document.getElementById('viewModal');
         if (viewModal) {
-            viewModal.addEventListener('show.bs.modal', function (event) {
+            viewModal.addEventListener('show.bs.modal', function(event) {
                 const btn = event.relatedTarget;
                 const tbody = document.getElementById('viewModalBodyRows');
                 if (!tbody) return;
@@ -1264,5 +1278,3 @@ $showSheet = (int) ($uiPrefs['show_sheet'] ?? 1);
 
 
 <?php require '../layout/layout_footer.php'; ?>
-
-Balance showing ta upore theke nicher dike ase aita niche theke uporer dike korte hobe
