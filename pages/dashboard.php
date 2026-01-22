@@ -139,13 +139,16 @@ $catExpense = [
 
 try {
     $sqlCat = "
-        SELECT category, COALESCE(SUM(amount), 0) AS total_amount
+        SELECT category,
+            COUNT(*) AS total_rows,
+            COALESCE(SUM(amount), 0) AS total_amount
         FROM accounts
         WHERE $whereAcc
-          AND type = 'expense'
-          AND category IN ('Raja', 'Yasin')
+        AND type = 'expense'
+        AND category IN ('Raja', 'Yasin')
         GROUP BY category
     ";
+
 
     $stmtCat = $pdo->prepare($sqlCat);
 
@@ -159,13 +162,17 @@ try {
 
     foreach ($rows as $r) {
         $cat = $r['category'] ?? '';
-        $amt = (float)($r['total_amount'] ?? 0);
+        $amt = (float) ($r['total_amount'] ?? 0);
+        $cnt = (int) ($r['total_rows'] ?? 0);
+
         if (isset($catExpense[$cat])) {
             $catExpense[$cat] = $amt;
+            $catExpenseCount[$cat] = $cnt;
         }
     }
+
 } catch (Exception $e) {
-    // চাইলে debug:
+    // if debug:
     // echo '<pre>'.$e->getMessage().'</pre>';
 }
 
@@ -347,14 +354,14 @@ require '../layout/layout_header.php';
         </div>
 
         <!-- for raja and yasin cost -->
-        <div class="bg-slate-50 rounded-xl border border-slate-100 p-4">
+        <div class="bg-amber-100 rounded-xl border border-slate-100 p-4">
             <div class="flex items-center justify-between">
-                <div class="text-xs text-slate-500">Yesin</div>
+                <div class="text-xs text-slate-600">Yesin</div>
                 <div class="text-[11px] text-slate-500" title="Invoices where pay > 0">
-                    (<?= (int) $income['collected_count'] ?>)
+                    (<?= (int) $catExpenseCount['Yasin'] ?>)
                 </div>
             </div>
-            <div class="text-2xl font-bold text-sky-600 mt-1">
+            <div class="text-2xl font-bold text-amber-500 mt-1">
                 ৳ <?= number_format($catExpense['Yasin'], 0); ?>
             </div>
             <a href="category_details.php?category=Yasin&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
@@ -362,14 +369,14 @@ require '../layout/layout_header.php';
                 View Details
             </a>
         </div>
-        <div class="bg-slate-50 rounded-xl border border-slate-100 p-4">
+        <div class="bg-lime-100 rounded-xl border border-slate-100 p-4">
             <div class="flex items-center justify-between">
-                <div class="text-xs text-slate-500">Raja</div>
+                <div class="text-xs text-slate-600">Raja</div>
                 <div class="text-[11px] text-slate-500" title="Invoices where due > 0">
-                    (<?= (int) $income['due_count'] ?>)
+                    (<?= (int) $catExpenseCount['Raja'] ?>)
                 </div>
             </div>
-            <div class="text-2xl font-bold text-sky-600 mt-1">
+            <div class="text-2xl font-bold text-lime-500 mt-1">
                 ৳ <?= number_format($catExpense['Raja'], 0); ?>
             </div>
             <a href="category_details.php?category=Raja&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
