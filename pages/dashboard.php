@@ -74,6 +74,27 @@ $selected = match ($range) {
     default => 'This Month',
 };
 
+
+// ====== Accounts Range WHERE (based on accounts.date) ======
+$whereAcc = "1=1";
+if ($range === 'today') {
+    $whereAcc = "`date` = CURDATE()";
+} elseif ($range === 'this_month') {
+    $whereAcc = "DATE_FORMAT(`date`, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')";
+} elseif ($range === 'this_year') {
+    $whereAcc = "YEAR(`date`) = YEAR(CURDATE())";
+} elseif ($range === 'last_year') {
+    $whereAcc = "YEAR(`date`) = YEAR(CURDATE()) - 1";
+} elseif ($range === 'custom') {
+    if ($isValidDate($from) && $isValidDate($to)) {
+        $whereAcc = "`date` BETWEEN :from AND :to";
+    } else {
+        // fallback this_month
+        $whereAcc = "DATE_FORMAT(`date`, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')";
+    }
+}
+
+
 // SQL WHERE based on JSON invoiceDate
 $where = "1=1"; // lifetime
 if ($range === 'today') {
@@ -108,6 +129,46 @@ $income = [
     'collected_count' => 0,  // pay>0 invoices count
     'due_count' => 0,  // due>0 invoices count
 ];
+
+
+// ====== Raja/Yasin Category-wise Expense Summary (accounts table) ======
+$catExpense = [
+    'Yasin' => 0.0,
+    'Raja'  => 0.0,
+];
+
+try {
+    $sqlCat = "
+        SELECT category, COALESCE(SUM(amount), 0) AS total_amount
+        FROM accounts
+        WHERE $whereAcc
+          AND type = 'expense'
+          AND category IN ('Raja', 'Yasin')
+        GROUP BY category
+    ";
+
+    $stmtCat = $pdo->prepare($sqlCat);
+
+    if ($range === 'custom' && strpos($whereAcc, ':from') !== false) {
+        $stmtCat->bindValue(':from', $from);
+        $stmtCat->bindValue(':to', $to);
+    }
+
+    $stmtCat->execute();
+    $rows = $stmtCat->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    foreach ($rows as $r) {
+        $cat = $r['category'] ?? '';
+        $amt = (float)($r['total_amount'] ?? 0);
+        if (isset($catExpense[$cat])) {
+            $catExpense[$cat] = $amt;
+        }
+    }
+} catch (Exception $e) {
+    // চাইলে debug:
+    // echo '<pre>'.$e->getMessage().'</pre>';
+}
+
 
 try {
     $sql = "
@@ -166,7 +227,6 @@ try {
     $income['total'] = (float) ($row['total_income'] ?? 0);
     $income['collected'] = (float) ($row['total_collected'] ?? 0);
     $income['due'] = (float) ($row['total_due'] ?? 0);
-
 } catch (Exception $e) {
     // debug চাইলে:
     // echo '<pre>'.$e->getMessage().'</pre>';
@@ -217,9 +277,10 @@ require '../layout/layout_header.php';
     </div>
 
     <script>
-        (function () {
+        (function() {
             const sel = document.getElementById('rangeSelect');
             const custom = document.getElementById('customFields');
+
             function toggleCustom() {
                 if (!sel || !custom) return;
                 custom.style.display = (sel.value === 'custom') ? 'flex' : 'none';
@@ -232,7 +293,7 @@ require '../layout/layout_header.php';
     </script>
 
     <!-- Cards: mobile => income full width, next row 2 cards -->
-    <div class="grid gap-3 grid-cols-2 md:grid-cols-3">
+    <div class="grid gap-3 grid-cols-2 md:grid-cols-5">
 
         <!-- Total Income (full width on small) -->
         <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 col-span-2 md:col-span-1">
@@ -243,9 +304,9 @@ require '../layout/layout_header.php';
                 </div>
             </div>
             <div class="text-2xl font-bold text-slate-800 mt-1">
-                ৳ <?= number_format($income['total'], 2); ?>
+                ৳ <?= number_format($income['total'], 0); ?>
             </div>
-            <a href="/pages/income_details.php?type=income&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+            <a href="income_details.php?type=income&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
                 class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
@@ -260,9 +321,9 @@ require '../layout/layout_header.php';
                 </div>
             </div>
             <div class="text-2xl font-bold text-emerald-600 mt-1">
-                ৳ <?= number_format($income['collected'], 2); ?>
+                ৳ <?= number_format($income['collected'], 0); ?>
             </div>
-            <a href="/pages/income_details.php?type=collected&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+            <a href="income_details.php?type=collected&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
                 class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
@@ -277,9 +338,41 @@ require '../layout/layout_header.php';
                 </div>
             </div>
             <div class="text-2xl font-bold text-red-500 mt-1">
-                ৳ <?= number_format($income['due'], 2); ?>
+                ৳ <?= number_format($income['due'], 0); ?>
             </div>
-            <a href="/pages/income_details.php?type=due&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+            <a href="income_details.php?type=due&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
+                View Details
+            </a>
+        </div>
+
+        <!-- for raja and yasin cost -->
+        <div class="bg-slate-50 rounded-xl border border-slate-100 p-4">
+            <div class="flex items-center justify-between">
+                <div class="text-xs text-slate-500">Yesin</div>
+                <div class="text-[11px] text-slate-500" title="Invoices where pay > 0">
+                    (<?= (int) $income['collected_count'] ?>)
+                </div>
+            </div>
+            <div class="text-2xl font-bold text-sky-600 mt-1">
+                ৳ <?= number_format($catExpense['Yasin'], 0); ?>
+            </div>
+            <a href="category_details.php?category=Yasin&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+                class="inline-block text-xs text-indigo-600 hover:underline mt-2">
+                View Details
+            </a>
+        </div>
+        <div class="bg-slate-50 rounded-xl border border-slate-100 p-4">
+            <div class="flex items-center justify-between">
+                <div class="text-xs text-slate-500">Raja</div>
+                <div class="text-[11px] text-slate-500" title="Invoices where due > 0">
+                    (<?= (int) $income['due_count'] ?>)
+                </div>
+            </div>
+            <div class="text-2xl font-bold text-sky-600 mt-1">
+                ৳ <?= number_format($catExpense['Raja'], 0); ?>
+            </div>
+            <a href="category_details.php?category=Raja&range=<?= urlencode($range) ?>&from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
                 class="inline-block text-xs text-indigo-600 hover:underline mt-2">
                 View Details
             </a>
@@ -318,7 +411,7 @@ require '../layout/layout_header.php';
     <div class="bg-white rounded-xl shadow p-4">
         <div class="text-xs text-slate-500 mb-1">Trashed Schools</div>
         <div class="text-2xl font-bold text-red-500 mb-1"><?php echo $trashedSchools; ?></div>
-        <a href="/pages/trash.php" class="inline-block text-xs text-indigo-600 hover:underline">
+        <a href="trash.php" class="inline-block text-xs text-indigo-600 hover:underline">
             Open Trash
         </a>
     </div>
