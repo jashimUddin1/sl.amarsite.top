@@ -12,6 +12,26 @@ A powerful and evolving **School Management & Activity Tracking System** designe
 
 ## 🚀 Latest Release
 
+### 🔖 Version `1.05.03` — **Accounts Dashboard Update**
+> This update adds **category-wise expense tracking** and a dedicated details page for better monitoring.
+
+#### ✨ Highlights
+- 👥 **Category-wise Expense Cards (Raja / Yasin)**
+  - Dashboard now shows **Raja** and **Yasin** expenses separately
+  - Data is calculated from the `accounts` table (`category` + `amount`)
+  - Range filter works correctly across:
+    **Today / This Month / This Year / Last Year / Lifetime / Custom**
+- 📄 **New Category Expense Details Page**
+  - Added a new details page for category-based expense entries:
+    - `/pages/category_details.php?category=Raja`
+    - `/pages/category_details.php?category=Yasin`
+  - Shows expense list + total sum for the selected category
+  - Dashboard “View Details” buttons are now linked correctly
+- 🎨 **Dashboard UI Fixes**
+  - Raja/Yasin cards now show correct colors and labels
+  - Entry count now displays **total expense rows** for each category
+
+
 ### 🔖 Version `1.05.02` — **Major Update**
 > This release focuses on **logging accuracy, activity tracking, UI improvements, and data integrity**.
 
@@ -125,6 +145,26 @@ for real-world school data management, tracking, and accountability.
 ---
 
 ## 🚀 সর্বশেষ আপডেট
+
+### 🔖 ভার্সন `1.05.03` — **অ্যাকাউন্ট ড্যাশবোর্ড আপডেট**
+> এই আপডেটে **ক্যাটাগরি অনুযায়ী খরচ ট্র্যাকিং** এবং ডিটেইলস পেজ যোগ করা হয়েছে, যাতে হিসাব আরও সহজ হয়।
+
+#### ✨ নতুন কী আছে
+- 👥 **ক্যাটাগরি অনুযায়ী খরচ কার্ড (Raja / Yasin)**
+  - ড্যাশবোর্ডে এখন **Raja** এবং **Yasin** এর খরচ আলাদা আলাদা দেখাবে
+  - ডাটা নেওয়া হয় `accounts` টেবিল থেকে (`category` + `amount`)
+  - টাইম রেঞ্জ ফিল্টার ঠিকভাবে কাজ করে:
+    **Today / This Month / This Year / Last Year / Lifetime / Custom**
+- 📄 **ক্যাটাগরি ডিটেইলস পেজ যুক্ত**
+  - ক্যাটাগরি অনুযায়ী খরচের এন্ট্রি দেখার জন্য নতুন পেজ যোগ করা হয়েছে:
+    - `/pages/category_details.php?category=Raja`
+    - `/pages/category_details.php?category=Yasin`
+  - নির্দিষ্ট ক্যাটাগরির সব এন্ট্রি + মোট খরচ দেখা যায়
+  - ড্যাশবোর্ডের “View Details” বাটন এখন ঠিকভাবে লিংক করা
+- 🎨 **ড্যাশবোর্ড UI ফিক্স**
+  - Raja/Yasin কার্ডের রঙ ও লেবেল ঠিক করা হয়েছে
+  - কাউন্ট এখন দেখাবে **কয়টা expense entry হয়েছে**
+
 
 ### 🔖 ভার্সন `1.05.02` — **মেজর আপডেট**
 > এই আপডেটে মূলত **লগিং সিস্টেম, ড্যাশবোর্ড অ্যাক্টিভিটি, UI ও ডাটা নির্ভরযোগ্যতা** উন্নত করা হয়েছে।
