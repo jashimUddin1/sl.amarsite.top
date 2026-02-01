@@ -137,6 +137,11 @@ $catExpense = [
     'Raja'  => 0.0,
 ];
 
+$catExpenseCount = [
+    'Yasin' => 0,
+    'Raja'  => 0,
+];
+
 try {
     $sqlCat = "
         SELECT category,
