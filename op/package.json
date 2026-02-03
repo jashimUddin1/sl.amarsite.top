@@ -1,0 +1,17 @@
+{
+  "name": "school_list",
+  "version": "1.0.0",
+  "description": "<a name=\"English\"></a>\r 🌐 **Language:** English | [বাংলা](#বাংলা)",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/tailwind.css -o ./assets/css/tailwind.min.css --minify",
+    "watch:css": "tailwindcss -i ./src/tailwind.css -o ./assets/css/tailwind.min.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

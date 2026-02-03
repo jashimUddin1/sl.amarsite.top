@@ -57,13 +57,12 @@ try {
 
     // 2) Insert into invoice_trash
     $trashSql = "INSERT INTO invoice_trash
-                (invoice_id, in_no, data, deleted_by, deleted_at, reason)
+                (invoice_id, data, deleted_by, deleted_at, reason)
                 VALUES
-                (:invoice_id, :in_no, :data, :deleted_by, NOW(), :reason)";
+                (:invoice_id, :data, :deleted_by, NOW(), :reason)";
     $trashStmt = $pdo->prepare($trashSql);
     $trashStmt->execute([
         ':invoice_id' => (int)$row['id'],
-        ':in_no'      => (int)$row['in_no'],
         ':data'       => (string)$row['data'], 
         ':deleted_by' => $user_id,
         ':reason'     => $reason,

@@ -849,6 +849,11 @@ require '../layout/single_invoice_header_final.php';
                 }
 
                 showToast("Invoice Save Successfully", "success");
+                
+                setTimeout(() => {
+                    window.location.href =
+                        "../schools/schools.php?district=&upazila=&status=Approved";
+                }, 1000)
 
                 //  save hole invoice-number auto next kore dite pore line ta comment sorai daw
                 // document.getElementById("invoice-number").value = payload.in_no + 1;

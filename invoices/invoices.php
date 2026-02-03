@@ -122,7 +122,7 @@ require '../layout/layout_header.php';
                     </a>
                 </button>
             </div>
-            <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0">
+            <!-- <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0">
                 <button type="submit" title="Invoice Auto create This Month" class="btn btn-sm <?php echo $btnClass; ?>"
                     <?php echo $btnDisabled; ?>>
                     <span class="d-none d-md-inline">Auto create</span>
@@ -131,7 +131,11 @@ require '../layout/layout_header.php';
                 <?php if ($remaining > 0): ?>
                     <span class="btn btn-sm <?php echo $btnClass; ?>"><?php echo (int) $remaining; ?></span>
                 <?php endif; ?>
-            </form>
+            </form> -->
+            <button type="button" title="Invoice Auto create disabled" class="btn btn-sm btn-outline-secondary">
+                <span class="d-none d-md-inline">Auto create</span>
+                 <i class="bi bi-magic d-inline d-md-none"></i>
+            </button>
         </div>
 
     </div>

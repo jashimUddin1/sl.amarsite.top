@@ -12,6 +12,8 @@ A powerful and evolving **School Management & Activity Tracking System** designe
 
 ## 🚀 Latest Release
 
+### Version `1.05.04` — ** invoice auto create off **
+
 ### 🔖 Version `1.05.03` — **Accounts Dashboard Update**
 > This update adds **category-wise expense tracking** and a dedicated details page for better monitoring.
 
