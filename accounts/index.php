@@ -231,7 +231,12 @@ if ($sheet === 'income') {
     $whereAcc .= " AND type='expense'";
 }
 
-$invDateExpr = "CAST(JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.invoiceDate')) AS DATE)";
+$invDateExpr = "CAST(
+    IFNULL(
+        `paid_at`, 
+        JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.invoiceDate'))
+    ) AS DATE
+)";
 [$whereInv, $paramsInv] = build_range_where($range, $from, $to, $today, $invDateExpr);
 
 /* -------------------- Normalize invalid custom -> show this month in UI too -------------------- */
@@ -264,6 +269,7 @@ $sql = "
     SELECT 
         'account' AS source,
         a.id AS row_id,
+        null AS paid_at,
         a.`date` AS txn_date,
         a.description,
         a.amount,
@@ -282,6 +288,7 @@ if ($includeInvoices) {
     SELECT
         'invoice' AS source,
         i.id AS row_id,
+        i.paid_at AS paid_at,
         CAST(JSON_UNQUOTE(JSON_EXTRACT(i.`data`, '$.invoiceDate')) AS DATE) AS txn_date,
         CONCAT(
             'Invoice #', i.in_no,

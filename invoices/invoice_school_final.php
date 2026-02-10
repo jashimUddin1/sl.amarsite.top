@@ -25,6 +25,15 @@ FROM invoices
 $stmt = $pdo->query($sql);
 $nextInvoiceNumber = (int)$stmt->fetchColumn();
 
+$stmt = $pdo->prepare("SELECT id, m_fee FROM schools WHERE id = :id LIMIT 1");
+$stmt->execute(['id' => $schoolId]);
+$school_fee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$monthShort  = date('M');
+$defaultDesc = "Software Subscription Fee ({$monthShort})";
+$defaultRate = (float)($school_fee['m_fee'] ?? 0);
+
+
 require '../layout/single_invoice_header_final.php';
 ?>
 
@@ -69,22 +78,19 @@ require '../layout/single_invoice_header_final.php';
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-school"
                                 value="<?= htmlspecialchars($school['school_name']) ?>"
-                                placeholder="Institution Name"
-                                >
+                                placeholder="Institution Name">
                         </div>
 
                         <div class="mb-3">
                             <input type="text" class="form-control" id="bill-name"
                                 value="<?= htmlspecialchars($school['client_name']) ?>"
-                                placeholder="Client Name"
-                                >
+                                placeholder="Client Name">
                         </div>
 
                         <div>
                             <input type="text" class="form-control" id="bill-phone"
                                 value="<?= htmlspecialchars($school['mobile'] ?? '') ?>"
-                                placeholder="Phone Number"
-                                >
+                                placeholder="Phone Number">
                         </div>
                     </div>
 
@@ -133,18 +139,17 @@ require '../layout/single_invoice_header_final.php';
                             <tr class="item-row">
                                 <td>
                                     <input type="text" class="form-control item-desc"
-                                        placeholder="Item description / comment" value="" required>
+                                        placeholder="Item description / comment" value="<?= htmlspecialchars($defaultDesc, ENT_QUOTES, 'UTF-8') ?>" required>
                                 </td>
                                 <td>
                                     <input type="text" class="form-control item-qty" value="1" required>
                                 </td>
                                 <td>
-                                    <input type="number" min="0" step="0.01" class="form-control item-rate" value="0"
+                                    <input type="number" min="0" step="0.01" class="form-control item-rate" value="<?= $defaultRate ?>"
                                         required>
                                 </td>
                                 <td>
-                                    <input type="number" class="form-control item-amount" value="0.00" required
-                                        >
+                                    <input type="number" class="form-control item-amount" value="0.00" required>
                                 </td>
                                 <td class="text-end">
                                     <button type="button" class="btn btn-link text-danger p-0 btn-sm btn-delete-row"
@@ -280,7 +285,7 @@ require '../layout/single_invoice_header_final.php';
 
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
         const itemsBody = document.getElementById("items-body");
         const invoiceForm = document.getElementById("invoice-form");
         const previewBody = document.getElementById("preview-body");
@@ -309,7 +314,10 @@ require '../layout/single_invoice_header_final.php';
             toastEl.classList.remove("text-bg-success", "text-bg-warning", "text-bg-info", "text-bg-danger");
             toastEl.classList.add(`text-bg-${type}`);
 
-            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 2600, autohide: true });
+            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, {
+                delay: 2600,
+                autohide: true
+            });
             toast.show();
         }
 
@@ -350,7 +358,8 @@ require '../layout/single_invoice_header_final.php';
 
             const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
                 "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
-                "Seventeen", "Eighteen", "Nineteen"];
+                "Seventeen", "Eighteen", "Nineteen"
+            ];
             const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
 
             function twoDigits(n) {
@@ -446,7 +455,12 @@ require '../layout/single_invoice_header_final.php';
             }
 
             const due = Math.max(0, total - pay);
-            return { total, pay, due, status };
+            return {
+                total,
+                pay,
+                due,
+                status
+            };
         }
 
         function updatePaymentUI() {
@@ -475,7 +489,7 @@ require '../layout/single_invoice_header_final.php';
         setNoteAsWordsFromTotal();
         calcBtn.classList.add("active");
 
-        calcBtn.addEventListener("click", function () {
+        calcBtn.addEventListener("click", function() {
             isApplied = !isApplied;
 
             if (isApplied) {
@@ -503,17 +517,23 @@ require '../layout/single_invoice_header_final.php';
             const rateInput = row.querySelector(".item-rate");
             const deleteBtn = row.querySelector(".btn-delete-row");
 
-            qtyInput.addEventListener("input", () => { recalcRow(row); updatePaymentUI(); });
-            rateInput.addEventListener("input", () => { recalcRow(row); updatePaymentUI(); });
+            qtyInput.addEventListener("input", () => {
+                recalcRow(row);
+                updatePaymentUI();
+            });
+            rateInput.addEventListener("input", () => {
+                recalcRow(row);
+                updatePaymentUI();
+            });
 
-            deleteBtn.addEventListener("click", function () {
+            deleteBtn.addEventListener("click", function() {
                 if (itemsBody.rows.length > 1) row.remove();
                 updatePaymentUI();
             });
         }
 
         // ✅ Enter navigation
-        itemsBody.addEventListener("keydown", function (e) {
+        itemsBody.addEventListener("keydown", function(e) {
             if (e.key !== "Enter") return;
 
             const el = e.target;
@@ -557,7 +577,7 @@ require '../layout/single_invoice_header_final.php';
         updatePaymentUI();
 
         // Add item
-        document.getElementById("add-item-btn").addEventListener("click", function () {
+        document.getElementById("add-item-btn").addEventListener("click", function() {
             const newRow = itemsBody.rows[0].cloneNode(true);
 
             newRow.querySelector(".item-desc").value = "";
@@ -573,12 +593,12 @@ require '../layout/single_invoice_header_final.php';
         });
 
         // Back
-        document.getElementById("back-btn").addEventListener("click", function () {
+        document.getElementById("back-btn").addEventListener("click", function() {
             window.history.back();
         });
 
         // Reset
-        document.getElementById("reset-btn").addEventListener("click", function () {
+        document.getElementById("reset-btn").addEventListener("click", function() {
             if (!confirm("Reset all invoice fields?")) return;
 
             invoiceForm.reset();
@@ -628,7 +648,7 @@ require '../layout/single_invoice_header_final.php';
             });
         }
 
-        document.getElementById("view-btn").addEventListener("click", function () {
+        document.getElementById("view-btn").addEventListener("click", function() {
             const billName = document.getElementById("bill-name").value || "....................";
             const invoiceNumber = document.getElementById("invoice-number").value || "--";
             const invoiceDate = document.getElementById("invoice-date").value || "-";
@@ -660,9 +680,9 @@ require '../layout/single_invoice_header_final.php';
             for (let i = 0; i < emptyRowsNeeded; i++) rowsHtml += makeEmptyPreviewRow();
 
             const statusForBadge = totals.status;
-            const unpaidBadge = statusForBadge === "UNPAID"
-                ? `<span class="badge-status-unpaid ms-2">UNPAID</span>`
-                : `<span class="badge base-bg base-p7d ms-2">${statusForBadge}</span>`;
+            const unpaidBadge = statusForBadge === "UNPAID" ?
+                `<span class="badge-status-unpaid ms-2">UNPAID</span>` :
+                `<span class="badge base-bg base-p7d ms-2">${statusForBadge}</span>`;
 
             previewBody.innerHTML = `
         <div class="invoice-preview-card" id="invoice-preview-card">
@@ -752,7 +772,7 @@ require '../layout/single_invoice_header_final.php';
         });
 
         // Download Preview as image
-        document.getElementById("download-preview-btn").addEventListener("click", function () {
+        document.getElementById("download-preview-btn").addEventListener("click", function() {
             const card = document.getElementById("invoice-preview-card");
             if (!card) {
                 alert("Please click View to generate the preview first.");
@@ -776,7 +796,7 @@ require '../layout/single_invoice_header_final.php';
             });
         });
 
-        document.getElementById("add-invoice-btn").addEventListener("click", async function () {
+        document.getElementById("add-invoice-btn").addEventListener("click", async function() {
 
             const filledRows = getNonEmptyItemRows();
             if (filledRows.length === 0) {
@@ -837,7 +857,9 @@ require '../layout/single_invoice_header_final.php';
             try {
                 const res = await fetch("controllers/invoice_save_school.php", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
                     body: JSON.stringify(payload)
                 });
 
@@ -849,7 +871,7 @@ require '../layout/single_invoice_header_final.php';
                 }
 
                 showToast("Invoice Save Successfully", "success");
-                
+
                 setTimeout(() => {
                     window.location.href =
                         "../schools/schools.php?district=&upazila=&status=Approved";
@@ -864,7 +886,7 @@ require '../layout/single_invoice_header_final.php';
             }
         });
 
-        document.getElementById("download-pdf-btn").addEventListener("click", async function () {
+        document.getElementById("download-pdf-btn").addEventListener("click", async function() {
             const card = document.getElementById("invoice-preview-card");
             if (!card) {
                 showToast("PDF ডাউনলোডের আগে View দিয়ে Preview বানাও।", "warning");
@@ -899,7 +921,9 @@ require '../layout/single_invoice_header_final.php';
                 const imgs = Array.from(clone.querySelectorAll("img"));
                 await Promise.all(imgs.map(img => {
                     if (img.complete) return Promise.resolve();
-                    return new Promise(res => { img.onload = img.onerror = () => res(); });
+                    return new Promise(res => {
+                        img.onload = img.onerror = () => res();
+                    });
                 }));
 
                 const canvas = await html2canvas(clone, {
@@ -912,7 +936,9 @@ require '../layout/single_invoice_header_final.php';
 
                 const imgData = canvas.toDataURL("image/png");
 
-                const { jsPDF } = window.jspdf;
+                const {
+                    jsPDF
+                } = window.jspdf;
                 const pdf = new jsPDF("p", "mm", "a4");
 
                 const pageWidth = pdf.internal.pageSize.getWidth();

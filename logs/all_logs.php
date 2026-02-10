@@ -10,6 +10,39 @@ require_login();
 
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
+function is_json_text(string $s): bool {
+    if ($s === '') return false;
+    json_decode($s, true);
+    return json_last_error() === JSON_ERROR_NONE;
+}
+
+// nested array কে "totals.status" => value এ flatten করে
+function flatten_assoc($data, string $prefix = ''): array {
+    $out = [];
+
+    if (!is_array($data)) {
+        if ($prefix !== '') $out[$prefix] = $data;
+        return $out;
+    }
+
+    foreach ($data as $k => $v) {
+        $key = $prefix === '' ? (string)$k : ($prefix . '.' . (string)$k);
+
+        if (is_array($v)) {
+            $child = flatten_assoc($v, $key);
+            if (!empty($child)) {
+                $out += $child;
+            } else {
+                $out[$key] = $v;
+            }
+        } else {
+            $out[$key] = $v;
+        }
+    }
+
+    return $out;
+}
+
 // ---------- Filters ----------
 $q        = trim($_GET['q'] ?? '');
 $actionF  = trim($_GET['action'] ?? '');
@@ -149,7 +182,7 @@ function build_qs(array $extra = []) {
             <?php endforeach; ?>
         </select>
 
-         <input type="number" name="school_id" value="<?= h($schoolId) ?>"
+        <input type="number" name="school_id" value="<?= h($schoolId) ?>"
                class="border rounded-md px-3 py-2 text-sm"
                placeholder="School ID">
 
@@ -219,6 +252,16 @@ function build_qs(array $extra = []) {
                     $oldText = (string)($log['old_text'] ?? '');
                     $newText = (string)($log['new_text'] ?? '');
 
+                    // ✅ JSON হলে human-friendly করার জন্য decode + flatten
+                    $oldArr  = is_json_text($oldText) ? json_decode($oldText, true) : null;
+                    $newArr  = is_json_text($newText) ? json_decode($newText, true) : null;
+
+                    $oldFlat = is_array($oldArr) ? flatten_assoc($oldArr) : [];
+                    $newFlat = is_array($newArr) ? flatten_assoc($newArr) : [];
+
+                    $allKeys = array_unique(array_merge(array_keys($oldFlat), array_keys($newFlat)));
+                    sort($allKeys);
+
                     $rowNo = $offset + $i + 1;
                     ?>
                     <tr class="hover:bg-slate-50 align-top">
@@ -234,7 +277,7 @@ function build_qs(array $extra = []) {
                             <span class="text-[11px] px-2 py-0.5 rounded-full <?= h($badgeClass) ?>">
                                 <?= h($actionLabel) ?>
                             </span>
-                            <div class="text-[11px] text-slate-500 mt-1">Log ID: <?= (int)$log['id'] ?></div>
+                            <!-- <div class="text-[11px] text-slate-500 mt-1">Log ID: <?= (int)$log['id'] ?></div> -->
                         </td>
                         <td class="p-2 border">
                             <div class="font-semibold text-[13px]"><?= h($userName) ?></div>
@@ -248,18 +291,53 @@ function build_qs(array $extra = []) {
                         <td class="p-2 border">
                             <details class="text-[12px]">
                                 <summary class="cursor-pointer text-indigo-600 hover:underline">
-                                    View Old/New
+                                    View Changes
                                 </summary>
 
-                                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    <div class="border rounded-lg p-2 bg-slate-50">
-                                        <div class="text-[11px] font-semibold text-slate-600 mb-1">Old</div>
-                                        <div class="whitespace-pre-wrap break-words text-slate-800"><?= h($oldText ?: '—') ?></div>
-                                    </div>
-                                    <div class="border rounded-lg p-2 bg-slate-50">
-                                        <div class="text-[11px] font-semibold text-slate-600 mb-1">New</div>
-                                        <div class="whitespace-pre-wrap break-words text-slate-800"><?= h($newText ?: '—') ?></div>
-                                    </div>
+                                <div class="mt-2">
+                                    <?php if (!empty($allKeys)): ?>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full text-[12px] border-collapse">
+                                                <thead>
+                                                    <tr class="bg-slate-100">
+                                                        <th class="p-2 border text-left">Field</th>
+                                                        <th class="p-2 border text-left">Old</th>
+                                                        <th class="p-2 border text-left">New</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                <?php foreach ($allKeys as $k): ?>
+                                                    <?php
+                                                    $ov = array_key_exists($k, $oldFlat) ? $oldFlat[$k] : '—';
+                                                    $nv = array_key_exists($k, $newFlat) ? $newFlat[$k] : '—';
+
+                                                    if (is_array($ov)) $ov = json_encode($ov, JSON_UNESCAPED_UNICODE);
+                                                    if (is_array($nv)) $nv = json_encode($nv, JSON_UNESCAPED_UNICODE);
+
+                                                    if (is_bool($ov)) $ov = $ov ? 'Yes' : 'No';
+                                                    if (is_bool($nv)) $nv = $nv ? 'Yes' : 'No';
+                                                    ?>
+                                                    <tr class="hover:bg-slate-50 align-top">
+                                                        <td class="p-2 border font-semibold text-slate-700"><?= h($k) ?></td>
+                                                        <td class="p-2 border text-slate-800 whitespace-pre-wrap break-words"><?= h((string)$ov) ?></td>
+                                                        <td class="p-2 border text-slate-800 whitespace-pre-wrap break-words"><?= h((string)$nv) ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <div class="border rounded-lg p-2 bg-slate-50">
+                                                <div class="text-[11px] font-semibold text-slate-600 mb-1">Old</div>
+                                                <div class="whitespace-pre-wrap break-words text-slate-800"><?= h($oldText ?: '—') ?></div>
+                                            </div>
+                                            <div class="border rounded-lg p-2 bg-slate-50">
+                                                <div class="text-[11px] font-semibold text-slate-600 mb-1">New</div>
+                                                <div class="whitespace-pre-wrap break-words text-slate-800"><?= h($newText ?: '—') ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </details>
                         </td>

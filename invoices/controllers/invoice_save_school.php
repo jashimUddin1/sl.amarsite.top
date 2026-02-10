@@ -48,6 +48,10 @@ if ($in_no <= 0) {
     exit;
 }
 
+// ✅ paid_at logic for CREATE (UNPAID/PAID based on totals.status)
+$status = strtoupper((string)($data['totals']['status'] ?? ''));
+$paid_at = ($status === 'PAID') ? date('Y-m-d H:i:s') : null;
+
 // akhane aro validation or logic lekha jabe 
 
 
@@ -71,15 +75,16 @@ try {
         exit;
     }
 
-
     // all ok now start insert
     $json = json_encode($data, JSON_UNESCAPED_UNICODE);
 
-    $ins = $pdo->prepare("INSERT INTO invoices (school_id, in_no, data, created_at) VALUES (:school_id, :in_no, :data, NOW())");
+    // ✅ paid_at সহ insert
+    $ins = $pdo->prepare("INSERT INTO invoices (school_id, in_no, data, paid_at, created_at) VALUES (:school_id, :in_no, :data, :paid_at, NOW())");
     $ins->execute([
         'school_id' => $school_id,
         'in_no' => $in_no,
-        'data' => $json
+        'data' => $json,
+        'paid_at' => $paid_at
     ]);
 
     $invoice_id = (int) $pdo->lastInsertId();
@@ -116,5 +121,4 @@ try {
 
     http_response_code(500);
     echo json_encode(['ok' => false, 'msg' => 'Server error', 'err' => $e->getMessage()]);
-
 }

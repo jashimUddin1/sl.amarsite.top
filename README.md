@@ -12,6 +12,28 @@ A powerful and evolving **School Management & Activity Tracking System** designe
 
 ## 🚀 Latest Release
 
+### 🔖 Version `1.05.05` — **Invoice & Logging Optimization Update**
+> This update focuses on **invoice payment handling, logging accuracy, database optimization, and system flexibility**.
+
+#### ✨ Highlights
+- 💳 **Invoice Paid Status Enhancement**
+  - Invoice payment now properly tracks payment time
+  - New `paid_at` column added for accurate payment history
+- 🧾 **Invoice Update Logging Fixed**
+  - When an invoice is updated, **old data vs new data** now shows correctly in `all_logs`
+  - Improves audit trail reliability
+- 📊 **Logging System Optimization**
+  - `all_logs` table optimized for cleaner, more readable log entries
+  - Logs now display changes in a clearer and more structured format
+- 💼 **Accounts Module Flexibility Improved**
+  - Better handling of categories and future expansion
+- ⚙️ **Invoice System Optimized**
+  - Performance and structure improvements
+  - More maintainable and scalable logic
+
+---
+
+
 ### Version `1.05.04` — ** invoice auto create off **
 
 ### 🔖 Version `1.05.03` — **Accounts Dashboard Update**
