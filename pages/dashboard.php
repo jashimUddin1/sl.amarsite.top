@@ -154,7 +154,6 @@ try {
         GROUP BY category
     ";
 
-
     $stmtCat = $pdo->prepare($sqlCat);
 
     if ($range === 'custom' && strpos($whereAcc, ':from') !== false) {
@@ -165,7 +164,7 @@ try {
     $stmtCat->execute();
     $rows = $stmtCat->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-    foreach ($rows as $r) {
+     foreach ($rows as $r) {
         $cat = $r['category'] ?? '';
         $amt = (float) ($r['total_amount'] ?? 0);
         $cnt = (int) ($r['total_rows'] ?? 0);
@@ -175,9 +174,8 @@ try {
             $catExpenseCount[$cat] = $cnt;
         }
     }
-
 } catch (Exception $e) {
-    // if debug:
+    // চাইলে debug:
     // echo '<pre>'.$e->getMessage().'</pre>';
 }
 

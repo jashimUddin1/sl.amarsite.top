@@ -846,10 +846,19 @@ require '../layout/single_invoice_header_final.php';
             const emptyRowsNeeded = Math.max(0, MIN_ROWS - filledRows.length);
             for (let i = 0; i < emptyRowsNeeded; i++) rowsHtml += makeEmptyPreviewRow();
 
-            const statusForBadge = totals.status;
+           const statusForBadge = totals.status;
+
+            const statusMap = {
+                UNPAID: "UNPAID",
+                PAID: "PAID",
+                PARTIAL: "<span style='font-size: 11px'>আংশিক পরিশোধোদিত</span>"
+            };
+
+            const statusLabel = statusMap[statusForBadge] || statusForBadge;
+
             const unpaidBadge = statusForBadge === "UNPAID"
-                ? `<span class="badge-status-unpaid ms-2">UNPAID</span>`
-                : `<span class="badge base-bg base-p7d ms-2">${statusForBadge}</span>`;
+                ? `<span class="badge-status-unpaid ms-2">${statusLabel}</span>`
+                : `<span class="badge base-bg base-p7d ms-2">${statusLabel}</span>`;
 
             previewBody.innerHTML = `
         <div class="invoice-preview-card" id="invoice-preview-card">
@@ -895,17 +904,17 @@ require '../layout/single_invoice_header_final.php';
                 <div class="col-md-5">
                     <table class="table table-sm subtotal_cal">
                         <tr>
-                            <th class="text-end">Subtotal</th>
+                            <th class="text-end">Total Amount</th>
                             <td class="text-end">Tk ${totals.total.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-end">Pay Amount</th>
+                            <td class="text-end">Tk ${totals.pay.toFixed(2)}</td>
                         </tr>
                         <tr style="background: #DCFCE7;">
                             <th class="text-end">Due</th>
-                            <td class="text-end">Tk ${totals.due.toFixed(2)}</td>
-                        </tr>
-                        <tr style="background: #1FBD59">
-                            <th class="text-end">TOTAL</th>
-                            <td class="text-end fw-bold">Tk ${totals.total.toFixed(2)}</td>
-                        </tr>
+                            <td class="text-end fs-bold text-danger">Tk ${totals.due.toFixed(2)}</td>
+                        </tr>        
                     </table>
                     <div class="mt-2 text-end">${unpaidBadge}</div>
                 </div>
