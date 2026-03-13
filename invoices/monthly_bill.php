@@ -2,7 +2,6 @@
 require_once '../auth/config.php';
 require_login();
 
-// ====== Layout variables ======
 $pageTitle   = 'Schools - Bill List';
 $pageHeading = 'School List';
 $activeMenu  = 'invoices';
@@ -29,15 +28,27 @@ $months = [
     12 => 'Dec',
 ];
 
-// =========================
-// helper
-// =========================
+$monthMap = [
+    'jan' => 1,
+    'feb' => 2,
+    'mar' => 3,
+    'apr' => 4,
+    'may' => 5,
+    'jun' => 6,
+    'jul' => 7,
+    'aug' => 8,
+    'sep' => 9,
+    'oct' => 10,
+    'nov' => 11,
+    'dec' => 12
+];
+
 function e($value): string
 {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function normalizeInvoiceStatus($status, $due = 0, $paidAt = null): string
+function normalizeInvoiceStatus($status, $due = 0): string
 {
     $status = strtoupper(trim((string)$status));
     $due = (float)$due;
@@ -53,9 +64,65 @@ function normalizeInvoiceStatus($status, $due = 0, $paidAt = null): string
     return 'Unpaid';
 }
 
-// =========================
-// get approved schools
-// =========================
+/**
+ * Extract billing month and year from item description.
+ *
+ * Supported examples:
+ * - Software subscription fee (Dec 2025)
+ * - Software subscription fee (Jan 2026)
+ * - Software subscription fee (Jan)
+ * - Software subscription fee (Feb)
+ *
+ * Returns:
+ * [
+ *   'month' => int|null,
+ *   'year'  => int|null
+ * ]
+ */
+function extractMonthYearFromDesc($desc, array $monthMap, int $defaultYear): array
+{
+    $result = [
+        'month' => null,
+        'year'  => null,
+    ];
+
+    $desc = trim((string)$desc);
+    if ($desc === '') {
+        return $result;
+    }
+
+    if (!preg_match('/\((.*?)\)/', $desc, $match)) {
+        return $result;
+    }
+
+    $inside = trim($match[1]);
+    if ($inside === '') {
+        return $result;
+    }
+
+    // Normalize spaces
+    $inside = preg_replace('/\s+/', ' ', $inside);
+
+    /**
+     * Match:
+     * Dec
+     * Dec 2025
+     * January
+     * January 2026
+     */
+    if (preg_match('/^([A-Za-z]+)(?:\s+(\d{4}))?$/', $inside, $parts)) {
+        $monthText = strtolower(substr($parts[1], 0, 3));
+
+        if (isset($monthMap[$monthText])) {
+            $result['month'] = $monthMap[$monthText];
+            $result['year']  = isset($parts[2]) ? (int)$parts[2] : $defaultYear;
+        }
+    }
+
+    return $result;
+}
+
+// Get all approved schools only
 $approvedStmt = $pdo->prepare("
     SELECT id, school_name, district, upazila, m_fee
     FROM schools
@@ -65,15 +132,12 @@ $approvedStmt = $pdo->prepare("
 $approvedStmt->execute();
 $schoolRows = $approvedStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// school id wise map
 $schools = [];
 foreach ($schoolRows as $school) {
     $schools[(int)$school['id']] = $school;
 }
 
-// =========================
-// get invoices
-// =========================
+// Get invoices
 $invoiceStmt = $pdo->prepare("
     SELECT id, in_no, school_id, data, paid_at
     FROM invoices
@@ -82,18 +146,15 @@ $invoiceStmt = $pdo->prepare("
 $invoiceStmt->execute();
 $invoiceRows = $invoiceStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// =========================
-// build invoice map
-// school_id => month => invoice info
-// only schools with invoice of selected year
-// =========================
 $invoiceMap = [];
-$schoolHasInvoice = [];
 
 foreach ($invoiceRows as $row) {
     $json = json_decode($row['data'], true);
+    if (!$json) {
+        continue;
+    }
 
-    if (!is_array($json) || empty($json['invoiceDate'])) {
+    if (empty($json['invoiceDate'])) {
         continue;
     }
 
@@ -102,42 +163,65 @@ foreach ($invoiceRows as $row) {
         continue;
     }
 
-    $year  = (int) date('Y', $time);
-    $month = (int) date('n', $time);
+    $invoiceYear  = (int) date('Y', $time);
+    $invoiceMonth = (int) date('n', $time);
+    $schoolId     = (int) $row['school_id'];
 
-    if ($year !== $selectedYear) {
-        continue;
-    }
-
-    $schoolId = (int) $row['school_id'];
-
+    // Invoice school must exist in approved school list
     if (!isset($schools[$schoolId])) {
         continue;
     }
 
     $due = (float)($json['totals']['due'] ?? 0);
-
     $status = normalizeInvoiceStatus(
         $json['totals']['status'] ?? 'UNPAID',
-        $due,
-        $row['paid_at'] ?? null
+        $due
     );
 
-    // same month এ একাধিক invoice থাকলে latest row রাখবে
-    if (!isset($invoiceMap[$schoolId][$month])) {
-        $invoiceMap[$schoolId][$month] = [
-            'invoice_id' => (int)$row['id'],
-            'status'     => $status,
-        ];
+    if (empty($json['items']) || !is_array($json['items'])) {
+        continue;
     }
 
-    $schoolHasInvoice[$schoolId] = true;
+    foreach ($json['items'] as $item) {
+        $desc = strtolower(trim($item['desc'] ?? ''));
+
+        if (
+            strpos($desc, 'subscription') === false &&
+            strpos($desc, 'software subscription fee') === false
+        ) {
+            continue;
+        }
+
+        $parsed = extractMonthYearFromDesc($item['desc'] ?? '', $monthMap, $invoiceYear);
+
+        $targetMonth = $parsed['month'];
+        $targetYear  = $parsed['year'];
+
+        // Fallback: if no month found in desc, use invoice date month/year
+        if (!$targetMonth) {
+            $targetMonth = $invoiceMonth;
+        }
+
+        if (!$targetYear) {
+            $targetYear = $invoiceYear;
+        }
+
+        // Only keep entries that belong to selected year
+        if ($targetYear !== $selectedYear) {
+            continue;
+        }
+
+        // Keep first matched invoice for a school-month
+        if (!isset($invoiceMap[$schoolId][$targetMonth])) {
+            $invoiceMap[$schoolId][$targetMonth] = [
+                'invoice_id' => (int)$row['id'],
+                'status'     => $status
+            ];
+        }
+    }
 }
 
-// =========================
-// year list for dropdown
-// =========================
-$currentYear = (int)date('Y');
+$currentYear = (int) date('Y');
 $startYear = $currentYear - 5;
 $endYear   = $currentYear + 2;
 ?>
@@ -176,6 +260,7 @@ $endYear   = $currentYear + 2;
         font-size: 12px;
         font-weight: bold;
         display: inline-block;
+        text-decoration: none;
     }
 
     .badge-paid {
@@ -216,6 +301,10 @@ $endYear   = $currentYear + 2;
         border-radius: 4px;
         font-weight: 600;
     }
+
+    .invoice-link {
+        text-decoration: none;
+    }
 </style>
 
 <div>
@@ -253,11 +342,10 @@ $endYear   = $currentYear + 2;
         </thead>
 
         <tbody>
-            <?php if (!empty($schoolHasInvoice)): ?>
+            <?php if (!empty($schools)): ?>
                 <?php
                 $sl = 1;
-                foreach ($schoolHasInvoice as $schoolId => $hasInvoice):
-                    $school = $schools[$schoolId];
+                foreach ($schools as $schoolId => $school):
                     $paidCount = 0;
                     $unpaidCount = 0;
                 ?>
@@ -273,7 +361,7 @@ $endYear   = $currentYear + 2;
                             </span>
                             <br>
                             <span class="fw-bold fs-6 text-primary">
-                               Fee <?php echo number_format($school['m_fee']); ?>৳
+                                Fee <?php echo number_format((float)$school['m_fee']); ?>৳
                             </span>
                         </td>
 
@@ -282,19 +370,19 @@ $endYear   = $currentYear + 2;
                                 <?php
                                 if (isset($invoiceMap[$schoolId][$monthNo])) {
                                     $status = $invoiceMap[$schoolId][$monthNo]['status'];
-                                    $invoiceId = $invoiceMap[$schoolId][$monthNo]['invoice_id'];
+                                    $invoiceId = (int)$invoiceMap[$schoolId][$monthNo]['invoice_id'];
 
                                     if ($status === 'Paid') {
-                                        echo '<a href="../invoices/invoice_edit.php?invoice_id=' . $invoiceId . '">
+                                        echo '<a class="invoice-link" href="../invoices/invoice_edit.php?invoice_id=' . $invoiceId . '">
                                                 <span class="badge badge-paid">Paid</span>
-                                             </a>';
+                                              </a>';
                                         $paidCount++;
                                     } elseif ($status === 'Partial') {
-                                        echo '<a href="../invoices/invoice_edit.php?invoice_id=' . $invoiceId . '">
+                                        echo '<a class="invoice-link" href="../invoices/invoice_edit.php?invoice_id=' . $invoiceId . '">
                                                 <span class="badge badge-partial">Partial</span>
                                               </a>';
                                     } else {
-                                        echo '<a href="../invoices/invoice_edit.php?invoice_id=' . $invoiceId . '">
+                                        echo '<a class="invoice-link" href="../invoices/invoice_edit.php?invoice_id=' . $invoiceId . '">
                                                 <span class="badge badge-unpaid">Unpaid</span>
                                               </a>';
                                         $unpaidCount++;
@@ -312,7 +400,7 @@ $endYear   = $currentYear + 2;
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="16">No invoice found for <?php echo e($selectedYear); ?></td>
+                    <td colspan="16">No approved school found</td>
                 </tr>
             <?php endif; ?>
         </tbody>
