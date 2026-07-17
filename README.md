@@ -12,6 +12,25 @@ A powerful and evolving **School Management & Activity Tracking System** designe
 
 ## 🚀 Latest Release
 
+### 🔖 Version `1.05.06` — **Invoice Month & Remaining List Update**
+> This update improves **invoice generation flexibility** and enhances the invoice management experience.
+
+#### ✨ Highlights
+- 📅 **Invoice Month Selection**
+  - Invoice generation now supports a selected month instead of only the current month
+  - Makes it possible to generate invoices for previous or upcoming months
+- 🧾 **Improved Auto Invoice Logic**
+  - Duplicate invoice checking now follows the selected invoice month
+  - Invoice date and subscription month are generated consistently
+- 📋 **Remaining Invoice List**
+  - Clicking the remaining invoice count now opens a popup showing all schools whose invoices are still pending
+  - Displays school name and monthly fee for quick verification
+- 🎨 **Better User Experience**
+  - Easier invoice planning and verification before auto generation
+  - Improved workflow for monthly billing management
+
+---
+
 ### 🔖 Version `1.05.05` — **Invoice & Logging Optimization Update**
 > This update focuses on **invoice payment handling, logging accuracy, database optimization, and system flexibility**.
 
@@ -170,6 +189,64 @@ for real-world school data management, tracking, and accountability.
 
 ## 🚀 সর্বশেষ আপডেট
 
+### 🔖 ভার্সন `1.05.06` — **ইনভয়েস মাস নির্বাচন ও রিমেইনিং তালিকা আপডেট**
+> এই আপডেটে **ইনভয়েস জেনারেশন আরও নমনীয়** করা হয়েছে এবং মাসভিত্তিক ইনভয়েস পরিচালনা সহজ করা হয়েছে।
+
+#### ✨ নতুন কী আছে
+- 📅 **ইনভয়েস মাস নির্বাচন**
+  - শুধু চলতি মাস নয়, এখন নির্দিষ্ট মাস নির্বাচন করে ইনভয়েস তৈরি করা যায়
+  - আগের বা পরের মাসের ইনভয়েসও সহজে জেনারেট করা সম্ভব
+- 🧾 **অটো ইনভয়েস লজিক উন্নত**
+  - ডুপ্লিকেট ইনভয়েস চেক এখন নির্বাচিত মাস অনুযায়ী হয়
+  - Invoice Date এবং Subscription Month একই মাস অনুযায়ী সংরক্ষণ করা হয়
+- 📋 **রিমেইনিং ইনভয়েস তালিকা**
+  - Remaining সংখ্যায় ক্লিক করলে যেসব স্কুলের ইনভয়েস এখনো তৈরি হয়নি তাদের তালিকা পপআপে দেখা যায়
+  - স্কুলের নাম ও মাসিক ফি প্রদর্শন করা হয়
+- 🎨 **ব্যবহার সহজ হয়েছে**
+  - ইনভয়েস তৈরির আগে সহজেই যাচাই করা যায় কোন কোন স্কুল বাকি আছে
+  - মাসভিত্তিক বিলিং পরিচালনা আরও সুবিধাজনক হয়েছে
+
+---
+
+### 🔖 ভার্সন `1.05.05` — **ইনভয়েস ও লগিং অপ্টিমাইজেশন আপডেট**
+> এই আপডেটে **ইনভয়েস পেমেন্ট, লগিং নির্ভুলতা, ডাটাবেজ অপ্টিমাইজেশন এবং সিস্টেমের নমনীয়তা** উন্নত করা হয়েছে।
+
+#### ✨ নতুন কী আছে
+- 💳 **ইনভয়েস পেমেন্ট স্ট্যাটাস উন্নত**
+  - ইনভয়েস পরিশোধের সময় এখন সঠিকভাবে সংরক্ষণ করা হয়
+  - নির্ভুল পেমেন্ট হিস্ট্রির জন্য নতুন `paid_at` কলাম যুক্ত করা হয়েছে
+- 🧾 **ইনভয়েস আপডেট লগ ঠিক করা হয়েছে**
+  - ইনভয়েস আপডেট করলে এখন `all_logs`-এ **পুরোনো ডাটা ও নতুন ডাটা** সঠিকভাবে দেখা যায়
+  - অডিট ও পরিবর্তনের ইতিহাস আরও নির্ভরযোগ্য হয়েছে
+- 📊 **লগিং সিস্টেম অপ্টিমাইজেশন**
+  - `all_logs` টেবিল আরও পরিষ্কার ও সহজে বোঝার মতো করা হয়েছে
+  - লগে পরিবর্তনগুলো আরও সুন্দর ও গুছানোভাবে প্রদর্শিত হয়
+- 💼 **অ্যাকাউন্টস মডিউল আরও নমনীয়**
+  - ক্যাটাগরি ব্যবস্থাপনা উন্নত করা হয়েছে
+  - ভবিষ্যতে নতুন ফিচার যুক্ত করা আরও সহজ হবে
+- ⚙️ **ইনভয়েস সিস্টেম অপ্টিমাইজেশন**
+  - পারফরম্যান্স ও কোড স্ট্রাকচার উন্নত করা হয়েছে
+  - রক্ষণাবেক্ষণ ও ভবিষ্যৎ উন্নয়ন আরও সহজ হয়েছে
+
+---
+
+### 🔖 ভার্সন `1.05.04` — **ইনভয়েস অটো ক্রিয়েট ফিচার যুক্ত**
+> এই আপডেটে **Approved স্কুলগুলোর জন্য স্বয়ংক্রিয়ভাবে মাসিক ইনভয়েস তৈরির সুবিধা** যোগ করা হয়েছে।
+
+#### ✨ নতুন কী আছে
+- 🤖 **অটো ইনভয়েস তৈরি**
+  - এক ক্লিকেই সকল Pending Approved স্কুলের ইনভয়েস তৈরি করা যায়
+- 🧾 **ডুপ্লিকেট ইনভয়েস প্রতিরোধ**
+  - একই মাসে কোনো স্কুলের ইনভয়েস আগে থেকেই থাকলে নতুন করে তৈরি হবে না
+- 🔢 **অটো ইনভয়েস নম্বর**
+  - নতুন ইনভয়েস নম্বর স্বয়ংক্রিয়ভাবে ধারাবাহিকভাবে তৈরি হয়
+- 📋 **স্বয়ংক্রিয় লগ সংরক্ষণ**
+  - Auto Create-এর প্রতিটি ইনভয়েস `note_logs`-এ সংরক্ষণ করা হয়
+- 📊 **Remaining Invoice Counter**
+  - কতগুলো Approved স্কুলের ইনভয়েস এখনো তৈরি হয়নি তা সরাসরি দেখা যায়
+
+---
+
 ### 🔖 ভার্সন `1.05.03` — **অ্যাকাউন্ট ড্যাশবোর্ড আপডেট**
 > এই আপডেটে **ক্যাটাগরি অনুযায়ী খরচ ট্র্যাকিং** এবং ডিটেইলস পেজ যোগ করা হয়েছে, যাতে হিসাব আরও সহজ হয়।
 
@@ -254,7 +331,7 @@ for real-world school data management, tracking, and accountability.
 - **Backend:** PHP (PDO)
 - **Frontend:** Bootstrap 5, JavaScript
 - **Database:** MySQL
-- **Logging:** কাস্টম লগ সিস্টেম
+- **Logging:** Custom logging system
 
 ---
 

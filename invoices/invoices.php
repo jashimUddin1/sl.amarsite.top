@@ -35,10 +35,17 @@ $approvedStmt = $pdo->prepare("SELECT id, school_name, m_fee FROM schools WHERE 
 $approvedStmt->execute();
 $approvedSchools = $approvedStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$monthStart = date('Y-m-01 00:00:00');
-$monthEnd = date('Y-m-t 23:59:59');
+$selectedMonth = $_GET['month'] ?? date('Y-m');
+
+$monthStart = $selectedMonth . '-01 00:00:00';
+$monthEnd   = date(
+    'Y-m-t 23:59:59',
+    strtotime($selectedMonth . '-01')
+);
 
 $remaining = 0;
+$remainingSchools = [];
+
 
 if ($approvedSchools) {
     $invCheck = $pdo->prepare("
@@ -65,22 +72,29 @@ if ($approvedSchools) {
 
             if ($invDate) {
                 $ts = strtotime($invDate);
-                if ($ts && date('Y-m', $ts) === date('Y-m')) {
+                if ($ts && date('Y-m', $ts) === $selectedMonth){
                     $hasThisMonth = true;
                     break;
                 }
             } else {
                 // invoiceDate না থাকলে created_at মাস ধরবো
                 $ts = strtotime($inv['created_at'] ?? '');
-                if ($ts && date('Y-m', $ts) === date('Y-m')) {
+                if ($ts && date('Y-m', $ts) === $selectedMonth){
                     $hasThisMonth = true;
                     break;
                 }
             }
         }
 
-        if (!$hasThisMonth)
+        if (!$hasThisMonth) {
             $remaining++;
+
+            $remainingSchools[] = [
+                'id' => $s['id'],
+                'school_name' => $s['school_name'],
+                'm_fee' => $s['m_fee']
+            ];
+        }
     }
 }
 
@@ -91,59 +105,60 @@ $btnDisabled = ($remaining > 0) ? '' : 'disabled';
 require '../layout/layout_header.php';
 ?>
 <style>
-.menu-wrap{
-    position: relative;
-    display: inline-block;
-    margin-left: 5px;
-}
+    .menu-wrap {
+        position: relative;
+        display: inline-block;
+        margin-left: 5px;
+    }
 
-.dot-btn{
-    border: 1px solid green;
-    background: white;
-    color:green;
-    padding: 5px 5px;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-    outline: green;
-    font-weight: bold;
-    border-radius: 5px;
-}
+    .dot-btn {
+        border: 1px solid green;
+        background: white;
+        color: green;
+        padding: 5px 5px;
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        outline: green;
+        font-weight: bold;
+        border-radius: 5px;
+    }
 
-.dot-btn:hover{
-    background: green;
-    color:white;
-}
-.dot-menu{
-    position: absolute;
-    top: 100%;
-    right: 0;
-    min-width: 140px;
-    background: #fff;
-    border: 1px solid #ccc;
-    display: none;
-    z-index: 999;
-}
+    .dot-btn:hover {
+        background: green;
+        color: white;
+    }
 
-.dot-menu a{
-    display: block;
-    padding: 8px 10px;
-    text-decoration: none;
-    color: #000;
-    border-bottom: 1px solid #eee;
-}
+    .dot-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        min-width: 140px;
+        background: #fff;
+        border: 1px solid #ccc;
+        display: none;
+        z-index: 999;
+    }
 
-.dot-menu a:last-child{
-    border-bottom: none;
-}
+    .dot-menu a {
+        display: block;
+        padding: 8px 10px;
+        text-decoration: none;
+        color: #000;
+        border-bottom: 1px solid #eee;
+    }
 
-.dot-menu a:hover{
-    background: #f5f5f5;
-}
+    .dot-menu a:last-child {
+        border-bottom: none;
+    }
 
-.dot-menu.show{
-    display: block;
-}
+    .dot-menu a:hover {
+        background: #f5f5f5;
+    }
+
+    .dot-menu.show {
+        display: block;
+    }
 </style>
 <div class="container-fluid">
 
@@ -176,24 +191,40 @@ require '../layout/layout_header.php';
                     </a>
                 </button>
             </div>
+
             <form method="POST" action="controllers/invoice_auto_generate.php" class="m-0">
+                <input type="hidden" name="month" value="<?= $selectedMonth ?>">
                 <button type="submit" title="Invoice Auto create This Month" class="btn btn-sm <?php echo $btnClass; ?>"
                     <?php echo $btnDisabled; ?>>
                     <span class="d-none d-md-inline">Auto create</span>
                     <i class="bi bi-magic d-inline d-md-none"></i>
                 </button>
                 <?php if ($remaining > 0): ?>
-                    <span class="btn btn-sm <?php echo $btnClass; ?>"><?php echo (int) $remaining; ?></span>
+                    <button
+                        type="button"
+                        class="btn btn-sm <?= $btnClass ?>"
+                        data-bs-toggle="modal"
+                        data-bs-target="#remainingSchoolModal">
+
+                        <?= $remaining ?>
+
+                    </button>
                 <?php endif; ?>
             </form>
             <div class="menu-wrap">
-    <button type="button" class="dot-btn" id="dotBtn">⋮</button>
+                <button type="button" class="dot-btn" id="dotBtn">⋮</button>
 
-    <div class="dot-menu" id="dotMenu">
-        <a href="monthly_bill.php">Monthly List</a>
-        <a href="#">All List</a>
-    </div>
-</div>
+                <div class="dot-menu" id="dotMenu">
+                    <a href="monthly_bill.php">Monthly List</a>
+                    <a href="#">All List</a>
+                    <input type="month"
+                        name="month"
+                        id="invoiceMonth"
+                        class="form-control form-control-sm"
+                        value="<?= $_GET['month'] ?? date('Y-m') ?>"
+                        onchange="location='?month='+this.value;">
+                </div>
+            </div>
         </div>
 
     </div>
@@ -442,17 +473,91 @@ require '../layout/layout_header.php';
 </script>
 
 <!-- for three dot button  -->
- <script>
-const dotBtn = document.getElementById('dotBtn');
-const dotMenu = document.getElementById('dotMenu');
+<script>
+    const dotBtn = document.getElementById('dotBtn');
+    const dotMenu = document.getElementById('dotMenu');
 
-dotBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    dotMenu.classList.toggle('show');
-});
+    dotBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dotMenu.classList.toggle('show');
+    });
 
-document.addEventListener('click', function() {
-    dotMenu.classList.remove('show');
-});
+    document.addEventListener('click', function() {
+        dotMenu.classList.remove('show');
+    });
 </script>
 <?php require '../layout/layout_footer.php'; ?>
+
+<div class="modal fade" id="remainingSchoolModal" tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    Remaining Schools (<?= $remaining ?>)
+                </h5>
+
+                <button class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <?php if ($remainingSchools): ?>
+
+                    <table class="table table-bordered table-sm">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>#</th>
+
+                                <th>School</th>
+
+                                <th>Monthly Fee</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <?php foreach ($remainingSchools as $i => $school): ?>
+
+                                <tr>
+
+                                    <td><?= $i + 1 ?></td>
+
+                                    <td><?= h($school['school_name']) ?></td>
+
+                                    <td><?= number_format($school['m_fee'], 2) ?></td>
+
+                                </tr>
+
+                            <?php endforeach; ?>
+
+                        </tbody>
+
+                    </table>
+
+                <?php else: ?>
+
+                    <div class="alert alert-success mb-0">
+                        No Remaining School
+                    </div>
+
+                <?php endif; ?>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -12,9 +12,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $user_id = $_SESSION['user']['id'] ?? ($_SESSION['user_id'] ?? 0);
 
 // Current month range
-$monthStart = date('Y-m-01 00:00:00');
-$monthEnd   = date('Y-m-t 23:59:59');
-$ymNow      = date('Y-m');
+// Selected month
+$ymNow = $_POST['month'] ?? date('Y-m');
+
+$monthStart = $ymNow . '-01 00:00:00';
+
+$monthEnd = date(
+    'Y-m-t 23:59:59',
+    strtotime($ymNow . '-01')
+);
 
 function safe_json(array $arr): string
 {
@@ -162,7 +168,7 @@ try {
     if (!$pending) {
         $_SESSION['flash'] = [
             'type' => 'info',
-            'msg' => 'এই মাসে সব approved স্কুলের invoice আগেই আছে।'
+            'msg' => date('F Y', strtotime($ymNow . '-01')) . ' মাসের সব approved স্কুলের invoice আগেই আছে।'
         ];
         header('Location: ../invoices.php');
         exit;
@@ -190,7 +196,7 @@ try {
     ");
 
     $created = 0;
-    $monthLabel = date('M');
+    $monthLabel = date('M', strtotime($ymNow . '-01'));
 
     foreach ($pending as $s) {
         $schoolId = (int)$s['id'];
@@ -202,7 +208,7 @@ try {
 
         $payload = [
             'invoiceNumber' => $nextNo,
-            'invoiceDate' => date('Y-m-d'),
+            'invoiceDate' => $ymNow . '-01',
             'invoiceStyle' => 'classic',
             'billTo' => [
                 'school' => $s['school_name'] ?? ('School ID: ' . $schoolId),
@@ -251,7 +257,7 @@ try {
 
     $_SESSION['flash'] = [
         'type' => 'success',
-        'msg' => "Auto-generated invoice: {$created} টি (এই মাসের জন্য)"
+        'msg' => "Auto-generated invoice: {$created} টি (" . date('F Y', strtotime($ymNow . '-01')) . ")"
     ];
     header('Location: ../invoices.php');
     exit;
@@ -268,3 +274,4 @@ try {
     header('Location: ../invoices.php');
     exit;
 }
+
