@@ -65,6 +65,11 @@ if ($user_id) {
                     <span class="mr-2">📊</span> Dashboard
                 </a>
 
+                <a href="<?= base_url('pages/add_run.php') ?>"
+                    class="flex  items-center px-4 py-2 text-sm <?php echo $activeMenu === 'addRun' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
+                    <span class="bg-green-500 p-2"> <span class="mr-2">📢</span> Add Run </span>
+                </a>
+
                 <a href="<?= base_url('accounts') ?>"
                     class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>">
                     <span class="mr-2">💰</span> Accounts
@@ -142,6 +147,11 @@ if ($user_id) {
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'dashboard' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
                         onclick="toggleSidebar()">
                         <span class="mr-2">📊</span> Dashboard
+                    </a>
+                    <a href="<?= base_url('pages/add_run.php') ?>"
+                        class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'addRun' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
+                        onclick="toggleSidebar()">
+                        <span class="bg-green-500 p-2"> <span class="mr-2">📢</span> Add Run </span>
                     </a>
                     <a href="<?= base_url('accounts') ?>"
                         class="flex items-center px-4 py-2 text-sm <?php echo $activeMenu === 'accounts' ? 'bg-slate-800' : 'hover:bg-slate-800'; ?>"
