@@ -140,7 +140,10 @@ require '../layout/layout_header.php';
                                 <td>৳<?= number_format($school['yearly_fee']); ?></td>
                                 <td>৳<?= number_format($school['website_fee']); ?></td>
                                 <td><?= number_format($school['students_number']); ?></td>
-                                <td title="<?= htmlspecialchars($colorNote); ?>" class="" style="background-color:  <?= htmlspecialchars($school['s_color']); ?>;"> </td>
+                                <td>
+                                    <span title="<?= htmlspecialchars($colorNote); ?>" class="" style="background-color:  <?= htmlspecialchars($school['s_color']); ?>; padding:8px;"> </span>
+                                </td>
+
                                 <!-- Last Note Column -->
                                 <td>
                                     <?php if (!empty($schoolNotes)): ?>
@@ -350,7 +353,7 @@ require '../layout/layout_header.php';
                                 </div>
                             </div>
 
-            
+
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
@@ -461,7 +464,7 @@ require '../layout/layout_header.php';
                         <div class="col-md-3 mb-3">
                             <label for="students" class="form-label">Students </label>
                             <input type="number" class="form-control" id="students" name="students"
-                            placeholder="00">
+                                placeholder="00">
                         </div>
                     </div>
 
@@ -529,7 +532,7 @@ require '../layout/layout_header.php';
                                     </div>
 
                                     <!-- Action Buttons (Done) -->
-                                    <div class="d-flex align-items-center gap-1">                                        
+                                    <div class="d-flex align-items-center gap-1">
                                         <!-- Mark as Read Button -->
                                         <form action="core/mark_notification_read.php" method="POST" class="m-0 ms-1">
                                             <input type="hidden" name="note_id" value="<?= $notif['id']; ?>">
