@@ -103,7 +103,8 @@ require '../layout/layout_header.php';
                         <th scope="col">M Fee</th>
                         <th scope="col">Y Fee</th>
                         <th scope="col">W Fee</th>
-                        <th scope="col">Color</th>
+                        <th scope="col">Stdnt</th>
+                        <th scope="col">Clr</th>
                         <th scope="col">Last Note</th>
                         <th class="text-center" scope="col">Action</th>
                     </tr>
@@ -139,6 +140,7 @@ require '../layout/layout_header.php';
                                 <td>৳<?= number_format($school['monthly_fee']); ?></td>
                                 <td>৳<?= number_format($school['yearly_fee']); ?></td>
                                 <td>৳<?= number_format($school['website_fee']); ?></td>
+                                <td><?= number_format($school['students_number']); ?></td>
                                 <td title="<?= htmlspecialchars($colorNote); ?>" class="" style="background-color:  <?= htmlspecialchars($school['s_color']); ?>;"> </td>
                                 <!-- Last Note Column -->
                                 <td>
@@ -204,12 +206,6 @@ require '../layout/layout_header.php';
                                                             <i class="bi bi-trash"></i> Delete
                                                         </button>
                                                     </form>
-                                                </li>
-                                                <li>
-                                                    <hr class="dropdown-divider">
-                                                </li>
-                                                <li>
-                                                    <i class="bi bi-check"></i> Approved
                                                 </li>
                                             </ul>
                                         </div>
@@ -285,17 +281,21 @@ require '../layout/layout_header.php';
 
                                                 <!-- Monthly Fee & Yearly Fee -->
                                                 <div class="row">
-                                                    <div class="col-md-4 mb-3">
+                                                    <div class="col-md-3 mb-3">
                                                         <label class="form-label">Monthly Fee <span class="text-danger">*</span></label>
                                                         <input type="number" class="form-control" name="monthly_fee" value="<?= $school['monthly_fee']; ?>">
                                                     </div>
-                                                    <div class="col-md-4 mb-3">
+                                                    <div class="col-md-3 mb-3">
                                                         <label class="form-label">Yearly Fee <span class="text-danger">*</span></label>
                                                         <input type="number" class="form-control" name="yearly_fee" value="<?= $school['yearly_fee']; ?>">
                                                     </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label class="form-label">Website Fee (opt)</label>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label class="form-label">Website Fee</label>
                                                         <input type="number" class="form-control" name="website_fee" value="<?= $school['website_fee']; ?>">
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label class="form-label">Students</label>
+                                                        <input type="number" class="form-control" name="students" value="<?= $school['students_number']; ?>">
                                                     </div>
                                                 </div>
 
@@ -494,8 +494,8 @@ require '../layout/layout_header.php';
                         </div>
                         <div class="col-2">
                             <label class="form-label">Color</label>
-                            <select name="sColor" id="">
-                                <option value="">Select Color</option>
+                            <select name="sColor" class="form-select" id="">
+                                <option value="">Color</option>
                                 <option value="green">Green</option>
                                 <option value="yellow">Yellow</option>
                                 <option value="pink">Pink</option>
@@ -507,19 +507,23 @@ require '../layout/layout_header.php';
 
                     <!-- Monthly Fee & Yearly Fee -->
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="monthlyFee" class="form-label">Monthly Fee<span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="monthlyFee" name="monthly_fee" placeholder="00" required>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="yearlyFee" class="form-label">Yearly Fee<span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="yearlyFee" name="yearly_fee" placeholder="00" required>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="websiteFee" class="form-label">Website fee(op)</label>
+                        <div class="col-md-3 mb-3">
+                            <label for="websiteFee" class="form-label">Website fee</label>
                             <input type="number" class="form-control" id="websiteFee" name="website_fee" placeholder="00">
                         </div>
-
+                        <div class="col-md-3 mb-3">
+                            <label for="students" class="form-label">Students </label>
+                            <input type="number" class="form-control" id="students" name="studnets"
+                            placeholder="00">
+                        </div>
                     </div>
 
                 </form>

@@ -13,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['school_id'])) {
 
     $monthly_fee     = !empty($_POST['monthly_fee']) ? intval($_POST['monthly_fee']) : 0;
     $yearly_fee      = !empty($_POST['yearly_fee']) ? intval($_POST['yearly_fee']) : 0;
-    $website_fee      = !empty($_POST['$website_fee']) ? intval($_POST['$website_fee']) : 0;
+    $website_fee     = !empty($_POST['$website_fee']) ? intval($_POST['$website_fee']) : 0;
+    $students        = !empty($_POST['students']) ? intval($_POST['students']) : 0;
     $sColor = !empty($_POST['sColor']) ? htmlspecialchars(trim($_POST['sColor'])) : 'grey';
 
     // Validation
@@ -34,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['school_id'])) {
                     monthly_fee = :monthly_fee, 
                     yearly_fee = :yearly_fee, 
                     website_fee = :website_fee,
+                    students_number = :students,
                     s_color = :sColor
                 WHERE id = :id";
 
@@ -49,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['school_id'])) {
             ':monthly_fee'     => $monthly_fee,
             ':yearly_fee'      => $yearly_fee,
             ':website_fee'     => $website_fee,
+            ':students'        => $students,
             ':sColor'          => $sColor,
             ':id'              => $school_id
         ]);

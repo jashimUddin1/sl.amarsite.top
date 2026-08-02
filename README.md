@@ -12,6 +12,10 @@ A powerful and evolving **School Management & Activity Tracking System** designe
 
 ## 🚀 Latest Release
 
+### 🔖 Version `1.06.02` — 
+1. school ar student ar jonno notun cell add kora hoice
+
+
 ### 🔖 Version `1.06.01` — **Color Status Tracking, Color Search & Sticky Table Header**
 > This update introduces **color-coded school status tracking**, **color-based table filtering**, **dynamic tooltip status notes**, and **sticky top bar navigation**.
 
