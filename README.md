@@ -12,6 +12,11 @@ A powerful and evolving **School Management & Activity Tracking System** designe
 
 ## 🚀 Latest Release
 
+### 🔖 Version `1.06.03` — 
+1. add run.php optimized kora hoice 
+2. auto invoice generates thik kora hoice
+
+
 ### 🔖 Version `1.06.02` — 
 1. school ar student ar jonno notun cell add kora hoice
 

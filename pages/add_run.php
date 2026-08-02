@@ -113,7 +113,6 @@ require '../layout/layout_header.php';
                     <?php if (!empty($schools)): ?>
                         <?php foreach ($schools as $index => $school): ?>
                             <?php
-                            // নির্দিষ্ট স্কুলটির সকল নোট ডাটাবেজ থেকে নিয়ে আসা (লুপের ভেতর)
                             $noteStmt = $pdo->prepare("SELECT * FROM add_run_note WHERE school_id = :school_id ORDER BY created_at DESC");
                             $noteStmt->execute([':school_id' => $school['id']]);
                             $schoolNotes = $noteStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -351,67 +350,7 @@ require '../layout/layout_header.php';
                                 </div>
                             </div>
 
-                            <!-- View Notes Modal Structure (লুপের ভেতরে নিয়ে আসা হয়েছে) -->
-                            <div class="modal fade" id="viewNotesModal<?= $school['id']; ?>" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-lg">
-                                    <div class="modal-content text-start">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">
-                                                <i class="bi bi-journal-bookmark text-primary me-2"></i>Notes History - <?= htmlspecialchars($school['school_name']); ?>
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-
-                                            <?php if (!empty($schoolNotes)): ?>
-                                                <div class="timeline">
-                                                    <?php foreach ($schoolNotes as $note): ?>
-                                                        <div class="card mb-3 border-0 bg-light shadow-sm">
-                                                            <div class="card-body">
-                                                                <!-- Note Content -->
-                                                                <p class="card-text text-dark mb-2" style="white-space: pre-line;">
-                                                                    <?= htmlspecialchars($note['note_text']); ?>
-                                                                </p>
-
-                                                                <hr class="my-2 text-muted">
-
-                                                                <!-- Dates & Times -->
-                                                                <div class="d-flex flex-wrap justify-content-between align-items-center fs-7 text-muted gap-2">
-                                                                    <div>
-                                                                        <i class="bi bi-clock me-1"></i>
-                                                                        <strong>Added:</strong> <?= date('d M, Y h:i A', strtotime($note['created_at'])); ?>
-                                                                    </div>
-
-                                                                    <?php if (!empty($note['next_meeting'])): ?>
-                                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                                                            <i class="bi bi-calendar-event me-1"></i> Next Meeting: <?= date('d M, Y h:i A', strtotime($note['next_meeting'])); ?>
-                                                                        </span>
-                                                                    <?php endif; ?>
-
-                                                                    <?php if (!empty($note['notification_time'])): ?>
-                                                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
-                                                                            <i class="bi bi-bell me-1"></i> Reminder: <?= date('d M, Y h:i A', strtotime($note['notification_time'])); ?>
-                                                                        </span>
-                                                                    <?php endif; ?>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php else: ?>
-                                                <div class="text-center py-4 text-muted">
-                                                    <i class="bi bi-journal-x fs-1 d-block mb-2 text-secondary"></i>
-                                                    কোনো নোট বা রিমাইন্ডার পাওয়া যায়নি।
-                                                </div>
-                                            <?php endif; ?>
-
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+            
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
@@ -521,7 +460,7 @@ require '../layout/layout_header.php';
                         </div>
                         <div class="col-md-3 mb-3">
                             <label for="students" class="form-label">Students </label>
-                            <input type="number" class="form-control" id="students" name="studnets"
+                            <input type="number" class="form-control" id="students" name="students"
                             placeholder="00">
                         </div>
                     </div>
@@ -589,27 +528,8 @@ require '../layout/layout_header.php';
                                         <?php endif; ?>
                                     </div>
 
-                                    <!-- Action Buttons (Done, Edit, Delete) -->
-                                    <div class="d-flex align-items-center gap-1">
-                                        <!-- Edit Button -->
-                                        <button type="button"
-                                            class="btn btn-sm btn-outline-primary edit-note-btn"
-                                            data-id="<?= $notif['id']; ?>"
-                                            data-note="<?= htmlspecialchars($notif['note_text']); ?>"
-                                            data-notif="<?= $notif['notification_time']; ?>"
-                                            data-meeting="<?= $notif['next_meeting']; ?>"
-                                            title="Edit Note">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-
-                                        <!-- Delete Button -->
-                                        <button type="button"
-                                            class="btn btn-sm btn-outline-danger delete-note-btn"
-                                            data-id="<?= $notif['id']; ?>"
-                                            title="Delete Note">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-
+                                    <!-- Action Buttons (Done) -->
+                                    <div class="d-flex align-items-center gap-1">                                        
                                         <!-- Mark as Read Button -->
                                         <form action="core/mark_notification_read.php" method="POST" class="m-0 ms-1">
                                             <input type="hidden" name="note_id" value="<?= $notif['id']; ?>">
@@ -792,7 +712,7 @@ require '../layout/layout_header.php';
                 const matchesText = rowText.includes(searchTerm);
 
                 // ২. কালার কলাম ম্যাচ চেক (কালার কলামটি ৮ম ঘরে / index 7 এ আছে)
-                const colorCell = row.children[7];
+                const colorCell = row.children[8];
                 const cellBgColor = colorCell ? colorCell.style.backgroundColor.toLowerCase() : '';
 
                 // যদি কালার সিলেক্ট না থাকে তবে সব দেখাবে, আর থাকলে ব্যাকগ্রাউন্ড কালারের সাথে মেলাবে

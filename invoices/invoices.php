@@ -30,56 +30,92 @@ function h($s)
     return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
 }
 
+// ✅ monthly_bill.php এর মতো আইটেম ডেসক্রিপশন থেকে মাস ও বছর বের করার ফাংশন
+$monthMap = [
+    'jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4,
+    'may' => 5, 'jun' => 6, 'jul' => 7, 'aug' => 8,
+    'sep' => 9, 'oct' => 10, 'nov' => 11, 'dec' => 12
+];
+
+function extractMonthYearFromDesc($desc, array $monthMap, int $defaultYear): array
+{
+    $result = ['month' => null, 'year' => null];
+    $desc = trim((string)$desc);
+    if ($desc === '') return $result;
+
+    if (!preg_match('/\((.*?)\)/', $desc, $match)) return $result;
+
+    $inside = trim($match[1]);
+    if ($inside === '') return $result;
+
+    $inside = preg_replace('/\s+/', ' ', $inside);
+
+    if (preg_match('/^([A-Za-z]+)(?:\s+(\d{4}))?$/', $inside, $parts)) {
+        $monthText = strtolower(substr($parts[1], 0, 3));
+        if (isset($monthMap[$monthText])) {
+            $result['month'] = $monthMap[$monthText];
+            $result['year']  = isset($parts[2]) ? (int)$parts[2] : $defaultYear;
+        }
+    }
+    return $result;
+}
+
 // ✅ Approved schools list
 $approvedStmt = $pdo->prepare("SELECT id, school_name, m_fee FROM schools WHERE status='Approved' AND m_fee > 0");
 $approvedStmt->execute();
 $approvedSchools = $approvedStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $selectedMonth = $_GET['month'] ?? date('Y-m');
-
-$monthStart = $selectedMonth . '-01 00:00:00';
-$monthEnd   = date(
-    'Y-m-t 23:59:59',
-    strtotime($selectedMonth . '-01')
-);
+$targetYear = (int)date('Y', strtotime($selectedMonth . '-01'));
+$targetMonthNo = (int)date('n', strtotime($selectedMonth . '-01'));
 
 $remaining = 0;
 $remainingSchools = [];
 
-
 if ($approvedSchools) {
+    // নির্বাচিত স্কুলের সকল ইনভয়েস পার্স করার জন্য তুলে আনা
     $invCheck = $pdo->prepare("
         SELECT id, data, created_at
         FROM invoices
         WHERE school_id = :sid
-          AND created_at BETWEEN :ms AND :me
         ORDER BY id DESC
-        LIMIT 30
     ");
 
     foreach ($approvedSchools as $s) {
         $sid = (int) $s['id'];
 
-        // এই মাসে ঐ স্কুলের invoices (created_at ভিত্তিতে) তুলে আনা
-        $invCheck->execute([':sid' => $sid, ':ms' => $monthStart, ':me' => $monthEnd]);
+        $invCheck->execute([':sid' => $sid]);
         $list = $invCheck->fetchAll(PDO::FETCH_ASSOC);
 
-        // ✅ এই মাসে invoice আছে কিনা চেক (invoiceDate থাকলে সেটাও মিলিয়ে দেখবে)
         $hasThisMonth = false;
+
         foreach ($list as $inv) {
             $data = json_decode($inv['data'] ?? '', true);
-            $invDate = $data['invoiceDate'] ?? null;
+            if (!$data) continue;
 
-            if ($invDate) {
-                $ts = strtotime($invDate);
-                if ($ts && date('Y-m', $ts) === $selectedMonth){
-                    $hasThisMonth = true;
-                    break;
+            $invDate = $data['invoiceDate'] ?? null;
+            $invYear = $invDate ? (int)date('Y', strtotime($invDate)) : (int)date('Y', strtotime($inv['created_at'] ?? 'now'));
+            $invMonth = $invDate ? (int)date('n', strtotime($invDate)) : (int)date('n', strtotime($inv['created_at'] ?? 'now'));
+
+            if (!empty($data['items']) && is_array($data['items'])) {
+                foreach ($data['items'] as $item) {
+                    $desc = strtolower(trim($item['desc'] ?? ''));
+
+                    // সাবস্ক্রিপশন সংক্রান্ত ফি চেক
+                    if (strpos($desc, 'subscription') !== false) {
+                        $parsed = extractMonthYearFromDesc($item['desc'] ?? '', $monthMap, $invYear);
+                        $m = $parsed['month'] ?? $invMonth;
+                        $y = $parsed['year'] ?? $invYear;
+
+                        if ($m === $targetMonthNo && $y === $targetYear) {
+                            $hasThisMonth = true;
+                            break 2; // এই স্কুলের নির্বাচিত মাসের বিল পাওয়া গেছে
+                        }
+                    }
                 }
             } else {
-                // invoiceDate না থাকলে created_at মাস ধরবো
-                $ts = strtotime($inv['created_at'] ?? '');
-                if ($ts && date('Y-m', $ts) === $selectedMonth){
+                // যদি ইনভয়েসে কোনো specific items না থাকে, তবে ইনভয়েস ডেট দিয়ে চেক
+                if ($invMonth === $targetMonthNo && $invYear === $targetYear) {
                     $hasThisMonth = true;
                     break;
                 }
@@ -100,7 +136,6 @@ if ($approvedSchools) {
 
 $btnClass = ($remaining > 0) ? 'btn-outline-success' : 'btn-outline-secondary';
 $btnDisabled = ($remaining > 0) ? '' : 'disabled';
-
 
 require '../layout/layout_header.php';
 ?>
