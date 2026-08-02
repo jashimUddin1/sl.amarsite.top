@@ -11,7 +11,6 @@ try {
     $fetchError = $e->getMessage();
 }
 
-
 // ====== Fetch Unread Notifications ======
 try {
     $notifStmt = $pdo->prepare("
@@ -45,10 +44,18 @@ require '../layout/layout_header.php';
         <button data-bs-toggle="modal" data-bs-target="#addSchoolModal" class="btn btn-success">Add School</button>
 
         <!-- 2. Search Bar (মাঝখানে যুক্ত করা হলো) -->
-        <div class="search-box flex-grow-1 mx-md-3" style="max-width: 400px;">
+        <div class="d-flex search-box flex-grow-1 mx-md-3" style="max-width: 400px;">
             <div class="input-group">
                 <input type="text" id="schoolSearchInput" class="form-control  ps-0" placeholder=" Search by name, phone, or location..." autocomplete="off">
             </div>
+            <select class="rounded" name="sColor" id="colorSelect">
+                <option value="">Color</option>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
+                <option value="pink">Pink</option>
+                <option value="blue">Blue</option>
+                <option value="red">Red</option>
+            </select>
         </div>
 
         <!-- Notification Bell Button -->
@@ -96,6 +103,7 @@ require '../layout/layout_header.php';
                         <th scope="col">M Fee</th>
                         <th scope="col">Y Fee</th>
                         <th scope="col">W Fee</th>
+                        <th scope="col">Color</th>
                         <th scope="col">Last Note</th>
                         <th class="text-center" scope="col">Action</th>
                     </tr>
@@ -108,6 +116,17 @@ require '../layout/layout_header.php';
                             $noteStmt = $pdo->prepare("SELECT * FROM add_run_note WHERE school_id = :school_id ORDER BY created_at DESC");
                             $noteStmt->execute([':school_id' => $school['id']]);
                             $schoolNotes = $noteStmt->fetchAll(PDO::FETCH_ASSOC);
+
+                            // color sort
+                            $colorNote = match (strtolower($school['s_color'] ?? '')) {
+                                'red'    => 'নেয়ার সম্ভাবনা নাই',
+                                'blue'   => 'ডিসেম্বরে নিবে',
+                                'green'  => '১০০% নিবে',
+                                'yellow' => 'নেওয়ার সম্ভাবনা আছে',
+                                'pink'   => 'পরবর্তীতে কল দিতে বলছে',
+                                default  => 'কোনো স্ট্যাটাস দেওয়া হয়নি'
+                            };
+
                             ?>
                             <tr>
                                 <th><?= $index + 1; ?></th>
@@ -120,6 +139,7 @@ require '../layout/layout_header.php';
                                 <td>৳<?= number_format($school['monthly_fee']); ?></td>
                                 <td>৳<?= number_format($school['yearly_fee']); ?></td>
                                 <td>৳<?= number_format($school['website_fee']); ?></td>
+                                <td title="<?= htmlspecialchars($colorNote); ?>" class="" style="background-color:  <?= htmlspecialchars($school['s_color']); ?>;"> </td>
                                 <!-- Last Note Column -->
                                 <td>
                                     <?php if (!empty($schoolNotes)): ?>
@@ -138,13 +158,12 @@ require '../layout/layout_header.php';
                                 <td class="text-center">
                                     <div class="d-flex align-items-center gap-2">
                                         <!-- 1. View Notes Icon Button -->
-                                        <button type="button"
+                                        <a href="add_run_note.php?school_id=<?= $school['id']; ?>"
                                             class="btn btn-sm btn-light text-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#viewNotesModal<?= $school['id']; ?>"
+
                                             title="View All Notes">
-                                            <i class="bi bi-eye fs-6"></i>
-                                        </button>
+                                            <i class="bi bi-journal-text fs-6"></i>
+                                        </a>
 
                                         <!-- 2. Add Note / Remark Icon Button -->
                                         <button type="button"
@@ -152,7 +171,7 @@ require '../layout/layout_header.php';
                                             data-bs-toggle="modal"
                                             data-bs-target="#noteModal<?= $school['id']; ?>"
                                             title="Add Note">
-                                            <i class="bi bi-journal-text fs-6"></i>
+                                            <i class="bi bi-pencil"></i>
                                         </button>
 
                                         <!-- 3. Three-dot Dropdown Menu -->
@@ -185,6 +204,12 @@ require '../layout/layout_header.php';
                                                             <i class="bi bi-trash"></i> Delete
                                                         </button>
                                                     </form>
+                                                </li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li>
+                                                    <i class="bi bi-check"></i> Approved
                                                 </li>
                                             </ul>
                                         </div>
@@ -237,10 +262,25 @@ require '../layout/layout_header.php';
                                                     </div>
                                                 </div>
 
-                                                <!-- Detailed Address -->
-                                                <div class="mb-3">
-                                                    <label class="form-label">Address Line (Road / Village / Area)</label>
-                                                    <input type="text" class="form-control" name="address_details" value="<?= htmlspecialchars($school['address_details']); ?>">
+                                                <div class="row">
+                                                    <!-- Detailed Address -->
+                                                    <div class="col-md-9 mb-3">
+                                                        <label class="form-label">Address Line (Road / Village / Area)</label>
+                                                        <input type="text" class="form-control" name="address_details" value="<?= htmlspecialchars($school['address_details']); ?>">
+                                                    </div>
+
+                                                    <!-- Color Selection -->
+                                                    <div class="col-md-3 mb-3">
+                                                        <label class="form-label">Color</label>
+                                                        <select name="sColor" class="form-select">
+                                                            <option value="" <?= empty($school['s_color']) ? 'selected' : ''; ?>>Select Color</option>
+                                                            <option value="green" <?= ($school['s_color'] == 'green') ? 'selected' : ''; ?>>Green</option>
+                                                            <option value="yellow" <?= ($school['s_color'] == 'yellow') ? 'selected' : ''; ?>>Yellow</option>
+                                                            <option value="pink" <?= ($school['s_color'] == 'pink') ? 'selected' : ''; ?>>Pink</option>
+                                                            <option value="blue" <?= ($school['s_color'] == 'blue') ? 'selected' : ''; ?>>Blue</option>
+                                                            <option value="red" <?= ($school['s_color'] == 'red') ? 'selected' : ''; ?>>Red</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
 
                                                 <!-- Monthly Fee & Yearly Fee -->
@@ -446,10 +486,23 @@ require '../layout/layout_header.php';
                         </div>
                     </div>
 
-                    <!-- Detailed Address -->
-                    <div class="mb-3">
-                        <label for="addressDetails" class="form-label">Address Line (Road / Village / Area)</label>
-                        <input type="text" class="form-control" id="addressDetails" name="address_details" placeholder="House/Road no, Area etc.">
+                    <div class="row">
+                        <!-- Detailed Address -->
+                        <div class="col-10 mb-3">
+                            <label class="form-label">Address Line (Road / Village / Area)</label>
+                            <input type="text" class="form-control" name="address_details" value="">
+                        </div>
+                        <div class="col-2">
+                            <label class="form-label">Color</label>
+                            <select name="sColor" id="">
+                                <option value="">Select Color</option>
+                                <option value="green">Green</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="pink">Pink</option>
+                                <option value="blue">Blue</option>
+                                <option value="red">Red</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Monthly Fee & Yearly Fee -->
@@ -520,7 +573,7 @@ require '../layout/layout_header.php';
                                             <i class="bi bi-clock-history me-1"></i> Added: <?= date('d M, h:i A', strtotime($notif['created_at'])); ?>
                                         </span>
 
-                                        <!-- Next Meeting Time (যদি ডাটাবেজে সেট করা থাকে) -->
+                                        <!-- Next Meeting Time -->
                                         <?php if (!empty($notif['next_meeting'])): ?>
                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
                                                 <i class="bi bi-calendar-event me-1"></i> Next Meeting: <?= date('d M Y, h:i A', strtotime($notif['next_meeting'])); ?>
@@ -532,13 +585,35 @@ require '../layout/layout_header.php';
                                         <?php endif; ?>
                                     </div>
 
-                                    <!-- Mark as Read Button -->
-                                    <form action="core/mark_notification_read.php" method="POST" class="m-0">
-                                        <input type="hidden" name="note_id" value="<?= $notif['id']; ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-check2-circle me-1"></i> Done
+                                    <!-- Action Buttons (Done, Edit, Delete) -->
+                                    <div class="d-flex align-items-center gap-1">
+                                        <!-- Edit Button -->
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-primary edit-note-btn"
+                                            data-id="<?= $notif['id']; ?>"
+                                            data-note="<?= htmlspecialchars($notif['note_text']); ?>"
+                                            data-notif="<?= $notif['notification_time']; ?>"
+                                            data-meeting="<?= $notif['next_meeting']; ?>"
+                                            title="Edit Note">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
-                                    </form>
+
+                                        <!-- Delete Button -->
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-danger delete-note-btn"
+                                            data-id="<?= $notif['id']; ?>"
+                                            title="Delete Note">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                        <!-- Mark as Read Button -->
+                                        <form action="core/mark_notification_read.php" method="POST" class="m-0 ms-1">
+                                            <input type="hidden" name="note_id" value="<?= $notif['id']; ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as Done">
+                                                <i class="bi bi-check2-circle me-1"></i> Done
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -547,7 +622,7 @@ require '../layout/layout_header.php';
                     <div class="text-center py-5 text-muted">
                         <i class="bi bi-bell-slash fs-1 d-block mb-3 text-secondary"></i>
                         <h5>কোনো Unread নোটিফিকেশন নেই!</h5>
-                        <p class="mb-0 fs-7">সব রিমাইন্ডার দেখা হয়ে গেছে।</p>
+                        <p class="mb-0 fs-7">সব রিমাইন্ডার দেখা হয়ে গেছে।</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -695,32 +770,48 @@ require '../layout/layout_header.php';
 </script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
         const searchInput = document.getElementById('schoolSearchInput');
-        // টেবিলের সবকটি রো (Tr) সিলেক্ট করা হচ্ছে (tbody এর ভেতর)
+        const colorSelect = document.getElementById('colorSelect');
         const tableRows = document.querySelectorAll('.table tbody tr');
 
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function () {
-                const searchTerm = this.value.toLowerCase().trim();
+        function filterTable() {
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const selectedColor = colorSelect ? colorSelect.value.toLowerCase().trim() : '';
 
-                tableRows.forEach(row => {
-                    // কোনো রো-তে যদি 'কোনো স্কুলের তথ্য পাওয়া যায়নি' বা empty মেসেজ থাকে তা স্কিপ করবে
-                    if (row.children.length === 1) return;
+            tableRows.forEach(row => {
+                // empty বা 'কোনো তথ্য পাওয়া যায়নি' রো স্কিপ করবে
+                if (row.children.length === 1) return;
 
-                    // রো-এর সম্পূর্ণ টেক্সট নেওয়া হচ্ছে
-                    const rowText = row.textContent.toLowerCase();
+                // ১. টেক্সট ম্যাচ চেক
+                const rowText = row.textContent.toLowerCase();
+                const matchesText = rowText.includes(searchTerm);
 
-                    // যদি সার্চের লেখা টেক্সটের সাথে মিলে যায় তবে দেখাবে, না মিললে হাইড করে দেবে
-                    if (rowText.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
+                // ২. কালার কলাম ম্যাচ চেক (কালার কলামটি ৮ম ঘরে / index 7 এ আছে)
+                const colorCell = row.children[7];
+                const cellBgColor = colorCell ? colorCell.style.backgroundColor.toLowerCase() : '';
+
+                // যদি কালার সিলেক্ট না থাকে তবে সব দেখাবে, আর থাকলে ব্যাকগ্রাউন্ড কালারের সাথে মেলাবে
+                const matchesColor = selectedColor === '' || cellBgColor.includes(selectedColor);
+
+                // ২টি শর্তই সত্যি হলে রো দেখাবে
+                if (matchesText && matchesColor) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
             });
+        }
+
+        // ইভেন্ট লিসেনার
+        if (searchInput) {
+            searchInput.addEventListener('keyup', filterTable);
+        }
+        if (colorSelect) {
+            colorSelect.addEventListener('change', filterTable);
         }
     });
 </script>
+
 
 <?php require '../layout/layout_footer.php'; ?>

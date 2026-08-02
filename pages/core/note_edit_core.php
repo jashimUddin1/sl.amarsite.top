@@ -1,0 +1,35 @@
+<?php
+require_once '../../auth/config.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $note_id = intval($_POST['note_id']);
+    $school_id = intval($_POST['school_id']);
+    $note_text = trim($_POST['note_text']);
+    $notification_time = !empty($_POST['notification_time']) ? $_POST['notification_time'] : NULL;
+    $next_meeting = !empty($_POST['next_meeting']) ? $_POST['next_meeting'] : NULL;
+
+    try {
+        $stmt = $pdo->prepare("UPDATE add_run_note SET note_text = :note_text, notification_time = :notification_time, next_meeting = :next_meeting WHERE id = :id");
+        $updated = $stmt->execute([
+            ':note_text' => $note_text,
+            ':notification_time' => $notification_time,
+            ':next_meeting' => $next_meeting,
+            ':id' => $note_id
+        ]);
+
+        if ($updated) {
+            $_SESSION['success'] = "নোট সফলভাবে আপডেট করা হয়েছে!";
+        } else {
+            $_SESSION['error'] = "নোট আপডেট করতে কোনো সমস্যা হয়েছে।";
+        }
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "ত্রুটি: " . $e->getMessage();
+    }
+
+    header("Location: ../add_run_note.php?school_id=" . $school_id);
+    exit();
+}

@@ -12,7 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['school_name'])) {
     
     $monthly_fee     = !empty($_POST['monthly_fee']) ? intval($_POST['monthly_fee']) : 0;
     $yearly_fee      = !empty($_POST['yearly_fee']) ? intval($_POST['yearly_fee']) : 0;
-    $website_fee      = !empty($_POST['website_fee']) ? intval($_POST['website_fee']) : 0;
+    $website_fee     = !empty($_POST['website_fee']) ? intval($_POST['website_fee']) : 0;
+    $sColor          = !empty($_POST['sColor']) ? htmlspecialchars(trim($_POST['sColor'])) : 'grey';
 
     if (empty($school_name) || empty($phone_number) || empty($division) || empty($district) || empty($upazila)) {
         $_SESSION['error'] = 'সবগুলো প্রয়োজনীয় (* চিহ্নিত) ফিল্ড সঠিকভাবে পূরণ করুন!';
@@ -22,8 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['school_name'])) {
 
     // ৪. PDO Prepared Statement দিয়ে SQL ইনসার্ট (add_run টেবিলে)
     try {
-        $sql = "INSERT INTO add_run (school_name, phone_number, division, district, upazila, address_details, monthly_fee, yearly_fee, website_fee) 
-                VALUES (:school_name, :phone_number, :division, :district, :upazila, :address_details, :monthly_fee, :yearly_fee, :website_fee)";
+        $sql = "INSERT INTO add_run (school_name, phone_number, division, district, upazila, address_details, monthly_fee, yearly_fee, website_fee, s_color) 
+                VALUES (:school_name, :phone_number, :division, :district, :upazila, :address_details, :monthly_fee, :yearly_fee, :website_fee, :sColor)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -37,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['school_name'])) {
             ':address_details' => $address_details,
             ':monthly_fee'     => $monthly_fee,
             ':yearly_fee'      => $yearly_fee,
-            ':website_fee'     => $website_fee
+            ':website_fee'     => $website_fee,
+            ':sColor'          => $sColor
         ]);
 
         $_SESSION['success'] = 'স্কুল সফলভাবে যোগ করা হয়েছে!';
