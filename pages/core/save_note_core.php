@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $school_id         = $_POST['school_id'] ?? null;
     $note_text         = trim($_POST['note_text'] ?? '');
     $next_meeting      = !empty($_POST['next_meeting']) ? $_POST['next_meeting'] : null;
-    $notification_time = !empty($_POST['notification_time']) ? $_POST['notification_time'] : null;
+    $notification_time =  $next_meeting; //!empty($_POST['notification_time']) ? $_POST['notification_time'] : null;
 
     if (!empty($school_id) && is_numeric($school_id) && !empty($note_text)) {
         try {

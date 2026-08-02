@@ -331,13 +331,13 @@ require '../layout/layout_header.php';
                                                 <!-- Next Meeting & Notification Time -->
                                                 <div class="row">
                                                     <div class="col-md-6 mb-3">
-                                                        <label class="form-label fw-bold">Next Meeting</label>
-                                                        <input type="datetime-local" class="form-control" name="next_meeting">
+                                                        <label class="form-label fw-bold">Next Meeting <span class="text-danger">*</span></label>
+                                                        <input type="datetime-local" class="form-control" name="next_meeting" required>
                                                     </div>
-                                                    <div class="col-md-6 mb-3">
+                                                    <!-- <div class="col-md-6 mb-3">
                                                         <label class="form-label fw-bold">Notification Time</label>
                                                         <input type="datetime-local" class="form-control" name="notification_time">
-                                                    </div>
+                                                    </div> -->
                                                 </div>
 
                                             </form>
