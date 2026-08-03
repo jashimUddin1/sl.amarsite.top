@@ -715,7 +715,7 @@ require '../layout/layout_header.php';
                 const matchesText = rowText.includes(searchTerm);
 
                 // ২. কালার কলাম ম্যাচ চেক (কালার কলামটি ৮ম ঘরে / index 7 এ আছে)
-                const colorCell = row.children[8];
+                const colorCell = row.children[8].querySelector('span');
                 const cellBgColor = colorCell ? colorCell.style.backgroundColor.toLowerCase() : '';
 
                 // যদি কালার সিলেক্ট না থাকে তবে সব দেখাবে, আর থাকলে ব্যাকগ্রাউন্ড কালারের সাথে মেলাবে
